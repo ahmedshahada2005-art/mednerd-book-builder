@@ -16,34 +16,44 @@
         <div class="text-center mb-8">
             <span class="bg-[#0e7490]/10 text-[#0e7490] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">منصة أكاديمية ذكية</span>
             <h1 class="text-3xl md:text-4xl font-bold text-[#0e7490] mt-3 mb-2">MEDNERD AI BOOK BUILDER</h1>
-            <p class="text-gray-600 text-sm md:text-base">ارفع ملفك الطبي ليتم تحويله تلقائياً إلى كتاب أكاديمي منسق بتنسيق A4 وخطوط مريحة.</p>
+            <p class="text-gray-600 text-sm md:text-base">تحويل المصادر الطبية إلى كتب أكاديمية احترافية متكاملة بتنسيق A4 والملاحظات السريرية.</p>
         </div>
 
         <!-- Main Form Grid -->
-        <div class="space-y-6 mb-6">
+        <div class="space-y-5 mb-6">
             <!-- Book Title -->
             <div>
                 <label class="block text-sm font-bold text-[#14532d] mb-2">عنوان المحاضرة أو المادة العلمية (باللغة العربية)</label>
                 <input type="text" id="bookTitle" placeholder="مثال: CVS Pharmacology - Heart Failure Management" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490] text-sm">
             </div>
 
+            <!-- Content Type -->
+            <div>
+                <label class="block text-sm font-bold text-[#14532d] mb-2">نوع المحتوى الأكاديمي</label>
+                <select id="contentType" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490] text-sm bg-white">
+                    <option value="summary">ملخص محاضرة شامل (Lecture Summary)</option>
+                    <option value="qbank">بنك أسئلة وحالات سريرية (Q-Bank & Clinical Vignettes)</option>
+                    <option value="highyield">نقاط مراجعة مكثفة (High-Yield Clinical Notes)</option>
+                </select>
+            </div>
+
             <!-- File Upload Section -->
             <div>
-                <label class="block text-sm font-bold text-[#14532d] mb-2">رفع ملف المصدر الطبي</label>
+                <label class="block text-sm font-bold text-[#14532d] mb-2">رفع ملف المصدر الطبي (.txt)</label>
                 <div class="border-2 border-dashed border-[#0e7490]/40 rounded-xl p-8 text-center hover:border-[#0e7490] transition-colors bg-[#fdfbf7]/50 cursor-pointer relative">
                     <input type="file" id="sourceFile" accept=".txt,.html,.md" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFileSelect(event)">
                     <svg class="mx-auto h-12 w-12 text-[#0e7490] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
                     </svg>
                     <p id="fileNameDisplay" class="text-sm font-bold text-[#14532d]">اضغط لاختيار ملف المصدر أو اسحبه إلى هنا</p>
-                    <p class="text-xs text-gray-500 mt-1">الرجاء رفع ملفات نصية (.txt) أو مستندات قابلة للقراءة لضمان دقة المحتوى</p>
+                    <p class="text-xs text-gray-500 mt-1">يرجى إرفاق ملف نصي للمحتوى الطبي لضمان توليد دقيق 100%</p>
                 </div>
             </div>
         </div>
 
         <!-- Submit Button -->
         <button onclick="generateBook()" class="w-full bg-[#0e7490] hover:bg-[#0b5f75] text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg text-base">
-            توليد وتصدير ملف الكتاب الأكاديمي مباشرة 🚀
+            توليد وتصدير ملف الكتاب الأكاديمي المكتمل مباشرة 🚀
         </button>
     </div>
 
@@ -54,10 +64,9 @@
         function handleFileSelect(event) {
             const file = event.target.files[0];
             if (file) {
-                uploadedFileName = file.name.replace(/\.[^/.]+$/, ""); // استخراج اسم الملف بدون اللاحقة
+                uploadedFileName = file.name.replace(/\.[^/.]+$/, "");
                 document.getElementById('fileNameDisplay').innerText = "تم إرفاق الملف بنجاح: " + file.name;
                 
-                // اقتراح عنوان الكتاب تلقائياً من اسم الملف إذا كان الحقل فارغاً
                 const titleInput = document.getElementById('bookTitle');
                 if (!titleInput.value) {
                     titleInput.value = uploadedFileName;
@@ -73,13 +82,13 @@
 
         function generateBook() {
             const title = document.getElementById('bookTitle').value || uploadedFileName || "المحاضرة الطبية الأكاديمية";
+            const contentType = document.getElementById('contentType').value;
             
             if(!uploadedFileContent) {
                 alert('الرجاء رفع ملف المصدر الطبي أولاً!');
                 return;
             }
 
-            // تنظيف النص وتوزيع الفقرات بذكاء
             const paragraphs = uploadedFileContent.split(/\r?\n+/).filter(p => p.trim().length > 0);
             let pagesHTML = '';
             let pageNum = 1;
@@ -89,7 +98,7 @@
                 <div class="page-card">
                     <div class="mednerd-header">
                         <span>MEDNERD | ${title}</span>
-                        <span>قسم أكاديمي</span>
+                        <span>قسم أكاديمي متقدم</span>
                     </div>
                     <div class="page-body">
                         ${num === 1 ? `<h1 class="book-title">${title}</h1>` : ''}
@@ -104,11 +113,15 @@
 
             let pageContent = '';
             paragraphs.forEach((p, index) => {
-                // إبراز المصطلحات الإنجليزية باللون الغامق والهايلات
                 let formattedP = p.replace(/([A-Z][a-zA-Z]{3,})/g, '<strong class="medical-term">$1</strong>');
-                pageContent += `<p class="medical-text">${formattedP}</p>`;
                 
-                // توزيع كل فقرتين أو ثلاث في صفحة A4 لضمان الراحة البصرية وعدم الحشو
+                // إضافة دعم الملاحظات السريرية إذا كانت الفقرة تبدأ بكلمة ملاحظة أو تنبيه
+                if (p.includes("ملاحظة") || p.includes("Clinical Note")) {
+                    pageContent += `<div class="clinical-note">ملاحظة سريرية: ${formattedP}</div>`;
+                } else {
+                    pageContent += `<p class="medical-text">${formattedP}</p>`;
+                }
+                
                 if ((index + 1) % 3 === 0 || index === paragraphs.length - 1) {
                     pagesHTML += createPage(pageContent, pageNum);
                     pageContent = '';
@@ -148,6 +161,10 @@
         .book-title { font-size: 1.8rem; font-weight: 900; color: #0e7490; margin-bottom: 10px; line-height: 1.4; border-right: 5px solid #14532d; padding-right: 12px; }
         .medical-text { font-size: 1.15rem; font-weight: 600; color: #1f2937; line-height: 1.9; text-align: justify; }
         .medical-term { font-weight: 900; color: #0e7490; background-color: #f0fbfd; padding: 0 4px; border-radius: 4px; }
+        .clinical-note { background: #fef3c7; border-right: 6px solid #b45309; padding: 14px 18px; margin: 15px 0; border-radius: 8px; font-weight: 700; color: #78350f; font-size: 1.1rem; }
+        .content-with-image { display: flex; gap: 20px; align-items: flex-start; margin: 15px 0; }
+        .text-content { flex: 1; }
+        .image-placeholder { width: 35%; border: 2px dashed #0e7490; border-radius: 12px; padding: 15px; text-align: center; background: #fdfbf7; font-size: 0.85rem; color: #0e7490; font-weight: 700; }
         @media print {
             body { background: none; }
             .page-card { margin: 0; box-shadow: none; page-break-after: always; }
@@ -159,7 +176,6 @@
 </body>
 </html>`;
 
-            // تصدير وتحميل الملف فوراً
             const blob = new Blob([fullHtmlCode], { type: 'text/html;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
@@ -170,7 +186,7 @@
             document.body.removeChild(a);
             URL.revokeObjectURL(url);
             
-            alert('تم توليد وتحميل ملف الكتاب الأكاديمي بنجاح تام وجاهز للطباعة والتشغيل!');
+            alert('تم توليد وتحميل الكتاب الأكاديمي المكتمل بنجاح تام!');
         }
     </script>
 </body>
