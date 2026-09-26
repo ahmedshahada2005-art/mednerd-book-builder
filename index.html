@@ -3,191 +3,1761 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>MEDNERD AI Book Builder - المنصة الأكاديمية</title>
+
+    <title>MEDNERD AI Book Builder</title>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
     <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #fdfbf7; color: #14532d; }
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: #fdfbf7;
+            color: #14532d;
+        }
+
+        textarea,
+        input,
+        select {
+            font-family: 'Cairo', sans-serif;
+        }
+
+        textarea {
+            resize: vertical;
+        }
+
+        .upload-zone {
+            transition: all .25s ease;
+        }
+
+        .upload-zone:hover {
+            border-color: #0e7490;
+            background: #f0fbfd;
+        }
+
+        .upload-zone.dragging {
+            border-color: #14532d;
+            background: #ecfdf5;
+            transform: scale(1.01);
+        }
+
+        .preview-frame {
+            width: 210mm;
+            min-height: 297mm;
+            background: white;
+            margin: auto;
+            box-shadow: 0 5px 25px rgba(0,0,0,.12);
+        }
+
+        .status-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            display: inline-block;
+            background: #16a34a;
+        }
+
+        @media(max-width: 900px) {
+            .preview-frame {
+                width: 100%;
+                min-height: auto;
+            }
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-4 md:p-6">
-    <div class="max-w-4xl w-full bg-white p-6 md:p-10 rounded-2xl shadow-xl border border-[#0e7490]/20">
-        <!-- Header -->
-        <div class="text-center mb-8">
-            <span class="bg-[#0e7490]/10 text-[#0e7490] text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">منصة أكاديمية ذكية</span>
-            <h1 class="text-3xl md:text-4xl font-bold text-[#0e7490] mt-3 mb-2">MEDNERD AI BOOK BUILDER</h1>
-            <p class="text-gray-600 text-sm md:text-base">تحويل المصادر الطبية إلى كتب أكاديمية احترافية متكاملة بتنسيق A4 والملاحظات السريرية.</p>
-        </div>
 
-        <!-- Main Form Grid -->
-        <div class="space-y-5 mb-6">
-            <!-- Book Title -->
-            <div>
-                <label class="block text-sm font-bold text-[#14532d] mb-2">عنوان المحاضرة أو المادة العلمية (باللغة العربية)</label>
-                <input type="text" id="bookTitle" placeholder="مثال: CVS Pharmacology - Heart Failure Management" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490] text-sm">
-            </div>
+<body>
 
-            <!-- Content Type -->
-            <div>
-                <label class="block text-sm font-bold text-[#14532d] mb-2">نوع المحتوى الأكاديمي</label>
-                <select id="contentType" class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490] text-sm bg-white">
-                    <option value="summary">ملخص محاضرة شامل (Lecture Summary)</option>
-                    <option value="qbank">بنك أسئلة وحالات سريرية (Q-Bank & Clinical Vignettes)</option>
-                    <option value="highyield">نقاط مراجعة مكثفة (High-Yield Clinical Notes)</option>
-                </select>
-            </div>
+<!-- =========================================================
+     HEADER
+========================================================= -->
 
-            <!-- File Upload Section -->
-            <div>
-                <label class="block text-sm font-bold text-[#14532d] mb-2">رفع ملف المصدر الطبي (.txt)</label>
-                <div class="border-2 border-dashed border-[#0e7490]/40 rounded-xl p-8 text-center hover:border-[#0e7490] transition-colors bg-[#fdfbf7]/50 cursor-pointer relative">
-                    <input type="file" id="sourceFile" accept=".txt,.html,.md" class="absolute inset-0 opacity-0 cursor-pointer" onchange="handleFileSelect(event)">
-                    <svg class="mx-auto h-12 w-12 text-[#0e7490] mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
-                    </svg>
-                    <p id="fileNameDisplay" class="text-sm font-bold text-[#14532d]">اضغط لاختيار ملف المصدر أو اسحبه إلى هنا</p>
-                    <p class="text-xs text-gray-500 mt-1">يرجى إرفاق ملف نصي للمحتوى الطبي لضمان توليد دقيق 100%</p>
+<header class="border-b border-[#0e7490]/10 bg-white">
+    <div class="max-w-7xl mx-auto px-4 py-5 flex flex-col md:flex-row gap-4 items-center justify-between">
+
+        <div>
+            <div class="flex items-center gap-2">
+                <div class="w-10 h-10 rounded-xl bg-[#0e7490] text-white flex items-center justify-center font-black">
+                    M
+                </div>
+
+                <div>
+                    <h1 class="font-black text-xl text-[#0e7490]">
+                        MEDNERD
+                    </h1>
+
+                    <p class="text-[10px] text-gray-500 tracking-widest">
+                        AI BOOK BUILDER
+                    </p>
                 </div>
             </div>
         </div>
 
-        <!-- Submit Button -->
-        <button onclick="generateBook()" class="w-full bg-[#0e7490] hover:bg-[#0b5f75] text-white font-bold py-4 px-6 rounded-xl transition-all shadow-lg text-base">
-            توليد وتصدير ملف الكتاب الأكاديمي المكتمل مباشرة 🚀
-        </button>
+        <div class="flex items-center gap-2 text-xs text-gray-500">
+            <span class="status-dot"></span>
+            نظام إعداد الكتب الأكاديمية
+        </div>
+
+    </div>
+</header>
+
+
+<!-- =========================================================
+     MAIN
+========================================================= -->
+
+<main class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- INTRO -->
+
+    <section class="mb-8">
+
+        <div class="max-w-3xl">
+
+            <span class="inline-block px-3 py-1 rounded-full bg-[#0e7490]/10 text-[#0e7490] text-xs font-bold mb-3">
+                MEDNERD ACADEMIC PUBLISHING SYSTEM
+            </span>
+
+            <h2 class="text-3xl md:text-4xl font-black text-[#14532d] leading-tight">
+                حوّل ملفك الطبي إلى
+                <span class="text-[#0e7490]">كتاب أكاديمي منظم</span>
+            </h2>
+
+            <p class="text-gray-500 mt-3 leading-8">
+                ارفع ملف المصدر، حدّد هوية الكتاب، ثبّت تعليمات الذكاء الاصطناعي،
+                وأضف تعليمات الصور. النظام يجهز المحتوى ليخرج كملف HTML مستقل
+                مناسب للطباعة بصيغة A4.
+            </p>
+
+        </div>
+
+    </section>
+
+
+    <div class="grid lg:grid-cols-12 gap-6">
+
+        <!-- =====================================================
+             SIDEBAR / SETTINGS
+        ====================================================== -->
+
+        <aside class="lg:col-span-5 space-y-5">
+
+            <!-- BOOK INFORMATION -->
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+
+                <div class="flex items-center justify-between mb-5">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            معلومات الكتاب
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            المعلومات الأساسية للمشروع
+                        </p>
+                    </div>
+
+                    <span class="text-xs bg-[#0e7490]/10 text-[#0e7490] px-3 py-1 rounded-full">
+                        01
+                    </span>
+
+                </div>
+
+
+                <div class="space-y-4">
+
+                    <div>
+                        <label class="block text-sm font-bold mb-2">
+                            عنوان الكتاب / المحاضرة
+                        </label>
+
+                        <input
+                            id="bookTitle"
+                            type="text"
+                            placeholder="مثال: Pharmacology of Heart Failure"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label class="block text-sm font-bold mb-2">
+                            اسم المادة
+                        </label>
+
+                        <input
+                            id="subjectName"
+                            type="text"
+                            placeholder="مثال: علم الأدوية"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                        >
+                    </div>
+
+
+                    <div>
+                        <label class="block text-sm font-bold mb-2">
+                            نوع المحتوى
+                        </label>
+
+                        <select
+                            id="contentType"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                        >
+
+                            <option value="lecture">
+                                محاضرة أكاديمية
+                            </option>
+
+                            <option value="summary">
+                                ملخص طبي
+                            </option>
+
+                            <option value="book">
+                                كتاب أكاديمي
+                            </option>
+
+                            <option value="review">
+                                مراجعة قبل الامتحان
+                            </option>
+
+                            <option value="clinical">
+                                محتوى سريري
+                            </option>
+
+                        </select>
+                    </div>
+
+
+                    <div>
+                        <label class="block text-sm font-bold mb-2">
+                            مستوى التفصيل
+                        </label>
+
+                        <select
+                            id="detailLevel"
+                            class="w-full px-4 py-3 rounded-xl border border-gray-300 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                        >
+
+                            <option value="high">
+                                تفصيل أكاديمي مرتفع
+                            </option>
+
+                            <option value="medium">
+                                تفصيل متوسط
+                            </option>
+
+                            <option value="exam">
+                                تركيز امتحاني
+                            </option>
+
+                        </select>
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- FILE UPLOAD -->
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+
+                <div class="flex items-center justify-between mb-5">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            ملف المصدر
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            ارفع المادة الأصلية
+                        </p>
+                    </div>
+
+                    <span class="text-xs bg-[#0e7490]/10 text-[#0e7490] px-3 py-1 rounded-full">
+                        02
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="uploadZone"
+                    class="upload-zone relative border-2 border-dashed border-[#0e7490]/30 rounded-2xl p-7 text-center cursor-pointer bg-[#fdfbf7]"
+                >
+
+                    <input
+                        id="sourceFile"
+                        type="file"
+                        accept=".txt,.html,.htm,.md,.pdf,.docx"
+                        class="absolute inset-0 opacity-0 cursor-pointer"
+                    >
+
+                    <div class="text-4xl mb-3">
+                        ↑
+                    </div>
+
+                    <p
+                        id="fileNameDisplay"
+                        class="font-bold text-[#14532d]"
+                    >
+                        اضغط لاختيار الملف
+                    </p>
+
+                    <p class="text-xs text-gray-400 mt-2 leading-6">
+                        PDF · DOCX · TXT · HTML · MD
+                    </p>
+
+                </div>
+
+
+                <div
+                    id="fileInfo"
+                    class="hidden mt-4 p-3 rounded-xl bg-gray-50 text-xs text-gray-500"
+                ></div>
+
+            </section>
+
+
+            <!-- GENERATION PROMPT -->
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+
+                <div class="flex items-center justify-between mb-4">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            Prompt التوليد
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            التعليمات الأساسية للذكاء الاصطناعي
+                        </p>
+                    </div>
+
+                    <span class="text-xs bg-[#14532d]/10 text-[#14532d] px-3 py-1 rounded-full">
+                        03
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="generationPrompt"
+                    rows="12"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                >أنت محرر كتب طبية أكاديمية محترف لمنصة MEDNERD.
+
+حوّل محتوى الملف المصدر إلى كتاب أكاديمي عربي احترافي.
+
+التزم بالمصدر بدقة ولا تضف معلومات علمية غير موجودة في المصدر إلا إذا طُلب ذلك صراحة.
+
+حافظ على جميع المعلومات المهمة، ورتب المحتوى بطريقة أكاديمية واضحة.
+
+استخدم اللغة العربية الطبية مع إبقاء المصطلحات الإنجليزية المهمة بين قوسين عند الحاجة.
+
+حافظ على أسماء الأمراض والأدوية والتشريح والعمليات والمصطلحات الطبية بدقة.
+
+حوّل العناوين إلى مستويات واضحة.
+
+حوّل القوائم الموجودة في المصدر إلى قوائم منظمة.
+
+حافظ على الجداول والمقارنات والمعلومات الرقمية.
+
+عند وجود أسئلة MCQ في المصدر:
+- حافظ على السؤال باللغة الإنجليزية إذا كان موجوداً كذلك.
+- ضع الترجمة العربية تحته.
+- حافظ على الخيارات.
+- لا تغيّر الإجابة الصحيحة الموجودة في المصدر.
+
+أضف تنسيقاً أكاديمياً واضحاً مناسباً لطلاب الكليات الطبية.
+
+لا تستخدم الإيموجيات.
+
+لا تستخدم أسلوباً طفولياً أو تسويقياً.
+
+النتيجة النهائية يجب أن تكون مناسبة لكتاب طبي جامعي عالمي.</textarea>
+
+
+                <button
+                    onclick="resetGenerationPrompt()"
+                    class="mt-3 text-xs text-[#0e7490] font-bold hover:underline"
+                >
+                    استعادة Prompt MEDNERD الأساسي
+                </button>
+
+            </section>
+
+
+            <!-- IMAGE PROMPT -->
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+
+                <div class="flex items-center justify-between mb-4">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            Prompt الصور
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            تعليمات إنشاء الصور الطبية
+                        </p>
+                    </div>
+
+                    <span class="text-xs bg-[#0e7490]/10 text-[#0e7490] px-3 py-1 rounded-full">
+                        04
+                    </span>
+
+                </div>
+
+
+                <textarea
+                    id="imagePrompt"
+                    rows="9"
+                    class="w-full px-4 py-3 rounded-xl border border-gray-300 text-sm leading-7 focus:outline-none focus:ring-2 focus:ring-[#0e7490]"
+                >أنشئ صوراً تعليمية طبية أكاديمية عالية الجودة متوافقة مع محتوى الكتاب.
+
+يجب أن تكون الصورة دقيقة علمياً وواضحة ومناسبة لطلاب الكليات الطبية.
+
+استخدم أسلوباً أكاديمياً احترافياً وليس كرتونياً.
+
+إذا كانت الصورة تشريحية، أظهر البنية التشريحية المطلوبة بدقة.
+
+إذا كانت الصورة مرضية، أظهر التغيرات المرضية المهمة بوضوح.
+
+إذا كانت هناك حاجة إلى أسهم أو Labels، استخدم أسهماً واضحة ومرتبة ولا تجعل النصوص متداخلة.
+
+حافظ على نسبة الأبعاد المطلوبة للصورة.
+
+لا تضف عناصر غير موجودة في الطلب.
+
+لا تستخدم شعارات أو علامات تجارية داخل الصورة.
+
+الهدف هو أن تكون الصورة مناسبة للإدراج مباشرة داخل كتاب MEDNERD الأكاديمي.</textarea>
+
+            </section>
+
+
+            <!-- DESIGN SETTINGS -->
+
+            <section class="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm">
+
+                <div class="flex items-center justify-between mb-4">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            الهوية والطباعة
+                        </h3>
+                    </div>
+
+                    <span class="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-full">
+                        05
+                    </span>
+
+                </div>
+
+
+                <div class="grid grid-cols-2 gap-3">
+
+                    <div>
+                        <label class="text-xs font-bold block mb-2">
+                            حجم الخط
+                        </label>
+
+                        <select
+                            id="fontSize"
+                            class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm"
+                        >
+                            <option value="17px">17px</option>
+                            <option value="18px" selected>18px</option>
+                            <option value="19px">19px</option>
+                            <option value="20px">20px</option>
+                        </select>
+                    </div>
+
+
+                    <div>
+                        <label class="text-xs font-bold block mb-2">
+                            تباعد الأسطر
+                        </label>
+
+                        <select
+                            id="lineHeight"
+                            class="w-full px-3 py-2.5 rounded-xl border border-gray-300 text-sm"
+                        >
+                            <option value="1.7">1.7</option>
+                            <option value="1.85" selected>1.85</option>
+                            <option value="2">2</option>
+                        </select>
+                    </div>
+
+                </div>
+
+
+                <div class="mt-4 p-3 rounded-xl bg-[#fdfbf7] border border-[#0e7490]/10">
+
+                    <div class="flex justify-between text-xs">
+
+                        <span class="font-bold">
+                            حجم الصفحة
+                        </span>
+
+                        <span class="text-[#0e7490] font-bold">
+                            A4
+                        </span>
+
+                    </div>
+
+                    <div class="flex justify-between text-xs mt-2">
+
+                        <span class="font-bold">
+                            الاتجاه
+                        </span>
+
+                        <span class="text-[#0e7490] font-bold">
+                            عمودي
+                        </span>
+
+                    </div>
+
+                    <div class="flex justify-between text-xs mt-2">
+
+                        <span class="font-bold">
+                            اللغة
+                        </span>
+
+                        <span class="text-[#0e7490] font-bold">
+                            العربية RTL
+                        </span>
+
+                    </div>
+
+                </div>
+
+            </section>
+
+
+            <!-- ACTIONS -->
+
+            <section class="space-y-3">
+
+                <button
+                    id="generateBtn"
+                    onclick="generateBook()"
+                    class="w-full bg-[#0e7490] hover:bg-[#0b6078] text-white font-black py-4 rounded-xl shadow-lg transition"
+                >
+                    تجهيز الكتاب الأكاديمي
+                </button>
+
+
+                <button
+                    onclick="downloadHTML()"
+                    class="w-full bg-[#14532d] hover:bg-[#104224] text-white font-bold py-3 rounded-xl transition"
+                >
+                    تصدير HTML مستقل
+                </button>
+
+
+                <button
+                    onclick="printBook()"
+                    class="w-full border border-gray-300 bg-white hover:bg-gray-50 text-[#14532d] font-bold py-3 rounded-xl transition"
+                >
+                    طباعة / حفظ PDF
+                </button>
+
+            </section>
+
+        </aside>
+
+
+        <!-- =====================================================
+             PREVIEW
+        ====================================================== -->
+
+        <section class="lg:col-span-7">
+
+            <div class="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm sticky top-5">
+
+                <div class="flex items-center justify-between mb-4">
+
+                    <div>
+                        <h3 class="font-black text-[#14532d]">
+                            معاينة الكتاب
+                        </h3>
+
+                        <p class="text-xs text-gray-400 mt-1">
+                            Preview
+                        </p>
+                    </div>
+
+                    <span
+                        id="pageCount"
+                        class="text-xs bg-[#0e7490]/10 text-[#0e7490] px-3 py-1 rounded-full"
+                    >
+                        0 صفحة
+                    </span>
+
+                </div>
+
+
+                <div
+                    id="previewContainer"
+                    class="bg-gray-100 rounded-xl p-4 md:p-8 overflow-auto max-h-[80vh]"
+                >
+
+                    <div class="preview-frame p-[20mm]">
+
+                        <div class="border-b-2 border-[#0e7490] pb-4 mb-8 flex justify-between">
+
+                            <strong class="text-[#0e7490]">
+                                MEDNERD
+                            </strong>
+
+                            <span class="text-xs text-gray-400">
+                                Academic Medical Publishing
+                            </span>
+
+                        </div>
+
+
+                        <div class="text-center py-24">
+
+                            <div class="text-[#0e7490] text-5xl font-black mb-5">
+                                M
+                            </div>
+
+                            <h1
+                                id="previewTitle"
+                                class="text-3xl font-black text-[#14532d]"
+                            >
+                                عنوان الكتاب
+                            </h1>
+
+                            <p
+                                id="previewSubject"
+                                class="text-gray-500 mt-4"
+                            >
+                                المادة العلمية
+                            </p>
+
+                            <div class="mt-12 h-px bg-gray-200"></div>
+
+                            <p class="text-xs text-gray-400 mt-8">
+                                MEDNERD Medical Publishing
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </section>
+
     </div>
 
-    <script>
-        let uploadedFileContent = "";
-        let uploadedFileName = "";
+</main>
 
-        function handleFileSelect(event) {
-            const file = event.target.files[0];
-            if (file) {
-                uploadedFileName = file.name.replace(/\.[^/.]+$/, "");
-                document.getElementById('fileNameDisplay').innerText = "تم إرفاق الملف بنجاح: " + file.name;
-                
-                const titleInput = document.getElementById('bookTitle');
-                if (!titleInput.value) {
-                    titleInput.value = uploadedFileName;
-                }
 
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    uploadedFileContent = e.target.result;
-                };
-                reader.readAsText(file, 'UTF-8');
-            }
+<!-- =========================================================
+     JAVASCRIPT
+========================================================= -->
+
+<script>
+
+let uploadedFileContent = "";
+let uploadedFileName = "";
+let generatedHTML = "";
+
+const defaultGenerationPrompt = document.getElementById("generationPrompt").value;
+
+
+/* =========================================================
+   FILE HANDLING
+========================================================= */
+
+const fileInput = document.getElementById("sourceFile");
+const uploadZone = document.getElementById("uploadZone");
+
+fileInput.addEventListener("change", handleFile);
+
+uploadZone.addEventListener("dragover", function(e) {
+    e.preventDefault();
+    uploadZone.classList.add("dragging");
+});
+
+uploadZone.addEventListener("dragleave", function() {
+    uploadZone.classList.remove("dragging");
+});
+
+uploadZone.addEventListener("drop", function(e) {
+
+    e.preventDefault();
+
+    uploadZone.classList.remove("dragging");
+
+    const file = e.dataTransfer.files[0];
+
+    if(file) {
+        fileInput.files = e.dataTransfer.files;
+        handleFile({target:{files:[file]}});
+    }
+
+});
+
+
+function handleFile(event) {
+
+    const file = event.target.files[0];
+
+    if(!file) return;
+
+    uploadedFileName = file.name;
+
+    document.getElementById("fileNameDisplay").textContent =
+        "تم اختيار: " + file.name;
+
+    const info = document.getElementById("fileInfo");
+
+    info.classList.remove("hidden");
+
+    info.innerHTML =
+        "<strong>الملف:</strong> " +
+        escapeHTML(file.name) +
+        "<br><strong>الحجم:</strong> " +
+        formatBytes(file.size);
+
+
+    const titleInput = document.getElementById("bookTitle");
+
+    if(!titleInput.value) {
+
+        titleInput.value =
+            file.name
+                .replace(/\.[^/.]+$/, "")
+                .replace(/[_-]/g, " ");
+
+    }
+
+
+    /*
+       قراءة الملفات النصية فقط داخل المتصفح.
+
+       PDF / DOCX يحتاجان Parser أو Backend
+       لذلك يتم حفظ الملف في الواجهة حالياً
+       دون الادعاء بأن المتصفح استخرج محتواه.
+    */
+
+    const extension =
+        file.name.split(".").pop().toLowerCase();
+
+
+    if(["txt","html","htm","md"].includes(extension)) {
+
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+
+            uploadedFileContent = e.target.result;
+
+            showSuccess(
+                "تمت قراءة محتوى الملف ويمكن توليد المعاينة."
+            );
+
+        };
+
+        reader.readAsText(file, "UTF-8");
+
+    } else {
+
+        uploadedFileContent = "";
+
+        showSuccess(
+            "تم رفع الملف. لاستخراج محتوى PDF/DOCX وربطه بالذكاء الاصطناعي يجب إضافة API أو Parser."
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   GENERATION
+========================================================= */
+
+function generateBook() {
+
+    const title =
+        document.getElementById("bookTitle").value.trim()
+        || "المحاضرة الطبية الأكاديمية";
+
+
+    const subject =
+        document.getElementById("subjectName").value.trim()
+        || "مادة طبية";
+
+
+    const contentType =
+        document.getElementById("contentType").value;
+
+
+    const detail =
+        document.getElementById("detailLevel").value;
+
+
+    if(!uploadedFileName) {
+
+        alert("الرجاء رفع ملف المصدر أولاً.");
+
+        return;
+    }
+
+
+    let sourceHTML = "";
+
+
+    if(uploadedFileContent) {
+
+        sourceHTML =
+            convertSourceToAcademicHTML(
+                uploadedFileContent
+            );
+
+    } else {
+
+        sourceHTML = `
+
+            <div class="notice-box">
+
+                <h3>الملف جاهز للمعالجة</h3>
+
+                <p>
+                    تم رفع الملف:
+                    <strong>${escapeHTML(uploadedFileName)}</strong>
+                </p>
+
+                <p>
+                    هذه المعاينة تحتاج إلى ربط النظام
+                    بمحرك AI لاستخراج محتوى PDF/DOCX
+                    وتحويله وفق Prompt التوليد.
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+
+    generatedHTML =
+        buildCompleteHTML({
+
+            title,
+            subject,
+            sourceHTML,
+            contentType,
+            detail,
+            generationPrompt:
+                document.getElementById("generationPrompt").value,
+
+            imagePrompt:
+                document.getElementById("imagePrompt").value
+
+        });
+
+
+    updatePreview(
+        title,
+        subject,
+        sourceHTML
+    );
+
+
+    document.getElementById("pageCount").textContent =
+        "تم تجهيز المعاينة";
+
+
+    showSuccess(
+        "تم تجهيز قالب الكتاب بنجاح."
+    );
+
+}
+
+
+/* =========================================================
+   SOURCE → ACADEMIC HTML
+========================================================= */
+
+function convertSourceToAcademicHTML(text) {
+
+    let clean =
+        text
+            .replace(/\r\n/g, "\n")
+            .replace(/\r/g, "\n");
+
+
+    const lines =
+        clean
+            .split("\n")
+            .map(x => x.trim())
+            .filter(Boolean);
+
+
+    let html = "";
+
+
+    lines.forEach((line, index) => {
+
+        const safe =
+            escapeHTML(line);
+
+
+        /*
+          العناوين القصيرة
+        */
+
+        if(
+            line.length < 100 &&
+            (
+                line.endsWith(":") ||
+                /^[0-9]+[.)-]\s/.test(line) ||
+                /^[A-Z][A-Za-z\s-]{3,70}$/.test(line)
+            )
+        ) {
+
+            html += `
+                <h2 class="section-title">
+                    ${safe}
+                </h2>
+            `;
+
+            return;
         }
 
-        function generateBook() {
-            const title = document.getElementById('bookTitle').value || uploadedFileName || "المحاضرة الطبية الأكاديمية";
-            const contentType = document.getElementById('contentType').value;
-            
-            if(!uploadedFileContent) {
-                alert('الرجاء رفع ملف المصدر الطبي أولاً!');
-                return;
-            }
 
-            const paragraphs = uploadedFileContent.split(/\r?\n+/).filter(p => p.trim().length > 0);
-            let pagesHTML = '';
-            let pageNum = 1;
-            
-            function createPage(contentHtml, num) {
-                return `
-                <div class="page-card">
-                    <div class="mednerd-header">
-                        <span>MEDNERD | ${title}</span>
-                        <span>قسم أكاديمي متقدم</span>
-                    </div>
-                    <div class="page-body">
-                        ${num === 1 ? `<h1 class="book-title">${title}</h1>` : ''}
-                        ${contentHtml}
-                    </div>
-                    <div class="mednerd-footer">
-                        <span>MEDNERD Medical Publishing</span>
-                        <span>${num}</span>
-                    </div>
-                </div>`;
-            }
+        /*
+          القوائم
+        */
 
-            let pageContent = '';
-            paragraphs.forEach((p, index) => {
-                let formattedP = p.replace(/([A-Z][a-zA-Z]{3,})/g, '<strong class="medical-term">$1</strong>');
-                
-                // إضافة دعم الملاحظات السريرية إذا كانت الفقرة تبدأ بكلمة ملاحظة أو تنبيه
-                if (p.includes("ملاحظة") || p.includes("Clinical Note")) {
-                    pageContent += `<div class="clinical-note">ملاحظة سريرية: ${formattedP}</div>`;
-                } else {
-                    pageContent += `<p class="medical-text">${formattedP}</p>`;
-                }
-                
-                if ((index + 1) % 3 === 0 || index === paragraphs.length - 1) {
-                    pagesHTML += createPage(pageContent, pageNum);
-                    pageContent = '';
-                    pageNum++;
-                }
-            });
+        if(
+            /^[-•●▪]\s*/.test(line)
+        ) {
 
-            const fullHtmlCode = `<!DOCTYPE html>
+            html += `
+                <div class="bullet-item">
+                    <span class="bullet-mark"></span>
+                    <span>${safe.replace(/^[-•●▪]\s*/, "")}</span>
+                </div>
+            `;
+
+            return;
+        }
+
+
+        /*
+          الأرقام
+        */
+
+        if(
+            /^\d+[.)]\s/.test(line)
+        ) {
+
+            html += `
+                <div class="number-item">
+                    ${safe}
+                </div>
+            `;
+
+            return;
+        }
+
+
+        /*
+          المصطلحات الإنجليزية
+        */
+
+        const formatted =
+            highlightMedicalTerms(safe);
+
+
+        html += `
+            <p class="medical-paragraph">
+                ${formatted}
+            </p>
+        `;
+
+    });
+
+
+    return html;
+
+}
+
+
+/* =========================================================
+   MEDICAL TERMS
+========================================================= */
+
+function highlightMedicalTerms(text) {
+
+    return text.replace(
+        /\b([A-Z][A-Za-z]{2,}(?:\s+[A-Z][A-Za-z]{2,})*)\b/g,
+        '<span class="english-term">$1</span>'
+    );
+
+}
+
+
+/* =========================================================
+   COMPLETE HTML
+========================================================= */
+
+function buildCompleteHTML(data) {
+
+return `<!DOCTYPE html>
+
 <html lang="ar" dir="rtl">
+
 <head>
-    <meta charset="UTF-8">
-    <title>${title}</title>
-    <script src="https://cdn.tailwindcss.com"><\/script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Cairo', sans-serif; background-color: #fdfbf7; color: #14532d; margin: 0; padding: 0; }
-        .page-card { 
-            width: 210mm; 
-            height: 297mm; 
-            max-height: 297mm; 
-            box-sizing: border-box;
-            overflow: hidden; 
-            page-break-after: always; 
-            page-break-inside: avoid; 
-            padding: 22mm 20mm; 
-            background: #ffffff; 
-            margin: 10mm auto; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
-            display: flex; 
-            flex-direction: column; 
-            justify-content: space-between; 
-            position: relative; 
-        }
-        .mednerd-header { border-bottom: 2px solid #0e7490; padding-bottom: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; color: #0e7490; font-size: 1rem; }
-        .mednerd-footer { border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 15px; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; color: #6b7280; font-weight: 600; }
-        .page-body { flex: 1; overflow: hidden; display: flex; flex-direction: column; gap: 16px; }
-        .book-title { font-size: 1.8rem; font-weight: 900; color: #0e7490; margin-bottom: 10px; line-height: 1.4; border-right: 5px solid #14532d; padding-right: 12px; }
-        .medical-text { font-size: 1.15rem; font-weight: 600; color: #1f2937; line-height: 1.9; text-align: justify; }
-        .medical-term { font-weight: 900; color: #0e7490; background-color: #f0fbfd; padding: 0 4px; border-radius: 4px; }
-        .clinical-note { background: #fef3c7; border-right: 6px solid #b45309; padding: 14px 18px; margin: 15px 0; border-radius: 8px; font-weight: 700; color: #78350f; font-size: 1.1rem; }
-        .content-with-image { display: flex; gap: 20px; align-items: flex-start; margin: 15px 0; }
-        .text-content { flex: 1; }
-        .image-placeholder { width: 35%; border: 2px dashed #0e7490; border-radius: 12px; padding: 15px; text-align: center; background: #fdfbf7; font-size: 0.85rem; color: #0e7490; font-weight: 700; }
-        @media print {
-            body { background: none; }
-            .page-card { margin: 0; box-shadow: none; page-break-after: always; }
-        }
-    </style>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+<title>${escapeHTML(data.title)}</title>
+
+<link
+href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;800;900&display=swap"
+rel="stylesheet">
+
+
+<style>
+
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background: #fdfbf7;
+    color: #1f2937;
+    font-family: "Cairo", sans-serif;
+    direction: rtl;
+}
+
+
+.page {
+    width: 210mm;
+    min-height: 297mm;
+    height: 297mm;
+
+    margin: 10mm auto;
+
+    background: #ffffff;
+
+    padding:
+        18mm
+        18mm
+        16mm
+        18mm;
+
+    position: relative;
+
+    display: flex;
+    flex-direction: column;
+
+    overflow: hidden;
+
+    page-break-after: always;
+}
+
+
+.page-header {
+
+    border-bottom:
+        2px solid #0e7490;
+
+    padding-bottom: 8px;
+
+    margin-bottom: 18px;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    align-items:
+        center;
+
+    color: #0e7490;
+
+    font-size: 10pt;
+
+    font-weight: 700;
+}
+
+
+.page-footer {
+
+    border-top:
+        1px solid #e5e7eb;
+
+    padding-top: 8px;
+
+    margin-top: auto;
+
+    display: flex;
+
+    justify-content:
+        space-between;
+
+    color: #6b7280;
+
+    font-size: 9pt;
+}
+
+
+.cover {
+
+    justify-content:
+        center;
+
+    align-items:
+        center;
+
+    text-align:
+        center;
+}
+
+
+.cover-logo {
+
+    width: 70px;
+
+    height: 70px;
+
+    background:
+        #0e7490;
+
+    color:
+        white;
+
+    border-radius:
+        18px;
+
+    display:
+        flex;
+
+    align-items:
+        center;
+
+    justify-content:
+        center;
+
+    font-size:
+        38px;
+
+    font-weight:
+        900;
+
+    margin:
+        0 auto 25px;
+}
+
+
+.cover-title {
+
+    color:
+        #14532d;
+
+    font-size:
+        28pt;
+
+    font-weight:
+        900;
+
+    line-height:
+        1.5;
+
+    margin-bottom:
+        18px;
+}
+
+
+.cover-subtitle {
+
+    color:
+        #0e7490;
+
+    font-size:
+        15pt;
+
+    font-weight:
+        700;
+}
+
+
+.cover-line {
+
+    width:
+        80px;
+
+    height:
+        3px;
+
+    background:
+        #0e7490;
+
+    margin:
+        35px auto;
+}
+
+
+.section-title {
+
+    color:
+        #14532d;
+
+    font-size:
+        19pt;
+
+    font-weight:
+        900;
+
+    border-right:
+        5px solid #0e7490;
+
+    padding-right:
+        12px;
+
+    margin:
+        20px 0 12px;
+
+    line-height:
+        1.5;
+}
+
+
+.medical-paragraph {
+
+    font-size:
+        ${document.getElementById("fontSize").value};
+
+    line-height:
+        ${document.getElementById("lineHeight").value};
+
+    color:
+        #1f2937;
+
+    font-weight:
+        500;
+
+    text-align:
+        justify;
+
+    margin:
+        0 0 12px;
+}
+
+
+.english-term {
+
+    color:
+        #0e7490;
+
+    font-weight:
+        800;
+}
+
+
+.bullet-item {
+
+    display:
+        flex;
+
+    align-items:
+        flex-start;
+
+    gap:
+        10px;
+
+    margin:
+        8px 0;
+
+    font-size:
+        16px;
+
+    line-height:
+        1.8;
+}
+
+
+.bullet-mark {
+
+    width:
+        7px;
+
+    height:
+        7px;
+
+    min-width:
+        7px;
+
+    border-radius:
+        50%;
+
+    background:
+        #0e7490;
+
+    margin-top:
+        12px;
+}
+
+
+.number-item {
+
+    margin:
+        8px 0;
+
+    padding:
+        8px 12px;
+
+    background:
+        #f8fafc;
+
+    border-right:
+        3px solid #0e7490;
+
+    line-height:
+        1.8;
+}
+
+
+.notice-box {
+
+    padding:
+        20px;
+
+    background:
+        #f0fbfd;
+
+    border:
+        1px solid #bae6fd;
+
+    border-radius:
+        12px;
+
+    margin-top:
+        20px;
+}
+
+
+.notice-box h3 {
+
+    color:
+        #0e7490;
+
+    margin-top:
+        0;
+}
+
+
+@page {
+
+    size:
+        A4 portrait;
+
+    margin:
+        0;
+}
+
+
+@media print {
+
+    body {
+        background:
+            white;
+    }
+
+    .page {
+
+        margin:
+            0;
+
+        box-shadow:
+            none;
+
+        page-break-after:
+            always;
+    }
+
+}
+
+
+</style>
+
 </head>
+
+
 <body>
-    ${pagesHTML}
+
+
+<!-- COVER -->
+
+<section class="page cover">
+
+    <div>
+
+        <div class="cover-logo">
+            M
+        </div>
+
+        <h1 class="cover-title">
+            ${escapeHTML(data.title)}
+        </h1>
+
+        <div class="cover-subtitle">
+            ${escapeHTML(data.subject)}
+        </div>
+
+        <div class="cover-line"></div>
+
+        <p>
+            MEDNERD Medical Publishing
+        </p>
+
+    </div>
+
+</section>
+
+
+<!-- CONTENT -->
+
+<section class="page">
+
+    <div class="page-header">
+
+        <span>
+            MEDNERD
+        </span>
+
+        <span>
+            ${escapeHTML(data.title)}
+        </span>
+
+    </div>
+
+
+    <main>
+
+        ${data.sourceHTML}
+
+    </main>
+
+
+    <div class="page-footer">
+
+        <span>
+            MEDNERD Medical Publishing
+        </span>
+
+        <span>
+            Academic Edition
+        </span>
+
+    </div>
+
+</section>
+
+
 </body>
+
 </html>`;
 
-            const blob = new Blob([fullHtmlCode], { type: 'text/html;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = title.replace(/\s+/g, '_') + '.html';
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            
-            alert('تم توليد وتحميل الكتاب الأكاديمي المكتمل بنجاح تام!');
-        }
-    </script>
+}
+
+
+/* =========================================================
+   PREVIEW
+========================================================= */
+
+function updatePreview(title, subject, content) {
+
+    const container =
+        document.getElementById("previewContainer");
+
+
+    document.getElementById("previewTitle")
+        .textContent = title;
+
+
+    document.getElementById("previewSubject")
+        .textContent = subject;
+
+
+    container.innerHTML = `
+
+        <div class="preview-frame p-[20mm]">
+
+            <div class="border-b-2 border-[#0e7490] pb-4 mb-7 flex justify-between">
+
+                <strong class="text-[#0e7490]">
+                    MEDNERD
+                </strong>
+
+                <span class="text-xs text-gray-400">
+                    Academic Medical Publishing
+                </span>
+
+            </div>
+
+
+            <h1 class="text-3xl font-black text-[#14532d] mb-5">
+                ${escapeHTML(title)}
+            </h1>
+
+
+            <p class="text-[#0e7490] font-bold mb-8">
+                ${escapeHTML(subject)}
+            </p>
+
+
+            <div class="space-y-4 text-gray-700 leading-8">
+
+                ${content}
+
+            </div>
+
+        </div>
+    `;
+
+}
+
+
+/* =========================================================
+   DOWNLOAD
+========================================================= */
+
+function downloadHTML() {
+
+    if(!generatedHTML) {
+
+        generateBook();
+
+    }
+
+
+    if(!generatedHTML) return;
+
+
+    const title =
+        document.getElementById("bookTitle").value
+        || "MEDNERD_Academic_Book";
+
+
+    const blob =
+        new Blob(
+            [generatedHTML],
+            {
+                type:
+                    "text/html;charset=utf-8"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const a =
+        document.createElement("a");
+
+
+    a.href = url;
+
+    a.download =
+        sanitizeFileName(title)
+        + ".html";
+
+
+    document.body.appendChild(a);
+
+    a.click();
+
+    document.body.removeChild(a);
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/* =========================================================
+   PRINT
+========================================================= */
+
+function printBook() {
+
+    if(!generatedHTML) {
+
+        generateBook();
+
+    }
+
+
+    const printWindow =
+        window.open(
+            "",
+            "_blank"
+        );
+
+
+    if(!printWindow) {
+
+        alert(
+            "يرجى السماح بفتح النوافذ المنبثقة للطباعة."
+        );
+
+        return;
+    }
+
+
+    printWindow.document.open();
+
+    printWindow.document.write(
+        generatedHTML
+    );
+
+    printWindow.document.close();
+
+
+    setTimeout(function() {
+
+        printWindow.focus();
+
+        printWindow.print();
+
+    }, 800);
+
+}
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function escapeHTML(value) {
+
+    return String(value)
+
+        .replace(/&/g, "&amp;")
+
+        .replace(/</g, "&lt;")
+
+        .replace(/>/g, "&gt;")
+
+        .replace(/"/g, "&quot;")
+
+        .replace(/'/g, "&#039;");
+
+}
+
+
+function sanitizeFileName(name) {
+
+    return name
+
+        .replace(/[\\/:*?"<>|]/g, "")
+
+        .replace(/\s+/g, "_")
+
+        .substring(0, 100);
+
+}
+
+
+function formatBytes(bytes) {
+
+    if(bytes === 0)
+        return "0 Bytes";
+
+
+    const units =
+        [
+            "Bytes",
+            "KB",
+            "MB",
+            "GB"
+        ];
+
+
+    const i =
+        Math.floor(
+            Math.log(bytes)
+            / Math.log(1024)
+        );
+
+
+    return (
+        parseFloat(
+            (bytes / Math.pow(1024, i))
+            .toFixed(2)
+        )
+        + " "
+        + units[i]
+    );
+
+}
+
+
+function showSuccess(message) {
+
+    const button =
+        document.getElementById("generateBtn");
+
+
+    const original =
+        button.textContent;
+
+
+    button.textContent =
+        message;
+
+
+    setTimeout(function() {
+
+        button.textContent =
+            original;
+
+    }, 2500);
+
+}
+
+
+function resetGenerationPrompt() {
+
+    document.getElementById(
+        "generationPrompt"
+    ).value =
+        defaultGenerationPrompt;
+
+}
+
+</script>
+
 </body>
 </html>
