@@ -1,0 +1,2659 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- سياسة أمان المحتوى (CSP) لتقييد إرسال البيانات حصراً إلى واجهة Google Gemini API -->
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src https://generativelanguage.googleapis.com; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
+  <title>MEDNERD | Learn. Practice. Understand.</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- مكتبة الاحتفال الترحيبي -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- مكتبة معالجة ملفات PDF محلياً داخل المتصفح -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    if (window.pdfjsLib) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+  <!-- مكتبة تعقيم المخرجات لمنع ثغرات XSS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.8/purify.min.js"></script>
+  <!-- مكتبة تحويل Markdown إلى HTML منظم -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+  <style>
+    /* الهوية البصرية الأساسية - الوضع النهاري */
+    :root {
+      --bg-main: #fdfbf7;
+      --bg-elevated: #f5f2eb;
+      --petrol: #0e7490;
+      --petrol-hover: #0b5c73;
+      --petrol-soft: rgba(14, 116, 144, 0.08);
+      --dark-green: #14532d;
+      --dark-green-soft: rgba(20, 83, 45, 0.1);
+      --mustard: #b45309;
+      --mustard-soft: rgba(180, 83, 9, 0.09);
+      --white: #ffffff;
+      --dark-text: #17202a;
+      --muted-text: #4b5563;
+      --border-color: #e5e7eb;
+      --danger: #dc2626;
+      --danger-soft: rgba(220, 38, 38, 0.08);
+      --shadow-sm: 0 4px 6px -1px rgba(14, 116, 144, 0.05), 0 2px 4px -2px rgba(14, 116, 144, 0.05);
+      --shadow-md: 0 10px 15px -3px rgba(14, 116, 144, 0.08), 0 4px 6px -4px rgba(14, 116, 144, 0.08);
+      --modal-backdrop: rgba(23, 32, 42, 0.65);
+    }
+
+    /* الهوية البصرية - الوضع الليلي (Dark Mode) مع الحفاظ على تناسق الألوان الأكاديمية */
+    [data-theme="dark"] {
+      --bg-main: #0f172a;
+      --bg-elevated: #1e293b;
+      --petrol: #22d3ee;
+      --petrol-hover: #06b6d4;
+      --petrol-soft: rgba(34, 211, 238, 0.12);
+      --dark-green: #4ade80;
+      --dark-green-soft: rgba(74, 222, 128, 0.14);
+      --mustard: #fbbf24;
+      --mustard-soft: rgba(251, 191, 36, 0.12);
+      --white: #1e293b;
+      --dark-text: #f1f5f9;
+      --muted-text: #94a3b8;
+      --border-color: #334155;
+      --danger: #f87171;
+      --danger-soft: rgba(248, 113, 113, 0.12);
+      --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      --shadow-md: 0 12px 20px -3px rgba(0, 0, 0, 0.45);
+      --modal-backdrop: rgba(2, 6, 23, 0.8);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Cairo', 'Inter', sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--dark-text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      line-height: 1.6;
+    }
+
+    body.modal-open {
+      overflow: hidden;
+    }
+
+    /* النوافذ المنبثقة (Modals) */
+    .modal-overlay, .workspace-modal {
+      position: fixed;
+      inset: 0;
+      background: var(--modal-backdrop);
+      backdrop-filter: blur(6px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+      animation: fadeIn 0.25s ease forwards;
+    }
+
+    .modal-card {
+      background: var(--white);
+      border-radius: 24px;
+      max-width: 620px;
+      width: 100%;
+      max-height: 92vh;
+      overflow-y: auto;
+      padding: 36px 32px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      border: 1px solid var(--border-color);
+      animation: scaleUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .quran-verse {
+      font-size: 28px;
+      font-weight: 800;
+      color: var(--dark-green);
+      line-height: 1.6;
+      margin-bottom: 8px;
+    }
+
+    .quran-reference {
+      font-size: 14px;
+      color: var(--petrol);
+      font-weight: 700;
+      margin-bottom: 24px;
+    }
+
+    .tribute-box {
+      background: var(--mustard-soft);
+      border-right: 4px solid var(--mustard);
+      padding: 18px;
+      border-radius: 12px;
+      margin-bottom: 24px;
+      font-size: 15px;
+      color: var(--dark-text);
+      text-align: right;
+      line-height: 1.75;
+    }
+
+    .tribute-box b {
+      color: var(--mustard);
+    }
+
+    /* الأزرار */
+    .btn-primary {
+      background: #0e7490;
+      color: #ffffff;
+      border: none;
+      padding: 12px 28px;
+      font-size: 16px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+      box-shadow: 0 4px 12px rgba(14, 116, 144, 0.25);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0b5c73;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--petrol);
+      border: 1px solid var(--petrol);
+      padding: 10px 18px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background: var(--petrol-soft);
+    }
+
+    .btn-secondary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .btn-telegram {
+      background: #0088cc;
+      color: #ffffff;
+      border: none;
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 700;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      text-decoration: none;
+    }
+
+    .btn-telegram:hover {
+      background: #0077b5;
+      transform: translateY(-1px);
+    }
+
+    /* شريط التنقل العلوي */
+    header {
+      background: var(--white);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    .nav-container {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .logo-area {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .logo-icon {
+      width: 42px;
+      height: 42px;
+      background: #0e7490;
+      color: #ffffff;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      font-weight: 800;
+    }
+
+    .logo-text {
+      font-size: 24px;
+      font-weight: 800;
+      color: var(--petrol);
+      letter-spacing: -0.5px;
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .theme-toggle-btn {
+      background: var(--bg-elevated);
+      color: var(--dark-text);
+      border: 1px solid var(--border-color);
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      transition: all 0.2s;
+    }
+
+    .theme-toggle-btn:hover {
+      border-color: var(--petrol);
+      color: var(--petrol);
+    }
+
+    .api-key-status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--petrol-soft);
+      padding: 8px 16px;
+      border-radius: 30px;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--petrol);
+      cursor: pointer;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+
+    .api-key-status:hover {
+      border-color: var(--petrol);
+    }
+
+    .status-dot {
+      width: 9px;
+      height: 9px;
+      background: #9ca3af;
+      border-radius: 50%;
+      transition: all 0.3s;
+    }
+
+    .status-dot.unverified {
+      background: var(--mustard);
+      box-shadow: 0 0 6px var(--mustard);
+    }
+
+    .status-dot.verifying {
+      background: var(--petrol);
+      animation: pulseDot 1s infinite;
+    }
+
+    .status-dot.connected {
+      background: var(--dark-green);
+      box-shadow: 0 0 8px var(--dark-green);
+    }
+
+    .status-dot.error {
+      background: var(--danger);
+      box-shadow: 0 0 8px var(--danger);
+    }
+
+    @keyframes pulseDot {
+      0%, 100% { transform: scale(1); opacity: 1; }
+      50% { transform: scale(1.35); opacity: 0.5; }
+    }
+
+    /* المحتوى الرئيسي */
+    main {
+      max-width: 1300px;
+      margin: 0 auto;
+      padding: 36px 24px;
+      flex: 1;
+      width: 100%;
+    }
+
+    .hero-section {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .hero-badges {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .hero-badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 5px 14px;
+      border-radius: 20px;
+      background: var(--petrol-soft);
+      color: var(--petrol);
+      border: 1px solid var(--border-color);
+    }
+
+    .hero-title {
+      font-size: 40px;
+      font-weight: 800;
+      color: var(--petrol);
+      margin-bottom: 12px;
+    }
+
+    .hero-subtitle {
+      font-size: 17px;
+      color: var(--muted-text);
+      max-width: 740px;
+      margin: 0 auto 28px auto;
+      line-height: 1.7;
+    }
+
+    /* البحث والتصنيفات */
+    .search-filter-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 720px;
+      margin: 0 auto 36px auto;
+    }
+
+    .search-box {
+      position: relative;
+      width: 100%;
+    }
+
+    .search-box i {
+      position: absolute;
+      right: 18px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--petrol);
+      font-size: 18px;
+    }
+
+    .search-input {
+      width: 100%;
+      padding: 15px 50px 15px 20px;
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      font-size: 15px;
+      color: var(--dark-text);
+      box-shadow: var(--shadow-sm);
+      outline: none;
+      transition: all 0.2s;
+    }
+
+    .search-input:focus {
+      border-color: var(--petrol);
+      box-shadow: 0 0 0 3px var(--petrol-soft);
+    }
+
+    .filter-pills {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .filter-pill {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      padding: 8px 18px;
+      border-radius: 30px;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--dark-text);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-pill:hover, .filter-pill.active {
+      background: #0e7490;
+      color: #ffffff;
+      border-color: #0e7490;
+    }
+
+    /* شبكة الأدوات */
+    .category-section {
+      margin-bottom: 44px;
+    }
+
+    .category-title {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--petrol);
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-right: 4px solid var(--petrol);
+      padding-right: 12px;
+    }
+
+    .tools-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+      gap: 20px;
+    }
+
+    .tool-card {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      border-radius: 18px;
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      text-align: right;
+    }
+
+    .tool-card:hover, .tool-card:focus-visible {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--petrol);
+      outline: none;
+    }
+
+    .tool-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 14px;
+    }
+
+    .tool-icon {
+      width: 48px;
+      height: 48px;
+      background: var(--petrol-soft);
+      color: var(--petrol);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .tool-badge {
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--dark-green-soft);
+      color: var(--dark-green);
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+
+    .tool-name {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--petrol);
+      margin-bottom: 8px;
+    }
+
+    .tool-desc {
+      font-size: 14px;
+      color: var(--muted-text);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .tool-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--petrol);
+      padding-top: 12px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .tool-footer i {
+      transition: transform 0.2s;
+    }
+
+    .tool-card:hover .tool-footer i {
+      transform: translateX(-5px);
+    }
+
+    /* نافذة تشغيل الأداة الموحدة */
+    .workspace-card {
+      background: var(--white);
+      border-radius: 22px;
+      max-width: 920px;
+      width: 100%;
+      max-height: 92vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      animation: scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .workspace-header {
+      padding: 20px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: var(--bg-elevated);
+      gap: 12px;
+    }
+
+    .workspace-title-area h2 {
+      font-size: 21px;
+      font-weight: 800;
+      color: var(--petrol);
+      margin-bottom: 2px;
+    }
+
+    .workspace-title-area p {
+      font-size: 13.5px;
+      color: var(--muted-text);
+    }
+
+    .close-btn {
+      background: var(--white);
+      border: 1px solid var(--border-color);
+      font-size: 18px;
+      color: var(--dark-text);
+      cursor: pointer;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.2s;
+    }
+
+    .close-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+
+    .workspace-body {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    /* الحقول والنماذج */
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--petrol);
+      margin-bottom: 8px;
+    }
+
+    .form-textarea, .form-input, .form-select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      font-size: 15px;
+      color: var(--dark-text);
+      background: var(--bg-main);
+      outline: none;
+      transition: border 0.2s, box-shadow 0.2s;
+    }
+
+    .form-textarea:focus, .form-input:focus, .form-select:focus {
+      border-color: var(--petrol);
+      box-shadow: 0 0 0 3px var(--petrol-soft);
+    }
+
+    .checkbox-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--dark-text);
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .checkbox-label input {
+      width: 18px;
+      height: 18px;
+      accent-color: #0e7490;
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .privacy-note {
+      font-size: 12.5px;
+      color: var(--muted-text);
+      background: var(--bg-elevated);
+      padding: 10px 14px;
+      border-radius: 10px;
+      margin-top: 14px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* منطقة المخرجات وتنسيق الجداول والنصوص الطبية */
+    .ai-output-box {
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 24px;
+      margin-top: 22px;
+      font-size: 15.5px;
+      line-height: 1.85;
+      color: var(--dark-text);
+      overflow-x: auto;
+    }
+
+    .ai-output-box h1, .ai-output-box h2, .ai-output-box h3, .ai-output-box h4 {
+      color: var(--petrol);
+      margin-top: 18px;
+      margin-bottom: 10px;
+      font-weight: 800;
+    }
+
+    .ai-output-box h1:first-child, .ai-output-box h2:first-child, .ai-output-box h3:first-child {
+      margin-top: 0;
+    }
+
+    .ai-output-box p {
+      margin-bottom: 12px;
+    }
+
+    .ai-output-box ul, .ai-output-box ol {
+      padding-right: 22px;
+      margin-bottom: 14px;
+    }
+
+    .ai-output-box li {
+      margin-bottom: 6px;
+    }
+
+    .ai-output-box strong, .ai-output-box b {
+      color: var(--petrol);
+    }
+
+    .ai-output-box blockquote {
+      border-right: 4px solid var(--dark-green);
+      background: var(--dark-green-soft);
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 14px 0;
+      color: var(--dark-text);
+    }
+
+    .ai-output-box table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 14.5px;
+    }
+
+    .ai-output-box th {
+      background: #0e7490;
+      color: #ffffff;
+      padding: 10px 14px;
+      text-align: right;
+      border: 1px solid var(--border-color);
+    }
+
+    .ai-output-box td {
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      background: var(--white);
+    }
+
+    .output-actions {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* التنبيهات ورسائل الخطأ */
+    .warning-alert {
+      background: var(--mustard-soft);
+      border: 1px solid var(--mustard);
+      color: var(--mustard);
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 600;
+      margin-top: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      line-height: 1.6;
+    }
+
+    .error-alert {
+      background: var(--danger-soft);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 14.5px;
+      font-weight: 600;
+      margin-top: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* محادثة المريض الافتراضي */
+    .chat-container {
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      background: var(--bg-main);
+      padding: 16px;
+      max-height: 360px;
+      overflow-y: auto;
+      margin-bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .chat-bubble {
+      padding: 12px 16px;
+      border-radius: 14px;
+      max-width: 85%;
+      font-size: 14.5px;
+      line-height: 1.7;
+    }
+
+    .chat-bubble.user {
+      background: #0e7490;
+      color: #ffffff;
+      align-self: flex-start;
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-bubble.patient {
+      background: var(--white);
+      color: var(--dark-text);
+      border: 1px solid var(--border-color);
+      align-self: flex-end;
+      border-bottom-left-radius: 4px;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2.5px solid rgba(255,255,255,0.35);
+      border-radius: 50%;
+      border-top-color: #ffffff;
+      animation: spin 0.75s linear infinite;
+    }
+
+    /* التذييل */
+    footer {
+      background: var(--white);
+      border-top: 1px solid var(--border-color);
+      padding: 32px 24px;
+      text-align: center;
+      margin-top: auto;
+      transition: background-color 0.25s ease;
+    }
+
+    .footer-content {
+      max-width: 900px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .footer-tribute {
+      color: var(--mustard);
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleUp {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @media (max-width: 768px) {
+      .hero-title { font-size: 30px; }
+      .modal-card { padding: 26px 20px; }
+      .quran-verse { font-size: 22px; }
+      .workspace-header { padding: 16px; }
+      .workspace-body { padding: 18px; }
+      .nav-container { padding: 12px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- نافذة الترحيب عند الدخول: الآية القرآنية + شكر إدارة MEDNERD والزميل أحمد شحادة + قناة التيليجرام -->
+  <div id="welcomeModal" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="welcomeVerseTitle">
+    <div class="modal-card">
+      <div id="welcomeVerseTitle" class="quran-verse">
+        ﴿ وَقُل رَّبِّ زِدْنِي عِلْمًا ﴾
+      </div>
+      <div class="quran-reference">
+        [سورة طه: 114]
+      </div>
+      <div class="tribute-box">
+        <b>شكر خاص وتقدير:</b><br>
+        نتقدم بخالص الشكر والعرفان إلى <b>إدارة MEDNERD</b> وإلى الزميل المبدع <b>أحمد شحادة</b> على هذا العمل الخارق والجهد الهندسي والأكاديمي المتميز لخدمة طلاب الطب والعلوم الصحية.
+      </div>
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <button class="btn-primary" onclick="closeWelcomeModal()">
+          <span>دخول إلى المنصة</span>
+          <i class="fa-solid fa-rocket"></i>
+        </button>
+        <a href="https://t.me/mednerd_M" target="_blank" rel="noopener noreferrer" class="btn-telegram">
+          <i class="fa-brands fa-telegram"></i>
+          <span>قناة MEDNERD على تيليجرام</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- الشريط العلوي -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="logo-area" aria-label="MEDNERD الصفحة الرئيسية">
+        <div class="logo-icon">M</div>
+        <div>
+          <div class="logo-text">MEDNERD</div>
+        </div>
+      </a>
+
+      <div class="nav-actions">
+        <a href="https://t.me/mednerd_M" target="_blank" rel="noopener noreferrer" class="btn-telegram" style="padding: 8px 14px; font-size: 13px;">
+          <i class="fa-brands fa-telegram"></i>
+          <span>تيليجرام</span>
+        </a>
+
+        <button class="theme-toggle-btn" id="themeToggleBtn" onclick="toggleTheme()" title="تبديل الوضع الليلي / النهاري" aria-label="تبديل الوضع الليلي">
+          <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+
+        <button class="api-key-status" onclick="openApiKeyModal()" aria-label="إعدادات مفتاح Gemini API">
+          <span id="statusDot" class="status-dot"></span>
+          <span id="apiKeyStatusText">لم تتم إضافة مفتاح API</span>
+          <i class="fa-solid fa-key"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- المحتوى الرئيسي -->
+  <main>
+    <section class="hero-section">
+      <div class="hero-badges">
+        <span class="hero-badge"><i class="fa-solid fa-graduation-cap"></i> مصمم لطلاب الطب والعلوم الصحية</span>
+        <span class="hero-badge"><i class="fa-solid fa-shield-halved"></i> معالجة مباشرة من متصفحك (BYOK)</span>
+        <span class="hero-badge"><i class="fa-solid fa-user-slash"></i> بدون تسجيل حساب أو اشتراكات</span>
+      </div>
+      <h1 class="hero-title">Learn. Practice. Understand.</h1>
+      <p class="hero-subtitle">
+        منظومة تعليمية طبية متكاملة تعمل بمفتاحك الشخصي لـ Gemini API. فكك الآليات الفيزيولوجية، حوّل محاضراتك وملفات PDF إلى اختبارات وبطاقات استذكار، وتدرّب سريرياً خطوة بخطوة.
+      </p>
+
+      <!-- شريط البحث والفلاتر -->
+      <div class="search-filter-bar">
+        <div class="search-box">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          <input type="text" id="searchInput" class="search-input" placeholder="ابحث بالعربية أو الإنجليزية (مثال: Flashcards, ECG, تشريح, مريض افتراضي, PDF)..." oninput="filterTools()" aria-label="ابحث عن أداة تعليمية">
+        </div>
+        <div class="filter-pills" role="tablist">
+          <button class="filter-pill active" onclick="setCategory('all', this)">جميع الأدوات (8)</button>
+          <button class="filter-pill" onclick="setCategory('study', this)">المذاكرة (Study)</button>
+          <button class="filter-pill" onclick="setCategory('memory', this)">الذاكرة (Memory)</button>
+          <button class="filter-pill" onclick="setCategory('clinical', this)">التفكير السريري</button>
+          <button class="filter-pill" onclick="setCategory('science', this)">المواد العلمية</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- حاوية الأدوات -->
+    <div id="toolsContainer"></div>
+  </main>
+
+  <!-- النافذة الموحدة لتشغيل الأدوات -->
+  <div id="workspaceModal" class="workspace-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="modalToolTitle">
+    <div class="workspace-card">
+      <div class="workspace-header">
+        <div class="workspace-title-area">
+          <h2 id="modalToolTitle">عنوان الأداة</h2>
+          <p id="modalToolSubtitle">وصف الأداة</p>
+        </div>
+        <button class="close-btn" onclick="closeWorkspace()" aria-label="إغلاق النافذة"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="workspace-body" id="workspaceBodyContent"></div>
+    </div>
+  </div>
+
+  <!-- نافذة إعداد واختبار مفتاح Gemini API -->
+  <div id="apiKeyModal" class="workspace-modal" style="display: none;" role="dialog" aria-modal="true" aria-labelledby="apiModalTitle">
+    <div class="workspace-card" style="max-width: 560px;">
+      <div class="workspace-header">
+        <div class="workspace-title-area">
+          <h2 id="apiModalTitle">إعداد مفتاح Google Gemini API</h2>
+          <p>اتصال مباشر من متصفحك إلى خوادم Google Gemini دون وسيط</p>
+        </div>
+        <button class="close-btn" onclick="closeApiKeyModal()" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div class="workspace-body">
+        <div id="maskedKeyBanner" style="display: none; margin-bottom: 16px; padding: 12px 14px; border-radius: 10px; background: var(--petrol-soft); border: 1px solid var(--border-color); font-size: 14px;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <span>المفتاح الحالي: <b id="maskedKeyText" style="font-family: monospace;" dir="ltr"></b></span>
+            <span id="keyStorageBadge" style="font-size: 12px; padding: 2px 8px; border-radius: 6px; background: var(--white);"></span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="apiKeyInput">أدخل مفتاح Gemini API جديداً (يبدأ بـ AIza...):</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="password" id="apiKeyInput" class="form-input" placeholder="أدخل المفتاح هنا..." autocomplete="off" spellcheck="false" dir="ltr">
+            <button type="button" class="btn-secondary" onclick="toggleApiKeyVisibility()" id="toggleKeyBtn" title="إظهار أو إخفاء المفتاح المدخل" aria-label="إظهار أو إخفاء المفتاح">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+          <small style="display: block; margin-top: 6px; color: var(--muted-text); font-size: 12.5px;">
+            يمكنك الحصول على مفتاح من <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" style="color: var(--petrol); font-weight: 700;">Google AI Studio</a>. تخضع الخدمة لحدود الاستخدام وشروط Google.
+          </small>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 14px; flex-wrap: wrap;">
+          <button type="button" class="btn-primary" style="flex: 1; padding: 11px; font-size: 14px;" onclick="saveApiKey(true)">
+            <i class="fa-solid fa-floppy-disk"></i> حفظ محلياً في المتصفح
+          </button>
+          <button type="button" class="btn-secondary" style="flex: 1; padding: 11px; font-size: 14px;" onclick="saveApiKey(false)">
+            <i class="fa-solid fa-clock"></i> استخدام مؤقت للجلسة
+          </button>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-bottom: 16px; flex-wrap: wrap;">
+          <button type="button" id="testConnectionBtn" class="btn-secondary" style="flex: 1;" onclick="testApiConnection()">
+            <i class="fa-solid fa-plug-circle-check"></i> اختبار الاتصال الفعلي
+          </button>
+          <button type="button" class="btn-secondary" style="border-color: var(--danger); color: var(--danger);" onclick="clearApiKey()">
+            <i class="fa-solid fa-trash-can"></i> حذف المفتاح المحفوظ
+          </button>
+        </div>
+
+        <div id="connectionTestResult" style="margin-bottom: 14px; font-size: 14px; font-weight: 700;"></div>
+
+        <div class="warning-alert">
+          <i class="fa-solid fa-shield-halved" style="margin-top: 3px;"></i>
+          <div>
+            <b>تنبيه أمني هام:</b> يُحفظ المفتاح في متصفحك (`localStorage`) أو في ذاكرة الجلسة المؤقتة، ولا يُرسل إطلاقاً إلى أي خادم تابع لـ MEDNERD. مع ذلك، فإن تخزين المفتاح محلياً في المتصفح لا يجعله محصناً من الوصول عبر أي كود JavaScript يعمل ضمن نطاق الموقع نفسه، كما أن مفتاح المتصفح ليس سراً عن مستخدم الجهاز. عند تفضيل عدم بقاء المفتاح على الجهاز، استخدم خيار "استخدام مؤقت للجلسة" أو احذفه فور انتهاء دراستك.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- التذييل -->
+  <footer>
+    <div class="footer-content">
+      <p style="font-weight: 700; color: var(--petrol); font-size: 16px;">MEDNERD · Learn. Practice. Understand.</p>
+      <p class="footer-tribute">
+        شكر خاص لإدارة MEDNERD وللزميل أحمد شحادة على هذا العمل الأكاديمي والتقني الرائد
+      </p>
+      <div style="margin-top: 6px;">
+        <a href="https://t.me/mednerd_M" target="_blank" rel="noopener noreferrer" class="btn-telegram">
+          <i class="fa-brands fa-telegram"></i>
+          <span>انضم إلى قناة MEDNERD الرسمية على تيليجرام</span>
+        </a>
+      </div>
+      <p style="font-size: 12.5px; color: var(--muted-text); margin-top: 8px;">
+        تنبيه تعليمي: جميع الأدوات مخصصة للأغراض التعليمية والتدريب الأكاديمي فقط، ولا تُعد بديلاً عن المراجع الطبية المعتمدة أو الإشراف السريري المؤهل.
+      </p>
+    </div>
+  </footer>
+
+  <script>
+    /**************************************************************
+     * 1. الإعدادات المركزية وحالة المنصة
+     **************************************************************/
+    const GEMINI_CONFIG = {
+      model: 'gemini-2.5-flash',
+      endpoint: 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent',
+      timeoutMs: 45000,
+      maxPdfPages: 25,
+      maxFileSizeBytes: 12 * 1024 * 1024 // 12 MB
+    };
+
+    const APP_STATE = {
+      currentCategory: 'all',
+      activeToolId: null,
+      sessionOnlyKey: '',
+      connectionStatus: 'no-key', // 'no-key' | 'unverified' | 'verifying' | 'connected' | 'invalid' | 'quota' | 'network-error'
+      isRequestInFlight: false,
+      lastRetryCallback: null,
+      patientHistory: [],
+      patientCaseContext: ''
+    };
+
+    // بيانات الأدوات الثماني مع كلمات مفتاحية بالعربية والإنجليزية
+    const TOOLS_DATA = [
+      {
+        id: 'medrecall',
+        category: 'study',
+        name: 'MedRecall',
+        desc: 'تحويل نصوص المحاضرات إلى أسئلة اختيار من متعدد (MCQs)، أسئلة قصيرة، وبطاقات استذكار (Flashcards) مع التفسير العلمي.',
+        icon: 'fa-brain',
+        badge: 'مذاكرة',
+        keywords: 'mcqs flashcards questions quiz اسئلة امتحانات بطاقات استذكار مراجعة محاضرات'
+      },
+      {
+        id: 'feynman',
+        category: 'study',
+        name: 'FeynmanMed',
+        desc: 'شرح المفاهيم الطبية والعلمية بثلاثة مستويات: مبسط جداً، أكاديمي لطلاب الطب، ومتقدم بالآليات الفيزيولوجية.',
+        icon: 'fa-graduation-cap',
+        badge: 'مذاكرة',
+        keywords: 'feynman explain levels concept شرح فاينمان تبسيط مفاهيم فيزيولوجيا'
+      },
+      {
+        id: 'medwhy',
+        category: 'memory',
+        name: 'MedWhy Chain',
+        desc: 'بناء سلسلة سببية متدرجة تشرح لماذا تحدث الظاهرة أو الآلية المرضية خطوة بخطوة من السبب للنتيجة.',
+        icon: 'fa-link',
+        badge: 'ذاكرة',
+        keywords: 'why chain mechanism pathophysiology سلسلة لماذا اليات مرضية فيزيولوجية سبب نتيجة'
+      },
+      {
+        id: 'mnemonic',
+        category: 'memory',
+        name: 'MedMnemonic',
+        desc: 'ابتكار وسائل تذكر، اختصارات (Acronyms)، وروابط ذهنية لحفظ القوائم الطبية مع عرض المعلومة الأصلية بجانبها.',
+        icon: 'fa-lightbulb',
+        badge: 'ذاكرة',
+        keywords: 'mnemonic memory acronyms حفظ اختصارات ذاكرة قوائم ادوية اعصاب'
+      },
+      {
+        id: 'patient',
+        category: 'clinical',
+        name: 'MedPatient',
+        desc: 'محاكاة مريض افتراضي تفاعلي للتدرب على أخذ القصة المرضية (History Taking) مع تقييم شامل للأداء السريري.',
+        icon: 'fa-user-doctor',
+        badge: 'سريري',
+        keywords: 'patient simulation clinical history osce مريض افتراضي قصة مرضية سريري تشخيص مقابلة'
+      },
+      {
+        id: 'ecg',
+        category: 'science',
+        name: 'MedECG Arena',
+        desc: 'منهجية منظمة لتفسير تخطيط القلب (ECG) عبر الوصف أو رفع صورة التخطيط مع بيان القيود التشخيصية.',
+        icon: 'fa-heart-pulse',
+        badge: 'علوم',
+        keywords: 'ecg ekg cardiology heart تخطيط القلب كهربائية القلب نبض'
+      },
+      {
+        id: 'pageintel',
+        category: 'study',
+        name: 'Page Intelligence',
+        desc: 'معالجة ملفات PDF محلياً أو نصوص المحاضرات لاستخراج الأفكار، المصطلحات، الآليات، والأسئلة المتوقعة.',
+        icon: 'fa-file-lines',
+        badge: 'مذاكرة',
+        keywords: 'pdf lecture summary notes terms تلخيص ملفات محاضرات مصطلحات'
+      },
+      {
+        id: 'anatomy',
+        category: 'science',
+        name: 'AnatomyVision',
+        desc: 'شرح التراكيب التشريحية، وظائفها، علاقاتها المجاورة، وأهميتها السريرية مع دعم رفع الصور التشريحية.',
+        icon: 'fa-eye',
+        badge: 'علوم',
+        keywords: 'anatomy vision structures nerves vessels تشريح تراكيب صور عظام عضلات'
+      }
+    ];
+
+    /**************************************************************
+     * 2. التهيئة الأولية والوضع الليلي وإدارة النوافذ
+     **************************************************************/
+    window.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      renderTools(TOOLS_DATA);
+      initStoredKeyState();
+
+      // إغلاق النوافذ عند الضغط على زر Escape
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          if (document.getElementById('apiKeyModal').style.display === 'flex') {
+            closeApiKeyModal();
+          } else if (document.getElementById('workspaceModal').style.display === 'flex') {
+            closeWorkspace();
+          } else if (document.getElementById('welcomeModal').style.display !== 'none') {
+            closeWelcomeModal();
+          }
+        }
+      });
+    });
+
+    function initTheme() {
+      const savedTheme = localStorage.getItem('mednerd_theme') || 'light';
+      applyTheme(savedTheme);
+    }
+
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute('data-theme') || 'light';
+      const next = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      localStorage.setItem('mednerd_theme', next);
+    }
+
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      const icon = document.getElementById('themeIcon');
+      if (icon) {
+        icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
+      }
+    }
+
+    function updateBodyScrollLock() {
+      const welcomeVisible = document.getElementById('welcomeModal').style.display !== 'none';
+      const workspaceVisible = document.getElementById('workspaceModal').style.display === 'flex';
+      const apiVisible = document.getElementById('apiKeyModal').style.display === 'flex';
+      if (welcomeVisible || workspaceVisible || apiVisible) {
+        document.body.classList.add('modal-open');
+      } else {
+        document.body.classList.remove('modal-open');
+      }
+    }
+
+    function closeWelcomeModal() {
+      const modal = document.getElementById('welcomeModal');
+      modal.style.display = 'none';
+      updateBodyScrollLock();
+      if (typeof confetti === 'function') {
+        try {
+          confetti({ particleCount: 70, spread: 65, origin: { y: 0.6 } });
+        } catch (_) {}
+      }
+    }
+
+    /**************************************************************
+     * 3. إدارة مفتاح Gemini API والأمان
+     **************************************************************/
+    function getActiveApiKey() {
+      if (APP_STATE.sessionOnlyKey) return APP_STATE.sessionOnlyKey;
+      return localStorage.getItem('mednerd_gemini_key') || '';
+    }
+
+    function maskApiKey(key) {
+      if (!key || key.length < 10) return '••••••••';
+      return key.slice(0, 4) + '••••••••••••' + key.slice(-4);
+    }
+
+    function initStoredKeyState() {
+      const key = getActiveApiKey();
+      if (key) {
+        // لا نعتبر المفتاح متصلاً لمجرد وجوده في localStorage؛ نضعه في حالة "بانتظار التحقق"
+        setConnectionStatus('unverified');
+      } else {
+        setConnectionStatus('no-key');
+      }
+    }
+
+    function setConnectionStatus(status, customMessage = '') {
+      APP_STATE.connectionStatus = status;
+      const dot = document.getElementById('statusDot');
+      const text = document.getElementById('apiKeyStatusText');
+
+      dot.className = 'status-dot';
+      switch (status) {
+        case 'no-key':
+          text.textContent = 'لم تتم إضافة مفتاح';
+          break;
+        case 'unverified':
+          dot.classList.add('unverified');
+          text.textContent = 'مفتاح محفوظ (اضغط للتحقق)';
+          break;
+        case 'verifying':
+          dot.classList.add('verifying');
+          text.textContent = 'جارٍ التحقق من الاتصال...';
+          break;
+        case 'connected':
+          dot.classList.add('connected');
+          text.textContent = 'الاتصال ناجح';
+          break;
+        case 'invalid':
+          dot.classList.add('error');
+          text.textContent = 'المفتاح غير صالح أو غير مخول';
+          break;
+        case 'quota':
+          dot.classList.add('error');
+          text.textContent = 'تجاوز حدود الاستخدام';
+          break;
+        case 'network-error':
+          dot.classList.add('error');
+          text.textContent = customMessage || 'تعذر الاتصال بالخدمة';
+          break;
+      }
+      refreshMaskedKeyBanner();
+    }
+
+    function refreshMaskedKeyBanner() {
+      const banner = document.getElementById('maskedKeyBanner');
+      const maskedText = document.getElementById('maskedKeyText');
+      const badge = document.getElementById('keyStorageBadge');
+      const key = getActiveApiKey();
+
+      if (key) {
+        banner.style.display = 'block';
+        maskedText.textContent = maskApiKey(key);
+        badge.textContent = APP_STATE.sessionOnlyKey ? 'مؤقت للجلسة فقط' : 'محفوظ في المتصفح';
+      } else {
+        banner.style.display = 'none';
+        maskedText.textContent = '';
+      }
+    }
+
+    function openApiKeyModal() {
+      // لا نعرض المفتاح المحفوظ داخل حقل الإدخال أبداً لحمايته من الكشف الكامل
+      const input = document.getElementById('apiKeyInput');
+      input.value = '';
+      input.type = 'password';
+      document.getElementById('toggleKeyBtn').innerHTML = '<i class="fa-solid fa-eye"></i>';
+      document.getElementById('connectionTestResult').textContent = '';
+      refreshMaskedKeyBanner();
+      document.getElementById('apiKeyModal').style.display = 'flex';
+      updateBodyScrollLock();
+    }
+
+    function closeApiKeyModal() {
+      document.getElementById('apiKeyInput').value = '';
+      document.getElementById('apiKeyModal').style.display = 'none';
+      updateBodyScrollLock();
+    }
+
+    function toggleApiKeyVisibility() {
+      const input = document.getElementById('apiKeyInput');
+      const btn = document.getElementById('toggleKeyBtn');
+      if (input.type === 'password') {
+        input.type = 'text';
+        btn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+      } else {
+        input.type = 'password';
+        btn.innerHTML = '<i class="fa-solid fa-eye"></i>';
+      }
+    }
+
+    function saveApiKey(persistToLocal) {
+      const rawKey = document.getElementById('apiKeyInput').value.trim();
+      const resultNode = document.getElementById('connectionTestResult');
+
+      if (!rawKey) {
+        resultNode.style.color = 'var(--danger)';
+        resultNode.textContent = 'يرجى إدخال مفتاح Gemini API أولاً قبل الحفظ.';
+        return;
+      }
+
+      if (persistToLocal) {
+        localStorage.setItem('mednerd_gemini_key', rawKey);
+        APP_STATE.sessionOnlyKey = '';
+      } else {
+        APP_STATE.sessionOnlyKey = rawKey;
+        localStorage.removeItem('mednerd_gemini_key');
+      }
+
+      document.getElementById('apiKeyInput').value = '';
+      setConnectionStatus('unverified');
+      resultNode.style.color = 'var(--petrol)';
+      resultNode.textContent = persistToLocal
+        ? 'تم حفظ المفتاح محلياً. جاري الآن اختبار الاتصال الفعلي...'
+        : 'تم تفعيل المفتاح مؤقتاً لهذه الجلسة. جاري اختبار الاتصال الفعلي...';
+
+      testApiConnection();
+    }
+
+    function clearApiKey() {
+      localStorage.removeItem('mednerd_gemini_key');
+      APP_STATE.sessionOnlyKey = '';
+      document.getElementById('apiKeyInput').value = '';
+      setConnectionStatus('no-key');
+      const resultNode = document.getElementById('connectionTestResult');
+      resultNode.style.color = 'var(--danger)';
+      resultNode.textContent = 'تم حذف المفتاح من المتصفح والذاكرة المؤقتة بنجاح.';
+    }
+
+    async function testApiConnection() {
+      const typedKey = document.getElementById('apiKeyInput').value.trim();
+      const keyToTest = typedKey || getActiveApiKey();
+      const resultNode = document.getElementById('connectionTestResult');
+      const testBtn = document.getElementById('testConnectionBtn');
+
+      if (!keyToTest) {
+        setConnectionStatus('no-key');
+        resultNode.style.color = 'var(--danger)';
+        resultNode.textContent = 'لم تتم إضافة مفتاح. يرجى إدخال مفتاح Gemini API لاختباره.';
+        return;
+      }
+
+      // إذا أدخل المستخدم مفتاحاً في الحقل وضغط اختبار مباشرة دون حفظ، نضعه كمؤقت للجلسة
+      if (typedKey && !getActiveApiKey()) {
+        APP_STATE.sessionOnlyKey = typedKey;
+        document.getElementById('apiKeyInput').value = '';
+      }
+
+      setConnectionStatus('verifying');
+      testBtn.disabled = true;
+      resultNode.style.color = 'var(--petrol)';
+      resultNode.textContent = 'جارٍ التحقق من الاتصال الفعلي بـ Gemini API...';
+
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), 15000);
+
+      try {
+        const response = await fetch(GEMINI_CONFIG.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': keyToTest
+          },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: 'أجب بكلمة: متصل' }] }],
+            generationConfig: { maxOutputTokens: 10 }
+          }),
+          signal: controller.signal
+        });
+
+        clearTimeout(timer);
+
+        if (response.ok) {
+          setConnectionStatus('connected');
+          resultNode.style.color = 'var(--dark-green)';
+          resultNode.textContent = '✓ الاتصال ناجح! المفتاح صالح وجاهز لتشغيل جميع الأدوات.';
+        } else {
+          const mapped = mapHttpErrorToArabic(response.status);
+          setConnectionStatus(mapped.status);
+          resultNode.style.color = 'var(--danger)';
+          resultNode.textContent = mapped.message;
+        }
+      } catch (err) {
+        clearTimeout(timer);
+        setConnectionStatus('network-error');
+        resultNode.style.color = 'var(--danger)';
+        resultNode.textContent = err.name === 'AbortError'
+          ? 'انتهت مهلة الاتصال بالخدمة. يرجى التحقق من جودة الإنترنت والمحاولة مجدداً.'
+          : 'تعذر الاتصال بخدمة Gemini API. تأكد من اتصالك بالإنترنت.';
+      } finally {
+        testBtn.disabled = false;
+      }
+    }
+
+    function mapHttpErrorToArabic(statusCode) {
+      if (statusCode === 400 || statusCode === 401 || statusCode === 403) {
+        return {
+          status: 'invalid',
+          message: 'المفتاح غير صالح أو غير مخول لإجراء هذا الطلب. تأكد من نسخ المفتاح الصحيح من Google AI Studio.'
+        };
+      }
+      if (statusCode === 429) {
+        return {
+          status: 'quota',
+          message: 'تم تجاوز حدود الاستخدام المسموحة لمفتاحك (Rate Limit / Quota). انتظر قليلاً أو راجع حصة حسابك في Google AI.'
+        };
+      }
+      if (statusCode === 404) {
+        return {
+          status: 'network-error',
+          message: 'النموذج المطلوب غير متوفر حالياً لهذا المفتاح.'
+        };
+      }
+      return {
+        status: 'network-error',
+        message: `تعذر إتمام الطلب (رمز الحالة: ${statusCode}). يرجى المحاولة لاحقاً.`
+      };
+    }
+
+    /**************************************************************
+     * 4. دالة الاتصال الموحدة بـ Gemini API (بدون تسريب المفتاح في URL)
+     **************************************************************/
+    async function callGeminiAPI({ systemInstruction, contents, generationConfig = {} }) {
+      const apiKey = getActiveApiKey();
+      if (!apiKey) {
+        openApiKeyModal();
+        throw new Error('لم تتم إضافة مفتاح Gemini API. يرجى إدخال مفتاحك أولاً لتشغيل الأداة.');
+      }
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), GEMINI_CONFIG.timeoutMs);
+
+      const payload = {
+        contents: contents,
+        generationConfig: {
+          temperature: 0.35,
+          ...generationConfig
+        }
+      };
+
+      if (systemInstruction) {
+        payload.systemInstruction = {
+          parts: [{ text: systemInstruction }]
+        };
+      }
+
+      try {
+        const response = await fetch(GEMINI_CONFIG.endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-goog-api-key': apiKey
+          },
+          body: JSON.stringify(payload),
+          signal: controller.signal
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!response.ok) {
+          const mapped = mapHttpErrorToArabic(response.status);
+          setConnectionStatus(mapped.status);
+          throw new Error(mapped.message);
+        }
+
+        const data = await response.json();
+
+        if (!data || !Array.isArray(data.candidates) || data.candidates.length === 0) {
+          throw new Error('تلقى المتصفح استجابة فارغة من النموذج. حاول تعديل النص المدخل وإعادة المحاولة.');
+        }
+
+        const candidate = data.candidates[0];
+        if (candidate.finishReason === 'SAFETY' || candidate.finishReason === 'BLOCKLIST') {
+          throw new Error('تم إيقاف الاستجابة بواسطة سياسات الأمان الخاصة بالنموذج. يرجى صياغة المدخلات بأسلوب أكاديمي واضح.');
+        }
+
+        const parts = candidate.content && candidate.content.parts;
+        if (!parts || !parts[0] || typeof parts[0].text !== 'string' || !parts[0].text.trim()) {
+          throw new Error('استجابة غير مكتملة من النموذج. يرجى الضغط على زر إعادة المحاولة.');
+        }
+
+        // تحديث حالة الاتصال إلى متصل فعلياً بعد نجاح الطلب
+        setConnectionStatus('connected');
+        return parts[0].text;
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('انتهت مهلة الطلب بسبب طول المحتوى أو بطء الإنترنت. حاول تقسيم النص إلى أجزاء أصغر ثم أعد المحاولة.');
+        }
+        if (err.message && err.message.includes('Failed to fetch')) {
+          setConnectionStatus('network-error');
+          throw new Error('انقطاع في الاتصال بالإنترنت أو تعذر الوصول إلى خوادم Google Gemini.');
+        }
+        throw err;
+      }
+    }
+
+    /**************************************************************
+     * 5. تعقيم المخرجات ومعالجة الملفات محلياً (PDF وصور)
+     **************************************************************/
+    function renderSafeMarkdown(markdownText) {
+      const rawHtml = typeof marked !== 'undefined' ? marked.parse(markdownText) : markdownText;
+      return DOMPurify.sanitize(rawHtml, {
+        USE_PROFILES: { html: true },
+        FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'style', 'link', 'meta'],
+        FORBID_ATTR: ['onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'style']
+      });
+    }
+
+    async function extractFileLocally(fileInputId) {
+      const input = document.getElementById(fileInputId);
+      if (!input || !input.files || input.files.length === 0) return null;
+
+      const file = input.files[0];
+      if (file.size === 0) {
+        throw new Error('الملف المختار فارغ (0 بايت). يرجى اختيار ملف صالح.');
+      }
+      if (file.size > GEMINI_CONFIG.maxFileSizeBytes) {
+        throw new Error('حجم الملف كبير جداً. الحد الأقصى المسموح للمعالجة في المتصفح هو 12 ميجابايت.');
+      }
+
+      // معالجة ملفات PDF محلياً عبر PDF.js
+      if (file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf')) {
+        if (!window.pdfjsLib) {
+          throw new Error('مكتبة قراءة ملفات PDF غير محملة حالياً. تحقق من اتصال الإنترنت أو ألصق النص يدوياً.');
+        }
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+          const totalPages = pdf.numPages;
+          const pagesToRead = Math.min(totalPages, GEMINI_CONFIG.maxPdfPages);
+          let extractedText = '';
+          let nonWhitespaceCount = 0;
+
+          for (let pageNum = 1; pageNum <= pagesToRead; pageNum++) {
+            const page = await pdf.getPage(pageNum);
+            const textContent = await page.getTextContent();
+            const pageStr = textContent.items.map(item => item.str).join(' ').trim();
+            if (pageStr.length > 0) {
+              nonWhitespaceCount += pageStr.length;
+              extractedText += `\n=== [صفحة ${pageNum} من ${totalPages}] ===\n${pageStr}\n`;
+            }
+          }
+
+          if (nonWhitespaceCount < 20) {
+            throw new Error('تعذر استخراج نص قابل للقراءة من ملف PDF لأن الملف يبدو ممسوحاً ضوئياً كصور (Scanned PDF) ولا يحتوي على طبقة نصية. يرجى نسخ النص أو استخدام ملف نصي.');
+          }
+
+          return {
+            type: 'pdf-text',
+            content: extractedText,
+            totalPages: totalPages,
+            processedPages: pagesToRead
+          };
+        } catch (pdfErr) {
+          if (pdfErr.message.includes('Scanned PDF')) throw pdfErr;
+          throw new Error('تعذر قراءة ملف PDF محلياً (قد يكون الملف محمياً بكلمة مرور أو تالفاً).');
+        }
+      }
+
+      // معالجة الصور
+      const allowedImageTypes = ['image/png', 'image/jpeg', 'image/webp'];
+      if (allowedImageTypes.includes(file.type)) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => {
+            const parts = String(reader.result).split(',');
+            if (parts.length < 2 || !parts[1]) {
+              reject(new Error('تعذر قراءة بيانات الصورة.'));
+              return;
+            }
+            resolve({
+              type: 'image',
+              base64: parts[1],
+              mimeType: file.type,
+              name: file.name
+            });
+          };
+          reader.onerror = () => reject(new Error('حدث خطأ أثناء قراءة ملف الصورة من جهازك.'));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      // معالجة الملفات النصية العادية
+      if (file.type === 'text/plain' || file.name.toLowerCase().endsWith('.txt')) {
+        const text = await file.text();
+        if (!text.trim()) throw new Error('الملف النصي فارغ.');
+        return { type: 'text', content: text };
+      }
+
+      throw new Error('نوع الملف غير مدعوم. الأنواع المدعومة هي: PDF نصي، صور (PNG, JPG, WEBP)، أو ملف نصي (TXT).');
+    }
+
+    /**************************************************************
+     * 6. عرض شبكة الأدوات والبحث ثنائي اللغة
+     **************************************************************/
+    function renderTools(list) {
+      const container = document.getElementById('toolsContainer');
+      container.innerHTML = '';
+
+      if (list.length === 0) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.style.cssText = 'text-align:center; padding: 48px 20px; color: var(--muted-text); font-weight: 600;';
+        emptyDiv.textContent = 'لا توجد أدوات مطابقة لعبارة البحث. جرب البحث بكلمات مثل: ECG، Flashcards، تشريح، PDF.';
+        container.appendChild(emptyDiv);
+        return;
+      }
+
+      const section = document.createElement('div');
+      section.className = 'category-section';
+
+      const title = document.createElement('div');
+      title.className = 'category-title';
+      title.innerHTML = '<i class="fa-solid fa-Layer-group"></i><span>الأدوات التعليمية الذكية المتاحة</span>';
+      section.appendChild(title);
+
+      const grid = document.createElement('div');
+      grid.className = 'tools-grid';
+
+      list.forEach(tool => {
+        const card = document.createElement('div');
+        card.className = 'tool-card';
+        card.setAttribute('tabindex', '0');
+        card.setAttribute('role', 'button');
+        card.setAttribute('aria-label', `فتح أداة ${tool.name}`);
+        card.onclick = () => openToolWorkspace(tool.id);
+        card.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            openToolWorkspace(tool.id);
+          }
+        };
+
+        card.innerHTML = `
+          <div>
+            <div class="tool-header">
+              <div class="tool-icon"><i class="fa-solid ${tool.icon}"></i></div>
+              <span class="tool-badge">${tool.badge}</span>
+            </div>
+            <h3 class="tool-name"></h3>
+            <p class="tool-desc"></p>
+          </div>
+          <div class="tool-footer">
+            <span>فتح مساحة العمل</span>
+            <i class="fa-solid fa-arrow-left"></i>
+          </div>
+        `;
+        card.querySelector('.tool-name').textContent = tool.name;
+        card.querySelector('.tool-desc').textContent = tool.desc;
+        grid.appendChild(card);
+      });
+
+      section.appendChild(grid);
+      container.appendChild(section);
+    }
+
+    function setCategory(cat, btnElement) {
+      APP_STATE.currentCategory = cat;
+      document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+      btnElement.classList.add('active');
+      filterTools();
+    }
+
+    function filterTools() {
+      const q = document.getElementById('searchInput').value.trim().toLowerCase();
+      const filtered = TOOLS_DATA.filter(tool => {
+        const catMatch = APP_STATE.currentCategory === 'all' || tool.category === APP_STATE.currentCategory;
+        const textMatch = !q ||
+          tool.name.toLowerCase().includes(q) ||
+          tool.desc.toLowerCase().includes(q) ||
+          tool.keywords.toLowerCase().includes(q);
+        return catMatch && textMatch;
+      });
+      renderTools(filtered);
+    }
+
+    /**************************************************************
+     * 7. بناء واجهات الأدوات الثماني ونظام التشغيل الموحد
+     **************************************************************/
+    function openToolWorkspace(toolId) {
+      const tool = TOOLS_DATA.find(t => t.id === toolId);
+      if (!tool) return;
+
+      APP_STATE.activeToolId = toolId;
+      APP_STATE.lastRetryCallback = null;
+
+      document.getElementById('modalToolTitle').textContent = tool.name;
+      document.getElementById('modalToolSubtitle').textContent = tool.desc;
+
+      const body = document.getElementById('workspaceBodyContent');
+      body.innerHTML = buildToolFormHTML(toolId);
+
+      document.getElementById('workspaceModal').style.display = 'flex';
+      updateBodyScrollLock();
+    }
+
+    function closeWorkspace() {
+      if (APP_STATE.isRequestInFlight) return;
+      document.getElementById('workspaceModal').style.display = 'none';
+      APP_STATE.activeToolId = null;
+      updateBodyScrollLock();
+    }
+
+    function buildPrivacyFooterHTML() {
+      return `
+        <div class="privacy-note">
+          <i class="fa-solid fa-lock" style="color: var(--petrol);"></i>
+          <span>عند الضغط على زر التشغيل، تُرسل المدخلات مباشرة من متصفحك إلى خدمة Google Gemini API باستخدام مفتاحك الشخصي، وتخضع لشروط خدمة Google. لا يُحفظ أي محتوى على خوادم MEDNERD.</span>
+        </div>
+        <div id="toolOutputContainer" aria-live="polite"></div>
+      `;
+    }
+
+    function buildToolFormHTML(toolId) {
+      switch (toolId) {
+        case 'medrecall':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="recallInput">نص المحاضرة أو الملاحظات العلمية:</label>
+              <textarea id="recallInput" class="form-textarea" rows="6" placeholder="ألصق فقرات المحاضرة هنا لتحويلها إلى أسئلة وبطاقات استذكار..."></textarea>
+            </div>
+            <div class="form-row">
+              <div>
+                <label class="form-label" for="recallType">نوع المخرجات:</label>
+                <select id="recallType" class="form-select">
+                  <option value="MCQs">أسئلة اختيار من متعدد (MCQs)</option>
+                  <option value="Short Questions">أسئلة مقالية قصيرة (Short Answer)</option>
+                  <option value="Flashcards">بطاقات استذكار (Flashcards: سؤال/جواب)</option>
+                  <option value="Mixed">مزيج متكامل (MCQs + Flashcards)</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" for="recallDifficulty">مستوى الصعوبة:</label>
+                <select id="recallDifficulty" class="form-select">
+                  <option value="متوسط أكاديمي">متوسط أكاديمي</option>
+                  <option value="أساسي مباشر">أساسي مباشر</option>
+                  <option value="متقدم وسريري (Clinical Vignettes)">متقدم وسريري (Clinical Vignettes)</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label" for="recallCount">العدد المطلوب (3 - 15):</label>
+                <input type="number" id="recallCount" class="form-input" value="5" min="3" max="15">
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="recallStrictSource" checked>
+                <span>الالتزام الصارم بمعلومات النص المدخل فقط (وعند إيقافه، يُسمح بإضافة ملاحظات توضيحية خارجية مع تمييزها بوضوح).</span>
+              </label>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeMedRecall()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> إنشاء الأسئلة والبطاقات
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'feynman':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="feynmanTopic">المفهوم الطبي أو العلمي المراد شرحه:</label>
+              <input type="text" id="feynmanTopic" class="form-input" placeholder="مثال: Starling's Law of the Heart أو Renin-Angiotensin System...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="feynmanContext">سياق إضافي أو نقاط تود التركيز عليها (اختياري):</label>
+              <textarea id="feynmanContext" class="form-textarea" rows="3" placeholder="مثال: ركز على علاقته بارتفاع الضغط الدوائي..."></textarea>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeFeynmanMed()">
+                <i class="fa-solid fa-layer-group"></i> توليد الشرح بالمستويات الثلاثة
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'medwhy':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="whyQuery">أدخل الظاهرة السريرية أو الآلية الفيزيولوجية:</label>
+              <input type="text" id="whyQuery" class="form-input" placeholder="مثال: لماذا يحدث الحماض الكيتوني السكري (DKA) عند نقص الإنسولين؟">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="whyDepth">مستوى التفصيل البيوكيميائي والفيزيولوجي:</label>
+              <select id="whyDepth" class="form-select">
+                <option value="متوازن وشامل لطلاب الطب">متوازن وشامل لطلاب الطب</option>
+                <option value="عميق جداً (يشمل المسارات الجزيئية والمستقبلات)">عميق جداً (المسارات الجزيئية والمستقبلات)</option>
+              </select>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeMedWhyChain()">
+                <i class="fa-solid fa-link"></i> بناء السلسلة السببية
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'mnemonic':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="mnemonicInput">القائمة أو المعلومات المراد حفظها:</label>
+              <textarea id="mnemonicInput" class="form-textarea" rows="5" placeholder="مثال: أفرع العصب الوجهي، أو أسباب التهاب البنكرياس الحاد، أو مجموعة دوائية..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="mnemonicStyle">أسلوب التذكر المفضل:</label>
+              <select id="mnemonicStyle" class="form-select">
+                <option value="اختصارات إنجليزية وعربية + قصة ربط ذهني">شامل (اختصارات إنجليزية وعربية + قصة ربط ذهني)</option>
+                <option value="اختصارات حروف أولى إنجليزية (English Acronyms)">اختصارات حروف أولى إنجليزية (Acronyms)</option>
+                <option value="جمل وقصص عربية سهلة التخيل">جمل وقصص عربية سهلة التخيل</option>
+              </select>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeMedMnemonic()">
+                <i class="fa-solid fa-lightbulb"></i> ابتكار وسائل التذكر
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'patient':
+          return `
+            <div class="form-row">
+              <div>
+                <label class="form-label" for="patientComplaint">الشكوى الرئيسية أو الجهاز الطبي:</label>
+                <input type="text" id="patientComplaint" class="form-input" placeholder="مثال: ألم بطني حاد في الربع السفلي الأيمن، أو ضيق نفس مفاجئ...">
+              </div>
+              <div>
+                <label class="form-label" for="patientLevel">مستوى صعوبة الحالة:</label>
+                <select id="patientLevel" class="form-select">
+                  <option value="كلاسيكي واضح للتدريب الأساسي">كلاسيكي واضح للتدريب الأساسي</option>
+                  <option value="متوسط يتطلب تفريقاً تشخيصياً دقيقاً">متوسط يتطلب تفريقاً تشخيصياً</option>
+                  <option value="متقدم مع أعراض غير نمطية">متقدم مع أعراض غير نمطية</option>
+                </select>
+              </div>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="startMedPatientCase()">
+                <i class="fa-solid fa-stethoscope"></i> بدء مقابلة المريض الافتراضي
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-rotate-right"></i> إعادة ضبط الجلسة
+              </button>
+            </div>
+            <div class="warning-alert" style="margin-top: 12px;">
+              <i class="fa-solid fa-user-shield"></i>
+              <span>تنبيه: هذه المحاكاة مخصصة للتدريب الطلابي على أخذ القصة المرضية فقط، ولا تمثل استشارة طبية أو تشخيصاً سريرياً حقيقياً.</span>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'ecg':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="ecgDesc">وصف تخطيط القلب أو السياق السريري للمريض:</label>
+              <textarea id="ecgDesc" class="form-textarea" rows="4" placeholder="أدخل معطيات التخطيط (مثال: السرعة، شكل موجات P، عرض QRS، تغيرات ST-T) أو عمر وأعراض المريض..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="ecgImageInput">إرفاق صورة تخطيط القلب (اختياري - PNG, JPG, WEBP):</label>
+              <input type="file" id="ecgImageInput" class="form-input" accept="image/png,image/jpeg,image/webp">
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeMedECGArena()">
+                <i class="fa-solid fa-heart-pulse"></i> تحليل التخطيط بمنهجية منظمة
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'pageintel':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="pagePdfInput">رفع ملف محاضرة (PDF نصي أو TXT) — يُستخرج النص محلياً في متصفحك:</label>
+              <input type="file" id="pagePdfInput" class="form-input" accept=".pdf,.txt,application/pdf,text/plain">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="pageRawText">أو ألصق نص المحاضرة مباشرة هنا:</label>
+              <textarea id="pageRawText" class="form-textarea" rows="5" placeholder="يمكنك لصق النص هنا أو الجمع بين الملف والنص..."></textarea>
+            </div>
+            <div class="form-group">
+              <label class="checkbox-label">
+                <input type="checkbox" id="pageStrictMode" checked>
+                <span>تفعيل وضع الالتزام الصارم بالمصدر (عدم إضافة أي معلومات غير واردة في المحاضرة).</span>
+              </label>
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executePageIntelligence()">
+                <i class="fa-solid fa-microchip"></i> تحليل المحاضرة واستخراج النقاط
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        case 'anatomy':
+          return `
+            <div class="form-group">
+              <label class="form-label" for="anatomyQuery">اسم التركيب التشريحي أو السؤال التشريحي:</label>
+              <input type="text" id="anatomyQuery" class="form-input" placeholder="مثال: Cavernous Sinus، أو Brachial Plexus، أو حدود القناة الأربية...">
+            </div>
+            <div class="form-group">
+              <label class="form-label" for="anatomyImageInput">إرفاق صورة تشريحية مساعدة للتحليل (اختياري - PNG, JPG, WEBP):</label>
+              <input type="file" id="anatomyImageInput" class="form-input" accept="image/png,image/jpeg,image/webp">
+            </div>
+            <div class="toolbar-actions">
+              <button class="btn-primary" id="primaryActionBtn" onclick="executeAnatomyVision()">
+                <i class="fa-solid fa-bone"></i> شرح التركيب والعلاقات التشريحية
+              </button>
+              <button class="btn-secondary" onclick="resetCurrentTool()">
+                <i class="fa-solid fa-eraser"></i> مسح المدخلات والنتائج
+              </button>
+            </div>
+            ${buildPrivacyFooterHTML()}
+          `;
+
+        default:
+          return '';
+      }
+    }
+
+    function resetCurrentTool() {
+      if (APP_STATE.isRequestInFlight) return;
+      if (APP_STATE.activeToolId) {
+        openToolWorkspace(APP_STATE.activeToolId);
+      }
+    }
+
+    /**************************************************************
+     * 8. دوال العرض الموحدة للنتائج والأخطاء والنسخ
+     **************************************************************/
+    function setToolLoadingState(isLoading, loadingText = 'جارٍ التحليل والمعالجة...') {
+      APP_STATE.isRequestInFlight = isLoading;
+      const btn = document.getElementById('primaryActionBtn');
+      if (!btn) return;
+
+      if (isLoading) {
+        btn.disabled = true;
+        btn.dataset.originalHtml = btn.innerHTML;
+        btn.innerHTML = `<span class="loading-spinner"></span><span>${loadingText}</span>`;
+      } else {
+        btn.disabled = false;
+        if (btn.dataset.originalHtml) {
+          btn.innerHTML = btn.dataset.originalHtml;
+        }
+      }
+    }
+
+    function renderToolOutput(markdownText, noticeBannerText = '') {
+      const container = document.getElementById('toolOutputContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      if (noticeBannerText) {
+        const notice = document.createElement('div');
+        notice.className = 'warning-alert';
+        notice.textContent = noticeBannerText;
+        container.appendChild(notice);
+      }
+
+      const box = document.createElement('div');
+      box.className = 'ai-output-box';
+
+      const contentDiv = document.createElement('div');
+      contentDiv.id = 'sanitizedResultContent';
+      contentDiv.innerHTML = renderSafeMarkdown(markdownText);
+      box.appendChild(contentDiv);
+
+      const actionsDiv = document.createElement('div');
+      actionsDiv.className = 'output-actions';
+
+      const copyBtn = document.createElement('button');
+      copyBtn.className = 'btn-secondary';
+      copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> <span>نسخ النتيجة</span>';
+      copyBtn.onclick = () => {
+        navigator.clipboard.writeText(contentDiv.innerText).then(() => {
+          copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> <span>تم النسخ بنجاح!</span>';
+          setTimeout(() => {
+            copyBtn.innerHTML = '<i class="fa-solid fa-copy"></i> <span>نسخ النتيجة</span>';
+          }, 2000);
+        });
+      };
+
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'btn-secondary';
+      clearBtn.style.borderColor = 'var(--danger)';
+      clearBtn.style.color = 'var(--danger)';
+      clearBtn.innerHTML = '<i class="fa-solid fa-trash"></i> <span>مسح النتيجة</span>';
+      clearBtn.onclick = () => {
+        container.innerHTML = '';
+      };
+
+      actionsDiv.appendChild(copyBtn);
+      actionsDiv.appendChild(clearBtn);
+      box.appendChild(actionsDiv);
+      container.appendChild(box);
+    }
+
+    function renderToolError(errorMessage, retryFn = null) {
+      const container = document.getElementById('toolOutputContainer');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const alertBox = document.createElement('div');
+      alertBox.className = 'error-alert';
+
+      const msgRow = document.createElement('div');
+      msgRow.style.display = 'flex';
+      msgRow.style.alignItems = 'center';
+      msgRow.style.gap = '10px';
+
+      const icon = document.createElement('i');
+      icon.className = 'fa-solid fa-circle-exclamation';
+      const textSpan = document.createElement('span');
+      textSpan.textContent = errorMessage; // آمن ضد XSS
+
+      msgRow.appendChild(icon);
+      msgRow.appendChild(textSpan);
+      alertBox.appendChild(msgRow);
+
+      if (retryFn) {
+        APP_STATE.lastRetryCallback = retryFn;
+        const retryBtn = document.createElement('button');
+        retryBtn.className = 'btn-secondary';
+        retryBtn.style.alignSelf = 'flex-start';
+        retryBtn.innerHTML = '<i class="fa-solid fa-rotate-right"></i> إعادة المحاولة';
+        retryBtn.onclick = () => {
+          if (APP_STATE.lastRetryCallback) APP_STATE.lastRetryCallback();
+        };
+        alertBox.appendChild(retryBtn);
+      }
+
+      container.appendChild(alertBox);
+    }
+
+    /**************************************************************
+     * 9. المنطق الفعلي للأدوات الثماني (Prompts احترافية + معالجة حقيقية)
+     **************************************************************/
+
+    // 1. MedRecall
+    async function executeMedRecall() {
+      if (APP_STATE.isRequestInFlight) return;
+      const text = document.getElementById('recallInput').value.trim();
+      const type = document.getElementById('recallType').value;
+      const difficulty = document.getElementById('recallDifficulty').value;
+      const count = Math.min(Math.max(parseInt(document.getElementById('recallCount').value, 10) || 5, 3), 15);
+      const strictSource = document.getElementById('recallStrictSource').checked;
+
+      if (!text) {
+        renderToolError('يرجى إدخال نص المحاضرة أو الملاحظات العلمية أولاً.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ صياغة الأسئلة والبطاقات من النص...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت أستاذ طب خبير في القياس والتقويم الطبي. مهمتك تحويل محتوى المحاضرة المقدم من الطالب إلى أسئلة وبطاقات استذكار دقيقة.
+القواعد الإلزامية:
+1. نوع المخرجات المطلوب: (${type})، العدد: (${count})، مستوى الصعوبة: (${difficulty}).
+2. حافظ على جميع المصطلحات الطبية والعلمية باللغة الإنجليزية بجانب السياق العربي.
+3. أظهر الإجابة الصحيحة والتفسير العلمي لكل سؤال.
+4. ${strictSource
+  ? 'التزم حصرياً بالمعلومات الموجودة في نص المستخدم ولا تختلق أو تضف أي معلومة من خارج النص.'
+  : 'اعتمد أساساً على نص المستخدم، وإذا أضفت أي معلومة إثرائية من خارج النص لتوضيح الإجابة فيجب وضعها تحت تنبيه صريح بعنوان: [معلومة إضافية خارج نص المحاضرة].'}`;
+
+      try {
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts: [{ text: `نص المحاضرة:\n\n${text}` }] }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeMedRecall);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 2. FeynmanMed
+    async function executeFeynmanMed() {
+      if (APP_STATE.isRequestInFlight) return;
+      const topic = document.getElementById('feynmanTopic').value.trim();
+      const context = document.getElementById('feynmanContext').value.trim();
+
+      if (!topic) {
+        renderToolError('يرجى إدخال المفهوم الطبي أو العلمي المراد شرحه.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ إعداد الشرح بالمستويات الثلاثة...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت معلم طبي خبير بتقنية فاينمان (Feynman Technique). اشرح المفهوم المطلوب بثلاثة مستويات منفصلة وواضحة:
+- المستوى الأول (شرح مبسط جداً): شرح واضح لغير المختصين مع مثال تقاسمي أو تشبيه تدريسي، مع التنبيه صراحة أن التشبيه تقريبي لتسهيل الفهم.
+- المستوى الثاني (شرح أكاديمي لطلاب العلوم الطبية): التعريف الدقيق، المكونات الأساسية، والأهمية السريرية مع الحفاظ على المصطلحات الإنجليزية.
+- المستوى الثالث (شرح متقدم بالآليات الفيزيولوجية والجزيئية): تفصيل الآليات الفيزيولوجية أو المرضية خطوة بخطوة.
+افصل بوضوح تام بين الحقائق العلمية المؤكدة وبين الاستنتاجات أو التشبيهات التفسيرية.`;
+
+      const userPrompt = context
+        ? `المفهوم المطلوب: ${topic}\nسياق إضافي للتركيز عليه: ${context}`
+        : `المفهوم المطلوب: ${topic}`;
+
+      try {
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts: [{ text: userPrompt }] }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeFeynmanMed);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 3. MedWhy Chain
+    async function executeMedWhyChain() {
+      if (APP_STATE.isRequestInFlight) return;
+      const query = document.getElementById('whyQuery').value.trim();
+      const depth = document.getElementById('whyDepth').value;
+
+      if (!query) {
+        renderToolError('يرجى إدخال الظاهرة أو الآلية الفيزيولوجية المراد تفكيكها.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ بناء السلسلة السببية الفيزيولوجية...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت خبير في الفيزيولوجيا المرضية (Pathophysiology). مهمتك بناء سلسلة سببية منظمة (MedWhy Chain) تشرح لماذا وكيف تحدث الظاهرة التي يسأل عنها الطالب.
+القواعد:
+1. مستوى العمق: ${depth}.
+2. انتقل خطوة بخطوة (الخطوة 1 ⬅ الخطوة 2 ⬅ الخطوة 3...) من المسبب الأولي إلى النتيجة السريرية، مع توضيح الروابط الفيزيولوجية والكيميائية الحيوية.
+3. تجنب السلاسل الطويلة المفتعلة أو الأسباب غير المثبتة علمياً؛ إذا كان هناك جزء غير محسوم علمياً فاذكر ذلك بوضوح.
+4. اختتم بـ "خلاصة تكاملية" تربط السلسلة كاملة مع المصطلحات الإنجليزية الأساسية.`;
+
+      try {
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts: [{ text: query }] }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeMedWhyChain);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 4. MedMnemonic
+    async function executeMedMnemonic() {
+      if (APP_STATE.isRequestInFlight) return;
+      const listText = document.getElementById('mnemonicInput').value.trim();
+      const style = document.getElementById('mnemonicStyle').value;
+
+      if (!listText) {
+        renderToolError('يرجى إدخال القائمة أو المعلومات المراد حفظها.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ ابتكار وسائل التذكر والروابط الذهنية...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت خبير في تقنيات الذاكرة الطبية (Medical Mnemonics).
+المطلوب:
+1. إنشاء وسائل تذكر مناسبة بأسلوب: (${style}).
+2. الحفاظ على الدقة العلمية التامة وعدم تحريف معنى أي مصطلح طبي لتطويعه في الاختصار.
+3. عرض جدول واضح يضع كل حرف أو عنصر في وسيلة التذكر مقابل المعلومة العلمية الأصلية الكاملة باللغتين العربية والإنجليزية لمنع أي التباس.`;
+
+      try {
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts: [{ text: listText }] }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeMedMnemonic);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 5. MedPatient (محاكاة سريرية متعددة الأدوار عبر الدالة الموحدة)
+    const PATIENT_SYSTEM_PROMPT = `أنت مريض افتراضي في محاكاة تعليمية لطلاب الطب للتدرب على أخذ القصة المرضية (History Taking).
+قواعد التقمص السريري:
+1. تحدث بلسان المريض فقط وبأسلوب واقعي، ولا تكشف جميع معلومات الحالة دفعة واحدة؛ اكشف فقط ما يسأل عنه الطالب بشكل مناسب.
+2. لا تذكر اسم التشخيص الطبي النهائي أثناء الحوار.
+3. عندما يطلب منك النظام تقديم [تقييم الأداء السريري النهائي]، اخرج من دور المريض وقدم تقريراً أكاديمياً منظماً يشمل:
+   - التشخيص التفريقي والمرجح للحالة التعليمية.
+   - النقاط الإيجابية التي سأل عنها الطالب في القصة المرضية.
+   - النقاط والعلامات المنذرة (Red Flags) التي أغفلها الطالب.
+   - نصائح عملية لتحسين مهارة التواصل السريري.`;
+
+    async function startMedPatientCase() {
+      if (APP_STATE.isRequestInFlight) return;
+      const complaint = document.getElementById('patientComplaint').value.trim() || 'ألم صدري حاد بدأ منذ ساعتين لدى مريض عمره 54 عاماً';
+      const level = document.getElementById('patientLevel').value;
+
+      setToolLoadingState(true, 'جارٍ تهيئة سيناريو المريض الافتراضي...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      APP_STATE.patientCaseContext = `الشكوى/الموضوع: ${complaint} | مستوى الصعوبة: ${level}`;
+      APP_STATE.patientHistory = [
+        {
+          role: 'user',
+          parts: [{
+            text: `ابدأ سيناريو مريض افتراضي جديد وفق المعطيات التالية: (${APP_STATE.patientCaseContext}). قدم نفسك كالمريض باختصار (العمر والشكوى الرئيسية التي جلبتك للعيادة أو الطوارئ في جملتين فقط) وانتظر أسئلة الطالب.`
+          }]
+        }
+      ];
+
+      try {
+        const firstReply = await callGeminiAPI({
+          systemInstruction: PATIENT_SYSTEM_PROMPT,
+          contents: APP_STATE.patientHistory
+        });
+
+        APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: firstReply }] });
+        renderPatientChatInterface(firstReply);
+      } catch (err) {
+        renderToolError(err.message, startMedPatientCase);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    function renderPatientChatInterface(initialReply) {
+      const container = document.getElementById('toolOutputContainer');
+      container.innerHTML = `
+        <div class="ai-output-box">
+          <h3 style="margin-bottom: 12px;"><i class="fa-solid fa-hospital-user"></i> غرفة المقابلة السريرية الافتراضية</h3>
+          <div id="patientChatLog" class="chat-container"></div>
+          <div class="form-group" style="margin-bottom: 12px;">
+            <label class="form-label" for="patientQuestionInput">وجه سؤالك التالي للمريض:</label>
+            <input type="text" id="patientQuestionInput" class="form-input" placeholder="مثال: متى بدأ الألم بالضبط؟ هل ينتشر إلى مكان آخر؟ هل تعاني من أمراض مزمنة؟">
+          </div>
+          <div class="toolbar-actions">
+            <button class="btn-primary" id="sendPatientQBtn" onclick="sendQuestionToPatient()">
+              <i class="fa-solid fa-paper-plane"></i> إرسال السؤال للمريض
+            </button>
+            <button class="btn-secondary" id="evaluatePatientBtn" style="border-color: var(--dark-green); color: var(--dark-green);" onclick="finishAndEvaluatePatientCase()">
+              <i class="fa-solid fa-clipboard-check"></i> إنهاء المقابلة وتقييم أدائي السريري
+            </button>
+          </div>
+          <div id="patientEvaluationBox"></div>
+        </div>
+      `;
+
+      appendChatBubble('patient', initialReply);
+
+      const qInput = document.getElementById('patientQuestionInput');
+      qInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          sendQuestionToPatient();
+        }
+      });
+    }
+
+    function appendChatBubble(sender, text) {
+      const chatLog = document.getElementById('patientChatLog');
+      if (!chatLog) return;
+
+      const bubble = document.createElement('div');
+      bubble.className = `chat-bubble ${sender === 'user' ? 'user' : 'patient'}`;
+
+      const label = document.createElement('div');
+      label.style.fontWeight = '800';
+      label.style.marginBottom = '4px';
+      label.style.fontSize = '12.5px';
+      label.textContent = sender === 'user' ? 'الطالب (أنت):' : 'المريض الافتراضي:';
+
+      const body = document.createElement('div');
+      if (sender === 'user') {
+        body.textContent = text; // حماية كاملة ضد XSS باستخدام textContent
+      } else {
+        body.innerHTML = renderSafeMarkdown(text);
+      }
+
+      bubble.appendChild(label);
+      bubble.appendChild(body);
+      chatLog.appendChild(bubble);
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
+    async function sendQuestionToPatient() {
+      if (APP_STATE.isRequestInFlight) return;
+      const qInput = document.getElementById('patientQuestionInput');
+      const sendBtn = document.getElementById('sendPatientQBtn');
+      const evalBtn = document.getElementById('evaluatePatientBtn');
+      if (!qInput) return;
+
+      const question = qInput.value.trim();
+      if (!question) return;
+
+      qInput.value = '';
+      appendChatBubble('user', question);
+      APP_STATE.patientHistory.push({ role: 'user', parts: [{ text: question }] });
+
+      APP_STATE.isRequestInFlight = true;
+      sendBtn.disabled = true;
+      evalBtn.disabled = true;
+      sendBtn.innerHTML = '<span class="loading-spinner"></span> <span>المريض يجيب...</span>';
+
+      try {
+        const reply = await callGeminiAPI({
+          systemInstruction: PATIENT_SYSTEM_PROMPT,
+          contents: APP_STATE.patientHistory
+        });
+        APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: reply }] });
+        appendChatBubble('patient', reply);
+      } catch (err) {
+        // التراجع عن الرسالة الأخيرة في السجل عند فشل الشبكة حتى يتمكن الطالب من إعادة إرسالها
+        APP_STATE.patientHistory.pop();
+        const evalBox = document.getElementById('patientEvaluationBox');
+        if (evalBox) {
+          evalBox.innerHTML = '';
+          const errDiv = document.createElement('div');
+          errDiv.className = 'error-alert';
+          errDiv.textContent = `تعذر إرسال السؤال: ${err.message}`;
+          evalBox.appendChild(errDiv);
+        }
+      } finally {
+        APP_STATE.isRequestInFlight = false;
+        sendBtn.disabled = false;
+        evalBtn.disabled = false;
+        sendBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> إرسال السؤال للمريض';
+      }
+    }
+
+    async function finishAndEvaluatePatientCase() {
+      if (APP_STATE.isRequestInFlight) return;
+      const sendBtn = document.getElementById('sendPatientQBtn');
+      const evalBtn = document.getElementById('evaluatePatientBtn');
+      const evalBox = document.getElementById('patientEvaluationBox');
+
+      APP_STATE.isRequestInFlight = true;
+      sendBtn.disabled = true;
+      evalBtn.disabled = true;
+      evalBtn.innerHTML = '<span class="loading-spinner" style="border-top-color: var(--dark-green);"></span> <span>جارٍ إعداد التقييم السريري...</span>';
+
+      const evaluationPrompt = `[تقييم الأداء السريري النهائي]: انتهت المقابلة الآن. بناءً على جميع الأسئلة التي طرحها الطالب أعلاه، قدم تقييماً تعليمياً مفصلاً ومنظماً يشمل:
+1. ملخص الحالة والتشخيص التفريقي التعليمي.
+2. الجوانب التي أحسن الطالب السؤال عنها في القصة المرضية.
+3. النقاط الحرجة والعلامات المنذرة (Red Flags) التي أغفل الطالب السؤال عنها.
+4. توجيهات سريرية منظمة لتطوير مهارة أخذ القصة المرضية.`;
+
+      const evaluationContents = [
+        ...APP_STATE.patientHistory,
+        { role: 'user', parts: [{ text: evaluationPrompt }] }
+      ];
+
+      try {
+        const report = await callGeminiAPI({
+          systemInstruction: PATIENT_SYSTEM_PROMPT,
+          contents: evaluationContents
+        });
+
+        evalBox.innerHTML = `
+          <div style="margin-top: 20px; padding: 20px; border-radius: 14px; background: var(--dark-green-soft); border: 1px solid var(--dark-green);">
+            <h3 style="color: var(--dark-green); margin-top: 0;"><i class="fa-solid fa-award"></i> تقرير تقييم الأداء السريري</h3>
+            <div>${renderSafeMarkdown(report)}</div>
+          </div>
+        `;
+      } catch (err) {
+        evalBox.innerHTML = '';
+        const errDiv = document.createElement('div');
+        errDiv.className = 'error-alert';
+        errDiv.textContent = `تعذر جلب التقييم: ${err.message}`;
+        evalBox.appendChild(errDiv);
+      } finally {
+        APP_STATE.isRequestInFlight = false;
+        sendBtn.disabled = false;
+        evalBtn.disabled = false;
+        evalBtn.innerHTML = '<i class="fa-solid fa-clipboard-check"></i> إنهاء المقابلة وتقييم أدائي السريري';
+      }
+    }
+
+    // 6. MedECG Arena
+    async function executeMedECGArena() {
+      if (APP_STATE.isRequestInFlight) return;
+      const desc = document.getElementById('ecgDesc').value.trim();
+      const fileInput = document.getElementById('ecgImageInput');
+      const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+      if (!desc && !hasFile) {
+        renderToolError('يرجى إدخال وصف تخطيط القلب أو إرفاق صورة واضحة للتخطيط.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ قراءة وتحليل معطيات تخطيط القلب...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت أستاذ أمراض قلبية متخصص في تدريس منهجية قراءة تخطيط القلب (ECG Interpretation).
+القواعد الصارمة:
+1. اعرض التحليل وفق المنهجية السريرية المنظمة:
+   - جودة التخطيط والمعايرة (Calibration & Quality) إن ظهرت.
+   - معدل ضربات القلب (Heart Rate).
+   - النظم (Rhythm).
+   - المحور الكهربائي (Cardiac Axis).
+   - الموجات والفواصل (P wave, PR interval, QRS complex, ST segment, T wave, QT interval).
+   - الاستنتاج التعليمي والتشخيص التفريقي.
+2. لا تختلق أي قياسات رقمية بالميلي ثانية أو المربعات الصغيرة إذا لم تكن واضحة تماماً في الصورة أو مذكورة في نص المستخدم.
+3. وضح القيود دائماً عندما لا تسمح جودة الصورة أو نقص المعطيات باستنتاج قاطع.
+4. أكد أن التحليل لأغراض التدريب التعليمي وليس تشخيصاً سريرياً نهائياً لمريض حقيقي.`;
+
+      try {
+        const parts = [];
+        if (desc) {
+          parts.push({ text: `وصف التخطيط والسياق المقدم من الطالب:\n${desc}` });
+        } else {
+          parts.push({ text: 'حلل صورة تخطيط القلب المرفقة وفق المنهجية التعليمية المنظمة، مع بيان أي قيود في وضوح الصورة.' });
+        }
+
+        if (hasFile) {
+          const imgData = await extractFileLocally('ecgImageInput');
+          if (imgData && imgData.type === 'image') {
+            parts.push({
+              inline_data: {
+                mime_type: imgData.mimeType,
+                data: imgData.base64
+              }
+            });
+          }
+        }
+
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeMedECGArena);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 7. Page Intelligence
+    async function executePageIntelligence() {
+      if (APP_STATE.isRequestInFlight) return;
+      const rawText = document.getElementById('pageRawText').value.trim();
+      const fileInput = document.getElementById('pagePdfInput');
+      const strictMode = document.getElementById('pageStrictMode').checked;
+      const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+      if (!rawText && !hasFile) {
+        renderToolError('يرجى رفع ملف محاضرة (PDF أو TXT) أو لصق نص المحاضرة في الحقل المخصص.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ استخراج النص وتحليل المحاضرة...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      try {
+        let combinedText = '';
+        let truncationNotice = '';
+
+        if (hasFile) {
+          const extracted = await extractFileLocally('pagePdfInput');
+          if (extracted && (extracted.type === 'pdf-text' || extracted.type === 'text')) {
+            combinedText += extracted.content + '\n\n';
+            if (extracted.totalPages && extracted.totalPages > extracted.processedPages) {
+              truncationNotice = `تنبيه: يحتوي ملف PDF على ${extracted.totalPages} صفحة؛ تمت معالجة أول ${extracted.processedPages} صفحة محلياً لضمان عدم تجاوز حدود حجم الطلب.`;
+            }
+          }
+        }
+
+        if (rawText) {
+          combinedText += `=== [نص مضاف يدوياً] ===\n${rawText}`;
+        }
+
+        if (!combinedText.trim()) {
+          throw new Error('لم يتم العثور على نص قابل للتحليل.');
+        }
+
+        const systemInstruction = `أنت محلل محتوى أكاديمي طبي. قم بتحليل نص المحاضرة المقدم وتنظيمه في الأقسام الواضحة التالية:
+1. العناوين والأفكار الأساسية المنظمة.
+2. قاموس المصطلحات الطبية والتعريفات الواردة (مع الحفاظ على المصطلح الإنجليزي).
+3. الآليات الفيزيولوجية أو المرضية المذكورة.
+4. أسئلة مراجعة متوقعة (High-Yield Questions) مع إجاباتها.
+5. النقاط المعقدة التي تحتاج من الطالب إلى مراجعة إضافية.
+${strictMode
+  ? 'تنبيه صارم: وضع الالتزام بالمصدر مفعل؛ لا تضف أي معلومة أو تعريف غير موجود في النص المقدم من المستخدم.'
+  : 'إذا أضفت توضيحاً تكميلياً من خارج النص فميّزه بوضوح بعبارة [إضافة توضيحية].'}`;
+
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts: [{ text: combinedText }] }]
+        });
+
+        renderToolOutput(output, truncationNotice);
+      } catch (err) {
+        renderToolError(err.message, executePageIntelligence);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+
+    // 8. AnatomyVision
+    async function executeAnatomyVision() {
+      if (APP_STATE.isRequestInFlight) return;
+      const query = document.getElementById('anatomyQuery').value.trim();
+      const fileInput = document.getElementById('anatomyImageInput');
+      const hasFile = fileInput && fileInput.files && fileInput.files.length > 0;
+
+      if (!query && !hasFile) {
+        renderToolError('يرجى إدخال اسم التركيب التشريحي أو إرفاق صورة تشريحية لدراستها.');
+        return;
+      }
+
+      setToolLoadingState(true, 'جارٍ إعداد الشرح التشريحي والعلاقات السريرية...');
+      document.getElementById('toolOutputContainer').innerHTML = '';
+
+      const systemInstruction = `أنت أستاذ علم التشريح السريري (Clinical Anatomy).
+اشرح التركيب التشريحي المطلوب أو الصورة التشريحية المرفقة ضمن أقسام منظمة:
+1. نظرة عامة والموقع التشريحي الدقيق.
+2. العلاقات التشريحية المجاورة (Anatomical Relations: Anterior, Posterior, Superior, Inferior, Medial, Lateral).
+3. التروية الدموية والتعصيب (Blood Supply & Innervation) والتصريف اللمفاوي عند ملاءمته.
+4. الوظيفة الفيزيولوجية والحركية.
+5. الأهمية السريرية وإصابات التركيب (Clinical Correlations).
+قواعد صارمة:
+- إذا أرفق المستخدم صورة، اشرح التراكيب الواضحة فيها فقط، وبيّن بوضوح أي حدود تمنع الجزم بتركيب غير ظاهر أو غير واضح، ولا تختلق علامات تشريحية غير مرئية.
+- هذه الأداة تحلل وتشرح التراكيب ولا تقوم بتوليد أو رسم صور تشريحية جديدة.`;
+
+      try {
+        const parts = [];
+        if (query) {
+          parts.push({ text: `التركيب التشريحي أو السؤال: ${query}` });
+        } else {
+          parts.push({ text: 'اشرح التراكيب التشريحية الظاهرة في الصورة المرفقة وعلاقاتها وأهميتها السريرية، مع توضيح أي قيود في وضوح الصورة.' });
+        }
+
+        if (hasFile) {
+          const imgData = await extractFileLocally('anatomyImageInput');
+          if (imgData && imgData.type === 'image') {
+            parts.push({
+              inline_data: {
+                mime_type: imgData.mimeType,
+                data: imgData.base64
+              }
+            });
+          }
+        }
+
+        const output = await callGeminiAPI({
+          systemInstruction,
+          contents: [{ role: 'user', parts }]
+        });
+        renderToolOutput(output);
+      } catch (err) {
+        renderToolError(err.message, executeAnatomyVision);
+      } finally {
+        setToolLoadingState(false);
+      }
+    }
+  </script>
+</body>
+</html>
