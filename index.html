@@ -261,7 +261,8 @@ const GEMINI_CONFIG = {
   apiBase: 'https://generativelanguage.googleapis.com/v1beta',
   // نماذج Gemini 3 تستخدم thinkingLevel (لا thinkingBudget). اجعلها null لحذف الإعداد كلياً.
   thinkingConfig: { thinkingLevel: 'low' },
-  timeoutMs: 60000,
+  timeoutMs: 60000,          // مهلة كل طلب على حدة (الاختبار والتوليد)
+  testMaxOutputTokens: 1024, // يشمل رموز التفكير؛ لا تقلّله كثيراً
   maxOutputTokens: 8192,
   maxPdfPages: 25,
   maxFileSizeBytes: 12 * 1024 * 1024
@@ -274,7 +275,9 @@ const APP_STATE = {
   connectionStatus: 'no-key',
   isRequestInFlight: false,
   lastRetryCallback: null,
-  patientHistory: []
+  patientHistory: [],
+  testInFlight: false,
+  lastCspViolation: null
 };
 
 const $ = id => document.getElementById(id);
@@ -474,6 +477,11 @@ window.addEventListener('DOMContentLoaded', () => {
   renderTools(TOOLS);
   initStoredKeyState();
   setupMarkdownSecurity();
+  document.addEventListener('securitypolicyviolation', e => {
+    if (/googleapis\.com/.test(e.blockedURI || '')) {
+      APP_STATE.lastCspViolation = { directive: e.violatedDirective, t: Date.now() };
+    }
+  });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if ($('apiKeyModal').style.display === 'flex') closeApiKeyModal();
@@ -611,13 +619,16 @@ function applyModelInput() {
 }
 
 // تصنيف موحد للأخطاء: لا إعادة محاولة تلقائية ولا تبديل للنماذج
-function classifyApiError(status, detail = '') {
+function classifyApiError(status, detail = '', stage = '') {
   const tail = detail ? ` (تفاصيل Google: ${detail.slice(0, 220)})` : '';
   const model = getModel();
   if (status === 401 || /api key not valid|API_KEY_INVALID|api key expired|invalid api key/i.test(detail)) {
     return { status: 'invalid', message: 'المفتاح غير صالح أو منتهي. انسخه من Google AI Studio وتأكد من عدم وجود مسافات.' + tail };
   }
-  if (status === 404 || /no longer available|is not found|not supported for generateContent/i.test(detail)) {
+  if (/location is not supported/i.test(detail)) {
+    return { status: 'permission', message: 'منطقتك/شبكتك الحالية غير مدعومة من Gemini API. جرّب شبكة أخرى أو راجع المناطق المدعومة في وثائق Google.' + tail };
+  }
+  if (stage !== 'key-check' && (status === 404 || /no longer available|is not found|not supported for generateContent/i.test(detail))) {
     return { status: 'model-error', message: `النموذج (${model}) غير متاح لهذا المفتاح أو تم إيقافه. غيّر اسمه من حقل "اسم النموذج" في هذه النافذة، أو من GEMINI_CONFIG.model في الكود.` + tail };
   }
   if (status === 429 || /quota|RESOURCE_EXHAUSTED|rate limit/i.test(detail)) {
@@ -632,32 +643,89 @@ function classifyApiError(status, detail = '') {
   return { status: 'network-error', message: `الطلب مرفوض (رمز ${status}).` + tail };
 }
 
-// إرسال واحد؛ إن رفض الخادم إعداد thinking تحديداً تُعاد المحاولة مرة واحدة فقط بدونه (ليس تبديل نموذج)
-async function postGemini(apiKey, body, signal) {
+const STAGE_LABELS = { 'key-check': 'التحقق من المفتاح', 'model-check': 'فحص النموذج', 'generate': 'طلب توليد المحتوى', 'model-list': 'قائمة النماذج' };
+
+// fetch بمهلة مستقلة لكل طلب: كل محاولة تأخذ AbortController جديداً فلا تُعاد إشارة ملغاة. لا يُسجَّل المفتاح أبداً.
+async function timedFetch(stage, url, init = {}, ms = GEMINI_CONFIG.timeoutMs) {
+  const controller = new AbortController();
+  let timedOut = false;
+  const timer = setTimeout(() => { timedOut = true; controller.abort(); }, ms);
+  const t0 = performance.now();
+  try {
+    const r = await fetch(url, { ...init, signal: controller.signal });
+    console.info(`[Gemini:${stage}] HTTP ${r.status} خلال ${Math.round(performance.now() - t0)}ms`);
+    return r;
+  } catch (e) {
+    e.stage = stage; e.timedOut = timedOut; e.elapsedMs = Math.round(performance.now() - t0);
+    console.warn(`[Gemini:${stage}] فشل (${timedOut ? 'timeout' : e.name}) بعد ${e.elapsedMs}ms`);
+    throw e;
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// طلب توليد؛ إن رفض الخادم thinkingConfig تحديداً تُعاد المحاولة مرة واحدة فقط بدونه (ليس تبديل نموذج)
+async function postGemini(apiKey, body, stage = 'generate') {
   const send = withThinking => {
-    const b = { ...body, generationConfig: { ...body.generationConfig } };
-    if (withThinking && GEMINI_CONFIG.thinkingConfig) b.generationConfig.thinkingConfig = GEMINI_CONFIG.thinkingConfig;
-    return fetch(modelUrl(), {
+    const gc = { ...(body.generationConfig || {}) };
+    if (withThinking && GEMINI_CONFIG.thinkingConfig && !gc.thinkingConfig) gc.thinkingConfig = GEMINI_CONFIG.thinkingConfig;
+    return timedFetch(stage, modelUrl(), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify(b),
-      signal
+      body: JSON.stringify({ ...body, generationConfig: gc })
     });
   };
   let r = await send(true);
   if (r.status === 400 && GEMINI_CONFIG.thinkingConfig && /thinking/i.test(await readApiError(r.clone()))) {
+    console.warn('[Gemini] رُفض thinkingConfig؛ محاولة واحدة بدونه');
     r = await send(false);
   }
   return r;
 }
 
+// أخطاء لا تحمل رمز HTTP: مهلة / انقطاع / CSP / CORS
+function classifyFetchError(err) {
+  const label = STAGE_LABELS[err.stage] || 'الاتصال';
+  if (err.timedOut) {
+    return { status: 'network-error', message: `انتهت المهلة (${Math.round(GEMINI_CONFIG.timeoutMs / 1000)} ثانية) في مرحلة «${label}» دون أي رد من خوادم Google. هذا لا يعني أن المفتاح أو النموذج خاطئان؛ الأسباب المحتملة: حجب أو بطء من الشبكة/مزوّد الإنترنت أو VPN، منطقة غير مدعومة، أو بطء مؤقت في الخدمة.` };
+  }
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return { status: 'network-error', message: 'لا يوجد اتصال بالإنترنت على هذا الجهاز.' };
+  }
+  const v = APP_STATE.lastCspViolation;
+  if (v && Date.now() - v.t < 15000) {
+    return { status: 'network-error', message: `سياسة الأمان (CSP) في الصفحة منعت الاتصال (${v.directive}). أضف https://generativelanguage.googleapis.com إلى connect-src في إعدادات الاستضافة.` };
+  }
+  if (err.name === 'TypeError') {
+    return { status: 'network-error', message: `تعذر إتمام الطلب في مرحلة «${label}» قبل وصول أي رد (CORS، أو إضافة متصفح/جدار حماية، أو شبكة تحجب generativelanguage.googleapis.com). التفاصيل في Console.` };
+  }
+  return { status: 'network-error', message: `خطأ غير متوقع في مرحلة «${label}». التفاصيل في Console.` };
+}
+
+// تشخيص: النماذج التي يدعمها المفتاح فعلياً (اقتراح فقط، لا تبديل تلقائي)
+async function suggestModels(apiKey) {
+  try {
+    const r = await timedFetch('model-list', `${GEMINI_CONFIG.apiBase}/models?pageSize=100`, { headers: { 'x-goog-api-key': apiKey } }, 10000);
+    if (!r.ok) return [];
+    const j = await r.json();
+    return (j.models || [])
+      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /flash/i.test(m.name) && !/image|tts|live|audio|embed|robotics|omni|native/i.test(m.name))
+      .map(m => m.name.replace(/^models\//, '')).slice(0, 6);
+  } catch (_) { return []; }
+}
+
 async function testApiConnection() {
+  if (APP_STATE.testInFlight) return; // منع الطلبات المتكررة
   applyModelInput();
   const typedKey = cleanKey($('apiKeyInput').value);
   const keyToTest = typedKey || getActiveApiKey();
   const res = $('connectionTestResult'), btn = $('testConnectionBtn');
   const show = (color, msg) => { res.style.color = color; res.textContent = msg; };
-  const fail = c => { setConnectionStatus(c.status); show('var(--danger)', '✗ ' + c.message); };
+  const fail = (c, stage) => {
+    setConnectionStatus(c.status);
+    show('var(--danger)', '✗ ' + c.message);
+    console.warn(`[Gemini:${stage}] ${c.status}: ${c.message}`);
+  };
 
   if (!keyToTest) {
     setConnectionStatus('no-key');
@@ -669,36 +737,63 @@ async function testApiConnection() {
     $('apiKeyInput').value = '';
   }
 
-  const model = getModel();
-  setConnectionStatus('verifying');
+  const model = getModel(), base = GEMINI_CONFIG.apiBase, hdr = { 'x-goog-api-key': keyToTest };
+  const step = (n, stage) => show('var(--petrol)', `(${n}/3) ${STAGE_LABELS[stage]} — ${model}...`);
+  const t0 = performance.now();
+  APP_STATE.testInFlight = true;
   btn.disabled = true;
-  show('var(--petrol)', `جارٍ فحص المفتاح والنموذج (${model})...`);
+  setConnectionStatus('verifying');
 
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), 25000);
   try {
-    // 1) فحص وجود النموذج وصلاحية المفتاح دون توليد
-    const meta = await fetch(`${GEMINI_CONFIG.apiBase}/models/${model}`, {
-      headers: { 'x-goog-api-key': keyToTest }, signal: controller.signal
-    });
-    if (!meta.ok) { fail(classifyApiError(meta.status, await readApiError(meta))); return; }
+    // 1) صلاحية المفتاح
+    step(1, 'key-check');
+    let r = await timedFetch('key-check', `${base}/models?pageSize=1`, { headers: hdr });
+    if (!r.ok) return fail(classifyApiError(r.status, await readApiError(r), 'key-check'), 'key-check');
 
-    // 2) طلب توليد فعلي صغير
-    const gen = await postGemini(keyToTest, {
+    // 2) وجود النموذج
+    step(2, 'model-check');
+    r = await timedFetch('model-check', `${base}/models/${encodeURIComponent(model)}`, { headers: hdr });
+    if (!r.ok) {
+      const c = classifyApiError(r.status, await readApiError(r), 'model-check');
+      if (c.status === 'model-error') {
+        const alt = await suggestModels(keyToTest);
+        if (alt.length) c.message += ' نماذج Flash المتاحة لمفتاحك الآن: ' + alt.join(' ، ') + '.';
+      }
+      return fail(c, 'model-check');
+    }
+
+    // 3) توليد فعلي صغير (نجاح الفحص السابق وحده لا يكفي)
+    step(3, 'generate');
+    r = await postGemini(keyToTest, {
       contents: [{ role: 'user', parts: [{ text: 'Reply with one word: OK' }] }],
-      generationConfig: { maxOutputTokens: 256 }
-    }, controller.signal);
-    if (!gen.ok) { fail(classifyApiError(gen.status, await readApiError(gen))); return; }
+      generationConfig: { maxOutputTokens: GEMINI_CONFIG.testMaxOutputTokens }
+    }, 'generate');
+    if (!r.ok) {
+      const c = classifyApiError(r.status, await readApiError(r), 'generate');
+      if (c.status === 'model-error') {
+        const alt = await suggestModels(keyToTest);
+        if (alt.length) c.message += ' نماذج Flash المتاحة لمفتاحك الآن: ' + alt.join(' ، ') + '.';
+      }
+      return fail(c, 'generate');
+    }
 
+    let data = null;
+    try { data = await r.json(); } catch (_) {}
+    const cand = data && data.candidates && data.candidates[0];
+    const text = cand && cand.content && Array.isArray(cand.content.parts)
+      ? cand.content.parts.filter(x => !x.thought).map(x => x.text || '').join('').trim() : '';
+    const secs = ((performance.now() - t0) / 1000).toFixed(1);
     setConnectionStatus('connected');
-    show('var(--dark-green)', `✓ المفتاح صحيح والنموذج (${model}) يعمل وجاهز لتشغيل الأدوات.`);
+    if (text) {
+      show('var(--dark-green)', `✓ المفتاح صحيح والنموذج (${model}) يعمل وجاهز لتشغيل الأدوات (${secs} ث).`);
+    } else {
+      show('var(--mustard)', `✓ الاتصال والتوليد سليمان مع النموذج (${model}) لكن الرد الاختباري جاء فارغاً (${(cand && cand.finishReason) || 'غير محدد'}). إن تكرر ذلك مع الأدوات فخفّض مستوى thinking أو أعد المحاولة.`);
+    }
   } catch (err) {
-    setConnectionStatus('network-error');
-    show('var(--danger)', err.name === 'AbortError'
-      ? '✗ انتهت مهلة الاتصال. تحقق من الإنترنت وأعد المحاولة.'
-      : '✗ مشكلة في الاتصال: تعذر الوصول لخوادم Gemini (شبكة، أو حجب CSP من الاستضافة، أو إضافة متصفح). افتح Console (F12) للتفاصيل.');
+    fail(classifyFetchError(err), err.stage || 'unknown');
+    console.error('[Gemini] تفاصيل تقنية:', err.name, err.message);
   } finally {
-    clearTimeout(timer);
+    APP_STATE.testInFlight = false;
     btn.disabled = false;
   }
 }
@@ -711,8 +806,6 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
     throw new Error('لم تتم إضافة مفتاح Gemini API. أدخل مفتاحك أولاً لتشغيل الأداة.');
   }
 
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), GEMINI_CONFIG.timeoutMs);
   const body = {
     contents,
     generationConfig: { temperature: 0.35, maxOutputTokens: GEMINI_CONFIG.maxOutputTokens, ...generationConfig }
@@ -720,11 +813,10 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
   if (systemInstruction) body.systemInstruction = { parts: [{ text: systemInstruction }] };
 
   try {
-    const response = await postGemini(apiKey, body, controller.signal);
-    clearTimeout(timeoutId);
+    const response = await postGemini(apiKey, body, 'generate');
 
     if (!response.ok) {
-      const c = classifyApiError(response.status, await readApiError(response));
+      const c = classifyApiError(response.status, await readApiError(response), 'generate');
       setConnectionStatus(c.status);
       throw new Error(c.message);
     }
@@ -748,14 +840,12 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
       ? text + '\n\n> ⚠️ **تم اقتطاع الإجابة لطولها.** قلّل العدد أو قصّر النص وأعد المحاولة.'
       : text;
   } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === 'AbortError') {
-      throw new Error('انتهت مهلة الطلب بسبب طول المحتوى أو بطء الإنترنت. قسّم النص إلى أجزاء أصغر.');
+    if (err.stage) { // خطأ شبكة/مهلة/إلغاء من timedFetch
+      const c = classifyFetchError(err);
+      setConnectionStatus(c.status);
+      throw new Error(c.message);
     }
-    if (err instanceof TypeError) {
-      setConnectionStatus('network-error');
-      throw new Error('مشكلة في الاتصال: تعذر الوصول لخوادم Gemini (شبكة، أو حجب CSP، أو إضافة متصفح). افتح Console للتفاصيل.');
-    }
+    if (err instanceof SyntaxError) throw new Error('وصلت استجابة غير مقروءة من الخدمة. أعد المحاولة.');
     throw err;
   }
 }
