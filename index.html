@@ -284,8 +284,7 @@ const GEMINI_CONFIG = {
   apiBase: 'https://generativelanguage.googleapis.com/v1beta',
   // نماذج Gemini 3 تستخدم thinkingLevel (لا thinkingBudget). اجعلها null لحذف الإعداد كلياً.
   thinkingConfig: { thinkingLevel: 'low' },
-  verifyTimeoutMs: 30000,    // مهلة كل مرحلة من مراحل التحقق من المفتاح فقط (منفصلة عن timeoutMs)
-  timeoutMs: 300000,         // مهلة طلب الذكاء الاصطناعي في كل الأدوات: 5 دقائق (300000 ms). مستقلة عن مهلة التحقق أدناه
+  timeoutMs: 400000,         // مهلة طلب الذكاء الاصطناعي في كل الأدوات: 400 ثانية (400000 ms). مستقلة عن مهلة التحقق أدناه
   testMaxOutputTokens: 1024, // يشمل رموز التفكير؛ لا تقلّله كثيراً
   maxOutputTokens: 8192,
   maxPdfPages: 25,
@@ -933,7 +932,8 @@ function toggleApiKeyVisibility() {
 
 function saveApiKey(persistToLocal) {
   applyModelInput();
-  const rawKey = cleanKey($('apiKeyInput').value);
+  // المفتاح المكتوب، أو المفتاح الفعّال الحالي إن كان الحقل فارغاً (مثلاً بعد التحقق المؤقت)
+  const rawKey = cleanKey($('apiKeyInput').value) || getActiveApiKey();
   const res = $('connectionTestResult');
   if (!rawKey) {
     res.style.color = 'var(--danger)';
@@ -1061,7 +1061,10 @@ function classifyFetchError(err) {
   const label = STAGE_LABELS[err.stage] || 'الاتصال';
   if (err.timedOut) {
     if (err.limitMs === GEMINI_CONFIG.timeoutMs) { // مهلة طلب الأداة (لا مهلة التحقق)
-      return { status: 'timeout', message: `الطلب استغرق وقتاً أطول من المسموح (${Math.round(GEMINI_CONFIG.timeoutMs / 60000)} دقائق) فتم إيقافه. يمكنك المحاولة مجدداً، أو تقليل حجم المدخلات.` };
+      const mx = Math.round(GEMINI_CONFIG.timeoutMs / 1000);
+      return { status: 'timeout', message: LANG === 'en'
+        ? `The request took longer than allowed (${mx} s) and was stopped. You can try again or reduce the input size.`
+        : `الطلب استغرق وقتاً أطول من المسموح (${mx} ثانية) فتم إيقافه. يمكنك المحاولة مجدداً، أو تقليل حجم المدخلات.` };
     }
     return { status: 'timeout', message: `انتهت المهلة (${Math.round((err.limitMs || GEMINI_CONFIG.timeoutMs) / 1000)} ثانية) في مرحلة «${label}» دون أي رد من خوادم Google. هذا لا يعني أن المفتاح أو النموذج خاطئان؛ الأسباب المحتملة: حجب أو بطء من الشبكة/مزوّد الإنترنت أو VPN، منطقة غير مدعومة، أو بطء مؤقت في الخدمة.` };
   }
@@ -1121,8 +1124,7 @@ async function testApiConnection() {
 
   const typedKey = cleanKey($('apiKeyInput').value);
   if (typedKey && typedKey !== getActiveApiKey()) { // الحالة المعروضة تخص المفتاح الفعّال فقط
-    APP_STATE.sessionOnlyKey = typedKey;
-    $('apiKeyInput').value = '';
+    APP_STATE.sessionOnlyKey = typedKey; // يبقى الحقل كما هو ليستطيع المستخدم حفظه بعد التحقق
   }
   const keyToTest = getActiveApiKey();
   if (!keyToTest) {
@@ -1132,7 +1134,7 @@ async function testApiConnection() {
   }
 
   const model = getModel(), base = GEMINI_CONFIG.apiBase, hdr = { 'x-goog-api-key': keyToTest };
-  const ms = GEMINI_CONFIG.verifyTimeoutMs;
+  const ms = GEMINI_CONFIG.timeoutMs; // مهلة موحّدة لكل طلبات Gemini، ومنها مراحل التحقق
   const v = { controller: new AbortController(), t0: performance.now(), stage: '', timer: null };
   APP_STATE.verify = v;
   APP_STATE.testInFlight = true;
@@ -1240,7 +1242,10 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
   const bar = $('reqBar'), txt = $('reqBarText');
   const tick = () => {
     if (APP_STATE.toolReq === req && txt) {
-      txt.textContent = `جارٍ انتظار رد Gemini — ${Math.floor((performance.now() - req.t0) / 1000)} ${SEC()} (الحد الأقصى ${Math.round(GEMINI_CONFIG.timeoutMs / 60000)} دقائق)`;
+      const el = Math.floor((performance.now() - req.t0) / 1000), mx = Math.round(GEMINI_CONFIG.timeoutMs / 1000);
+      txt.textContent = LANG === 'en'
+        ? `Waiting for Gemini — ${el} s (max ${mx} s)`
+        : `جارٍ انتظار رد Gemini — ${el} ث (الحد الأقصى ${mx} ث)`;
     }
   };
   if (bar) bar.style.display = 'flex';
