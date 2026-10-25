@@ -7,6 +7,13 @@
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com; font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; connect-src https://generativelanguage.googleapis.com; worker-src 'self' blob: https://cdnjs.cloudflare.com;">
 <script>try{if(localStorage.getItem("mednerd_lang")==="en"){var h=document.documentElement;h.lang="en";h.dir="ltr"}}catch(e){}</script>
 <title>MEDNERD | Learn. Practice. Understand.</title>
+<meta name="description" content="MEDNERD AI: منصة تعليمية طبية تعمل بمفتاحك الشخصي لـ Gemini API. Learn Medicine. Understand Life.">
+<meta name="theme-color" content="#0e7490">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://mednerd-book-builder.vercel.app">
+<meta property="og:title" content="MEDNERD AI | Learn Medicine. Understand Life.">
+<meta property="og:description" content="أدوات تعليمية طبية ذكية: مذاكرة، ذاكرة، تفكير سريري، وOSCE، تعمل بمفتاحك الشخصي لـ Gemini API.">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e7490'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -143,7 +150,7 @@ footer{background:var(--white);border-top:1px solid var(--border-color);padding:
 html[lang="en"] *{font-family:'Inter','Cairo',sans-serif}
 [dir="ltr"] .fa-arrow-left{transform:scaleX(-1)}
 [dir="ltr"] .tool-card:hover .tool-footer i{transform:scaleX(-1) translateX(-5px)}
-.dev-credit{text-align:center;direction:ltr;font-family:'Inter','Cairo',sans-serif;font-size:12.5px;letter-spacing:.2px;color:var(--muted-text);padding:14px 16px 20px;background:var(--white)}
+.dev-credit{text-align:center;direction:ltr;font-family:'Cairo','Inter',sans-serif;font-size:12.5px;letter-spacing:.2px;color:var(--muted-text);padding:14px 16px 20px;background:var(--white)}
 </style>
 </head>
 <body>
@@ -280,8 +287,8 @@ html[lang="en"] *{font-family:'Inter','Cairo',sans-serif}
 <script>
 /* ============ 1. الإعدادات والحالة ============ */
 // مهلتان مستقلتان: اختبار المفتاح، وتوليد المحتوى (لا تُستخدم إحداهما مكان الأخرى)
-const API_TEST_TIMEOUT_MS = 300000;               // اختبار المفتاح: 5 دقائق
-const CONTENT_GENERATION_TIMEOUT_MS = 30000;       // توليد المحتوى: 30 ثانية
+const API_TEST_TIMEOUT_MS = 25000;               // اختبار المفتاح: 5 دقائق
+const CONTENT_GENERATION_TIMEOUT_MS = 120000;       // توليد المحتوى: 30 ثانية
 
 const GEMINI_CONFIG = {
   // ★ اسم النموذج الافتراضي: المكان الوحيد الذي يُعدَّل لتغيير النموذج في كل الأدوات ★
@@ -837,6 +844,12 @@ window.addEventListener('DOMContentLoaded', () => {
     if (/googleapis\.com/.test(e.blockedURI || '')) {
       APP_STATE.lastCspViolation = { directive: e.violatedDirective, t: Date.now() };
     }
+  });
+  $('apiKeyInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); testApiConnection(); } });
+  $('apiModelInput').addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); testApiConnection(); } });
+  ['workspaceModal', 'apiKeyModal'].forEach(id => {
+    const m = $(id);
+    m.addEventListener('click', e => { if (e.target === m) { if (id === 'apiKeyModal') closeApiKeyModal(); else closeWorkspace(); } });
   });
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
@@ -1432,7 +1445,7 @@ function filterTools() {
   const q = $('searchInput').value.trim().toLowerCase();
   renderTools(TOOLS.filter(t =>
     (APP_STATE.currentCategory === 'all' || t.category === APP_STATE.currentCategory) &&
-    (!q || (t.name + ' ' + t.desc + ' ' + t.keywords).toLowerCase().includes(q))
+    (!q || (t.name + ' ' + t.desc + ' ' + t.keywords + ' ' + ((EN_TOOLS[t.id] && EN_TOOLS[t.id].d) || '')).toLowerCase().includes(q))
   ));
 }
 
@@ -1472,22 +1485,76 @@ function openToolWorkspace(toolId) {
   if (!tool) return;
   APP_STATE.activeToolId = toolId;
   APP_STATE.lastRetryCallback = null;
-  APP_STATE.session = null; // عزل جلسات الأدوات عن بعضها
+  if (!(APP_STATE.session && APP_STATE.session.toolId === toolId)) APP_STATE.session = null; // عزل الجلسات: الجلسة تبقى لنفس الأداة فقط
   $('modalToolTitle').textContent = tool.name;
   $('modalToolSubtitle').textContent = locTool(tool).desc;
   $('workspaceBodyContent').innerHTML = buildToolFormHTML(tool);
   $('workspaceModal').style.display = 'flex';
   updateBodyScrollLock();
+  if (APP_STATE.session && APP_STATE.session.toolId === toolId && APP_STATE.session.history.length > 1) restoreSession(tool);
 }
-function closeWorkspace() {
-  cancelToolRequest(); // إغلاق النافذة يلغي الطلب الجاري
+
+function restoreSession(tool) {
+  const ss = APP_STATE.session;
+  if (!ss) return;
+  renderSessionUI(tool, null);
+  ss.history.forEach((m, i) => {
+    if (i === 0) return; // الرسالة الأولى تعليمات داخلية للنموذج وليست من المستخدم
+    const txt = (m.parts && m.parts[0] && m.parts[0].text) || '';
+    sessBubble(m.role === 'user' ? 'user' : 'model', txt);
+  });
+}
+
+// (ج) إغلاق النافذة: تحذير عند وجود محادثة غير محفوظة، والإغلاق لا يمسح الجلسة
+function closeWorkspace(force) {
+  const ss = APP_STATE.session;
+  const hasSession = !!(ss && ss.toolId === APP_STATE.activeToolId && ss.history.length > 2);
+  const hasPatient = APP_STATE.patientHistory.length > 1;
+  const busy = APP_STATE.isRequestInFlight;
+  const hasData = hasSession || hasPatient || busy;
+  if (!force && hasData && !confirm(LANG === 'en'
+      ? 'Closing now will delete the current conversation and cancel any running request. Continue?'
+      : 'الإغلاق الآن سيحذف المحادثة الحالية ويلغي أي طلب جارٍ. هل تريد المتابعة؟')) return;
+  cancelToolRequest();
+  if (hasData) { APP_STATE.session = null; APP_STATE.patientHistory = []; }
   $('workspaceModal').style.display = 'none';
   APP_STATE.activeToolId = null;
   updateBodyScrollLock();
 }
 function resetCurrentTool() {
   if (APP_STATE.isRequestInFlight) return;
+  APP_STATE.session = null; // زر الإعادة يبدأ جلسة جديدة فعلاً
   if (APP_STATE.activeToolId) openToolWorkspace(APP_STATE.activeToolId);
+}
+
+/* ============ 9ب. تصدير التقارير (نسخ/تنزيل) ============ */
+function addExportBar(container, text, fileBase) {
+  if (!container || !text) return;
+  const bar = document.createElement('div');
+  bar.className = 'output-actions';
+  const copy = document.createElement('button');
+  copy.className = 'btn-secondary';
+  copy.innerHTML = `<i class="fa-solid fa-copy"></i> <span>${LANG === 'en' ? 'Copy result' : 'نسخ النتيجة'}</span>`;
+  copy.onclick = () => {
+    navigator.clipboard.writeText(text).then(() => {
+      copy.querySelector('span').textContent = LANG === 'en' ? 'Copied!' : 'تم النسخ!';
+    }).catch(() => {});
+  };
+  const dl = document.createElement('button');
+  dl.className = 'btn-secondary';
+  dl.innerHTML = `<i class="fa-solid fa-download"></i> <span>${LANG === 'en' ? 'Download .md' : 'تنزيل .md'}</span>`;
+  dl.onclick = () => {
+    const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = fileBase + '.md';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  bar.append(copy, dl);
+  container.appendChild(bar);
 }
 
 /* ============ 9. عرض النتائج والأخطاء ============ */
@@ -1623,7 +1690,7 @@ async function startMedPatientCase() {
   }];
 
   try {
-    const first = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory, generationConfig: { maxOutputTokens: 1024 } });
+    const first = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory, generationConfig: { maxOutputTokens: 2048 } });
     APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: first }] });
     renderPatientChatInterface(first);
   } catch (e) {
@@ -1696,7 +1763,7 @@ async function sendQuestionToPatient() {
   sendBtn.innerHTML = '<span class="loading-spinner"></span> <span>المريض يجيب...</span>';
 
   try {
-    const reply = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory, generationConfig: { maxOutputTokens: 1024 } });
+    const reply = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory, generationConfig: { maxOutputTokens: 2048 } });
     APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: reply }] });
     appendChatBubble('patient', reply);
     $('patientEvaluationBox').innerHTML = '';
@@ -1731,6 +1798,7 @@ async function finishAndEvaluatePatientCase() {
         <h3 style="color:var(--dark-green);margin-top:0;"><i class="fa-solid fa-award"></i> تقرير تقييم الأداء السريري</h3>
         <div data-notr="1">${renderSafeMarkdown(report)}</div>
       </div>`;
+    addExportBar(box.firstElementChild, report, 'mednerd-patient-assessment');
   } catch (e) {
     showPatientError('تعذر جلب التقييم', e);
   } finally {
@@ -1797,7 +1865,9 @@ function renderSessionUI(tool, first) {
       </div>
       <div id="sessResult"></div>
     </div>`;
-  sessBubble('model', first);
+  const si = $('sessInput');
+  if (si) si.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) { e.preventDefault(); sessSend(); } });
+  if (first) sessBubble('model', first);
 }
 
 function sessBubble(role, text) {
@@ -1867,6 +1937,7 @@ async function sessFinish() {
       contents: [...ss.history, { role: 'user', parts: [{ text: tool.finish[1] }] }]
     });
     $('sessResult').innerHTML = `<div style="margin-top:20px;padding:20px;border-radius:14px;background:var(--dark-green-soft);border:1px solid var(--dark-green);"><div data-notr="1">${renderSafeMarkdown(report)}</div><p class="verify-note">قد يخطئ النموذج: تحقق من المعلومات من المراجع المعتمدة.</p></div>`;
+    addExportBar($('sessResult').firstElementChild, report, 'mednerd-report');
   } catch (e) {
     sessError('تعذر إنهاء الجلسة', e);
   } finally {
@@ -1880,7 +1951,9 @@ function renderVideoLinks(output, v) {
   c.innerHTML = '';
   let list = [];
   try {
-    const j = JSON.parse(String(output).replace(/```json|```/g, '').trim());
+    const raw = String(output);
+    const a = raw.indexOf('{'), b = raw.lastIndexOf('}');
+    const j = JSON.parse(raw.slice(a, b + 1));
     list = (j.queries || []).filter(x => x && typeof x.q === 'string' && x.q.trim()).slice(0, 8);
   } catch (_) {}
   if (!list.length) { renderToolOutput(output, 'تعذر قراءة عبارات البحث بصيغة منظمة؛ هذه الاستجابة كما وصلت.'); return; }
