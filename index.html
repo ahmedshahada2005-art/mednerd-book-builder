@@ -1091,13 +1091,18 @@ async function timedFetch(stage, url, init = {}, ms = GEMINI_CONFIG.timeoutMs, p
 // طلب توليد؛ إن رفض الخادم thinkingConfig تحديداً تُعاد المحاولة مرة واحدة فقط بدونه (ليس تبديل نموذج)
 async function postGemini(apiKey, body, stage = 'generate', parent = null, ms = GEMINI_CONFIG.timeoutMs) {
   const t0 = performance.now();
+  const noThinking = !!body.noThinking; // الطلبات التجريبية بدون thinkingConfig لتفادي خطأ 400
+  const payload = { ...body };
+  delete payload.noThinking;
+  // المفتاح في رابط الطلب (query parameter) بدلاً من الهيدر
+  const url = `${modelUrl()}?key=${encodeURIComponent(apiKey)}`;
   const send = (withThinking, limit) => {
-    const gc = { ...(body.generationConfig || {}) };
-    if (withThinking && GEMINI_CONFIG.thinkingConfig && !gc.thinkingConfig) gc.thinkingConfig = GEMINI_CONFIG.thinkingConfig;
-    return timedFetch(stage, modelUrl(), {
+    const gc = { ...(payload.generationConfig || {}) };
+    if (withThinking && !noThinking && GEMINI_CONFIG.thinkingConfig && !gc.thinkingConfig) gc.thinkingConfig = GEMINI_CONFIG.thinkingConfig;
+    return timedFetch(stage, url, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-      body: JSON.stringify({ ...body, generationConfig: gc })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ ...payload, generationConfig: gc })
     }, limit, parent);
   };
   let r = await send(true, ms);
@@ -1107,10 +1112,9 @@ async function postGemini(apiKey, body, stage = 'generate', parent = null, ms = 
     const left = ms - (performance.now() - t0);
     r = await send(true, left);
   }
-  // إعادة محاولة واحدة فقط وبدون thinkingConfig، ومن الوقت المتبقي نفسه (لا تتجاوز المهلة الكلية)
-  if (r.status === 400 && GEMINI_CONFIG.thinkingConfig && /thinking/i.test(await readApiError(r.clone()))) {
+  // إعادة محاولة واحدة فقط بدون thinkingConfig، ومن الوقت المتبقي نفسه
+  if (r.status === 400 && !noThinking && GEMINI_CONFIG.thinkingConfig && /thinking/i.test(await readApiError(r.clone()))) {
     const left = ms - (performance.now() - t0);
-    console.warn('[Gemini] رُفض thinkingConfig؛ محاولة واحدة بدونه');
     if (left > 1000) r = await send(false, left);
   }
   return r;
@@ -1138,16 +1142,6 @@ function classifyFetchError(err) {
 }
 
 // تشخيص: النماذج التي يدعمها المفتاح فعلياً (اقتراح فقط، لا تبديل تلقائي)
-async function suggestModels(apiKey) {
-  try {
-    const r = await timedFetch('model-list', `${GEMINI_CONFIG.apiBase}/models?pageSize=100`, { headers: { 'x-goog-api-key': apiKey } }, 10000);
-    if (!r.ok) return [];
-    const j = await r.json();
-    return (j.models || [])
-      .filter(m => (m.supportedGenerationMethods || []).includes('generateContent') && /flash/i.test(m.name) && !/image|tts|live|audio|embed|robotics|omni|native/i.test(m.name))
-      .map(m => m.name.replace(/^models\//, '')).slice(0, 6);
-  } catch (_) { return []; }
-}
 
 function setKeyStatus(key, status) {
   if (!APP_STATE.verify && getActiveApiKey() === key) setConnectionStatus(status);
@@ -1179,9 +1173,7 @@ async function testApiConnection() {
   const show = (color, msg) => { res.style.color = color; res.textContent = msg; };
 
   const typedKey = cleanKey($('apiKeyInput').value);
-  if (typedKey && typedKey !== getActiveApiKey()) { // الحالة المعروضة تخص المفتاح الفعّال فقط
-    APP_STATE.sessionOnlyKey = typedKey; // يبقى الحقل كما هو ليستطيع المستخدم حفظه بعد التحقق
-  }
+  if (typedKey && typedKey !== getActiveApiKey()) APP_STATE.sessionOnlyKey = typedKey;
   const keyToTest = getActiveApiKey();
   if (!keyToTest) {
     setConnectionStatus('no-key');
@@ -1189,88 +1181,43 @@ async function testApiConnection() {
     return;
   }
 
-  const model = getModel(), base = GEMINI_CONFIG.apiBase, hdr = { 'x-goog-api-key': keyToTest };
-  const ms = API_TEST_TIMEOUT_MS; // اختبار المفتاح فقط
-  const v = { controller: new AbortController(), t0: performance.now(), stage: '', timer: null };
+  const v = { controller: new AbortController() };
   APP_STATE.verify = v;
   APP_STATE.testInFlight = true;
-  const sig = v.controller.signal;
-  const alive = () => APP_STATE.verify === v && getActiveApiKey() === keyToTest; // يُتجاهل كل ما هو قديم
-  const secs = () => ((performance.now() - v.t0) / 1000);
-  const tick = () => { if (alive()) show('var(--petrol)', v.stage); };
-  const step = () => { v.stage = 'جارٍ التحقق من مفتاح API…'; tick(); };
-  const end = (status, color, msg) => {
-    clearInterval(v.timer);
-    APP_STATE.verify = null;
-    APP_STATE.testInFlight = false;
-    btn.disabled = false;
-    cancelBtn.style.display = 'none';
-    setConnectionStatus(status);
-    show(color, msg);
-  };
-  const endErr = (c, stage) => {
-    console.warn(`[Gemini:${stage}] ${c.status}: ${c.message}`);
-    end(c.status, 'var(--danger)', '✗ ' + c.message);
-  };
-
   btn.disabled = true;
   cancelBtn.style.display = '';
   setConnectionStatus('verifying');
-  v.timer = setInterval(tick, 250);
+  show('var(--petrol)', 'جارٍ التحقق من مفتاح API…');
 
   try {
-    step();
-    let r = await timedFetch('key-check', `${base}/models?pageSize=1`, { headers: hdr }, ms, sig);
-    if (!alive()) return;
-    if (!r.ok) { const d = await readApiError(r); if (!alive()) return; return endErr(classifyApiError(r.status, d, 'key-check'), 'key-check'); }
+    // فحص مباشر واحد: طلب توليد خفيف جداً بدون thinking
+    const r = await postGemini(keyToTest, {
+      contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
+      generationConfig: { maxOutputTokens: GEMINI_CONFIG.testMaxOutputTokens },
+      noThinking: true
+    }, 'generate', v.controller.signal, API_TEST_TIMEOUT_MS);
+    if (APP_STATE.verify !== v) return;
 
-    step();
-    r = await timedFetch('model-check', `${base}/models/${encodeURIComponent(model)}`, { headers: hdr }, ms, sig);
-    if (!alive()) return;
-    if (!r.ok) {
-      const c = classifyApiError(r.status, await readApiError(r), 'model-check');
-      if (!alive()) return;
-      if (c.status === 'model-error') {
-        const alt = await suggestModels(keyToTest);
-        if (!alive()) return;
-        if (alt.length) c.message += ' نماذج Flash المتاحة لمفتاحك الآن: ' + alt.join(' ، ') + '.';
-      }
-      return endErr(c, 'model-check');
-    }
-
-    step(); // لا يُعلن النجاح إلا بعد توليد فعلي
-    r = await postGemini(keyToTest, {
-      contents: [{ role: 'user', parts: [{ text: 'Reply with one word: OK' }] }],
-      generationConfig: { maxOutputTokens: GEMINI_CONFIG.testMaxOutputTokens }
-    }, 'generate', sig, ms);
-    if (!alive()) return;
     if (!r.ok) {
       const c = classifyApiError(r.status, await readApiError(r), 'generate');
-      if (!alive()) return;
-      if (c.status === 'model-error') {
-        const alt = await suggestModels(keyToTest);
-        if (!alive()) return;
-        if (alt.length) c.message += ' نماذج Flash المتاحة لمفتاحك الآن: ' + alt.join(' ، ') + '.';
-      }
-      return endErr(c, 'generate');
+      setConnectionStatus(c.status);
+      show('var(--danger)', '✗ ' + c.message);
+      return;
     }
-
-    let data = null;
-    try { data = await r.json(); } catch (_) {}
-    if (!alive()) return;
-    const cand = data && data.candidates && data.candidates[0];
-    const text = cand && cand.content && Array.isArray(cand.content.parts)
-      ? cand.content.parts.filter(x => !x.thought).map(x => x.text || '').join('').trim() : '';
-    const note = 'هذه النتيجة لحظية ولا تضمن استمرار الخدمة أو الحصة.';
-    if (text) {
-      end('connected', 'var(--dark-green)', '✓ تم التحقق بنجاح.');
-    } else {
-      end('connected', 'var(--mustard)', `✓ المفتاح والتوليد سليمان مع النموذج (${model}) لكن الرد الاختباري جاء فارغاً (${(cand && cand.finishReason) || 'غير محدد'}). ${note}`);
-    }
+    setConnectionStatus('connected');
+    show('var(--dark-green)', 'تم التحقق بنجاح.');
   } catch (err) {
-    if (err.cancelled || !alive()) return; // أُلغي أو تغيّر المفتاح: لا تأثير على الواجهة
-    endErr(classifyFetchError(err), err.stage || 'unknown');
-    console.error('[Gemini] تفاصيل تقنية:', err.name, err.message);
+    if (err.cancelled || APP_STATE.verify !== v) return;
+    const c = classifyFetchError(err);
+    setConnectionStatus(c.status);
+    show('var(--danger)', '✗ ' + c.message);
+  } finally {
+    if (APP_STATE.verify === v) {
+      APP_STATE.verify = null;
+      APP_STATE.testInFlight = false;
+      btn.disabled = false;
+      cancelBtn.style.display = 'none';
+    }
   }
 }
 
