@@ -740,6 +740,7 @@ function setConnectionStatus(status, customMessage = '') {
     'connected': ['connected', 'الاتصال ناجح ومباشر'],
     'invalid': ['error', 'المفتاح غير صالح'],
     'quota': ['error', 'تجاوز حد الاستخدام'],
+    'busy': ['error', 'النموذج مشغول حالياً، المفتاح صالح'],
     'model-error': ['error', 'النموذج غير متاح'],
     'permission': ['error', 'الصلاحية مرفوضة'],
     'timeout': ['error', 'انتهت المهلة'],
@@ -836,7 +837,7 @@ async function readApiError(response) {
 
 function classifyApiError(status, detail = '') {
   const tail = detail ? ` (${detail.slice(0, 150)})` : '';
-  if (status === 401 || /api key not valid|API_KEY_INVALID/i.test(detail)) return { status: 'invalid', message: 'المفتاح غير صالح أو منتهي. تأكد من نسخه بشكل كامل.' + tail };
+  if (status === 401 || (status === 400 && /api key|API_KEY_INVALID/i.test(detail)) || /api key not valid|API_KEY_INVALID/i.test(detail)) return { status: 'invalid', message: 'المفتاح غير صالح أو منتهي. تأكد من نسخه بشكل كامل.' + tail };
   if (status === 429 || /quota|RESOURCE_EXHAUSTED/i.test(detail)) return { status: 'quota', message: 'تجاوزت حد الاستخدام المسموح للمفتاح. انتظر لحظات.' + tail };
   if (status === 404) return { status: 'model-error', message: `النموذج المحدد غير متاح لمفتاحك.` + tail };
   if (status === 403) return { status: 'permission', message: 'صلاحيات API مرفوضة. تأكد من عدم وجود قيود على المفتاح.' + tail };
@@ -865,24 +866,21 @@ async function timedFetch(url, init = {}, ms = GEMINI_CONFIG.timeoutMs, parent =
   }
 }
 
-async function postGemini(apiKey, body, parent = null, ms = GEMINI_CONFIG.timeoutMs, stream = false) {
-  const t0 = performance.now();
-  const send = limit => timedFetch(modelUrl(stream), {
+async function postGemini(apiKey, body, ctl, stream = false) {
+  // ctl: AbortController واحد يشمل الإلغاء اليدوي والمهلة الكلية (بما فيها قراءة البث)
+  const url = modelUrl(stream);
+  const send = () => fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body)
-  }, limit, parent);
-
-  let r = await send(ms);
-
-  // ضغط الخادم (502/503/504): حتى 3 إعادات بتأخير متزايد، ولا تتجاوز المهلة الكلية
+    body: JSON.stringify(body),
+    signal: ctl.signal
+  });
+  let r = await send();
+  // ضغط الخادم (502/503/504): حتى 3 إعادات بتأخير متزايد، والمهلة الكلية تبقى نافذة
   for (let attempt = 0; attempt < 3 && [502, 503, 504].includes(r.status); attempt++) {
-    const delay = 1500 * Math.pow(2, attempt); // 1.5ث، 3ث، 6ث
-    const left = ms - (performance.now() - t0) - delay;
-    if (left <= 2000 || (parent && parent.aborted)) break;
-    await new Promise(res => setTimeout(res, delay));
-    if (parent && parent.aborted) break;
-    r = await send(ms - (performance.now() - t0));
+    await new Promise(res => setTimeout(res, 1500 * Math.pow(2, attempt)));
+    if (ctl.signal.aborted) break;
+    r = await send();
   }
   return r;
 }
@@ -928,10 +926,12 @@ async function testApiConnection() {
 
   try {
     // إرسال طلب توليد فوري من كلمة واحدة
+    v.timedOut = false;
+    v.kill = setTimeout(() => { v.timedOut = true; v.controller.abort(); }, API_TEST_TIMEOUT_MS);
     const r = await postGemini(keyToTest, {
       contents: [{ role: 'user', parts: [{ text: 'ping' }] }],
       generationConfig: { maxOutputTokens: GEMINI_CONFIG.testMaxOutputTokens }
-    }, v.controller.signal, API_TEST_TIMEOUT_MS, false);
+    }, v.controller, false);
 
     if (APP_STATE.verify !== v) return;
 
@@ -948,11 +948,12 @@ async function testApiConnection() {
     res.style.color = 'var(--dark-green)';
     res.textContent = '✓ الاتصال ناجح ومباشر! النموذج جاهز للعمل فوراً.';
   } catch (err) {
-    if (err.cancelled || APP_STATE.verify !== v) return;
+    if (!v.timedOut && (v.controller.signal.aborted || APP_STATE.verify !== v)) return;
     setConnectionStatus('timeout');
     res.style.color = 'var(--danger)';
-    res.textContent = err.timedOut ? 'انتهت المهلة. الاتصال عبر الـ VPN بطيء حالياً، لكن المفتاح تم حفظه ويمكنك تجربة الأدوات مباشرة.' : 'تعذر الاتصال بالخادم. تحقق من شبكة الإنترنت لديك.';
+    res.textContent = v.timedOut ? 'انتهت المهلة. الاتصال عبر الـ VPN بطيء حالياً، لكن المفتاح تم حفظه ويمكنك تجربة الأدوات مباشرة.' : 'تعذر الاتصال بالخادم. تحقق من شبكة الإنترنت لديك.';
   } finally {
+    clearTimeout(v.kill);
     APP_STATE.verify = null;
     APP_STATE.testInFlight = false;
     btn.disabled = false;
@@ -995,9 +996,11 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
   if (bar) bar.style.display = 'flex';
   tick();
   req.timer = setInterval(tick, 1000);
+  req.timedOut = false;
+  req.kill = setTimeout(() => { req.timedOut = true; req.ctl.abort(); }, GEMINI_CONFIG.timeoutMs);
 
   try {
-    const response = await postGemini(apiKey, body, req.ctl.signal, GEMINI_CONFIG.timeoutMs, useStream);
+    const response = await postGemini(apiKey, body, req.ctl, useStream);
 
     if (!response.ok) {
       const c = classifyApiError(response.status, await readApiError(response));
@@ -1045,7 +1048,8 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
     setConnectionStatus('connected');
     return text;
   } catch (err) {
-    if (err.cancelled) {
+    if (req.ctl.signal.aborted) {
+      if (req.timedOut) throw new Error('الطلب استغرق وقتاً أطول من المسموح فتم إيقافه (الحد ' + Math.round(GEMINI_CONFIG.timeoutMs / 1000) + ' ثانية). حاول مجدداً أو قلّل حجم المدخلات.');
       const e = new Error('تم إلغاء الطلب.');
       e.cancelled = true;
       throw e;
@@ -1053,6 +1057,7 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
     throw err;
   } finally {
     clearInterval(req.timer);
+    clearTimeout(req.kill);
     if (APP_STATE.toolReq === req) {
       APP_STATE.toolReq = null;
       if (bar) bar.style.display = 'none';
