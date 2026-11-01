@@ -1393,17 +1393,23 @@ async function startMedPatientCase() {
   const level = $('level').value;
 
   setToolLoadingState(true, 'جارٍ تهيئة سيناريو المريض...');
-  $('toolOutputContainer').innerHTML = '';
   APP_STATE.patientHistory = [{
     role: 'user',
     parts: [{ text: `ابدأ سيناريو مريض افتراضي جديد وفق: (الشكوى: ${complaint} | الصعوبة: ${level}). قدم نفسك كالمريض باختصار في جملتين فقط.` }]
   }];
-
+  renderPatientChatInterface('');
+  const body = lastPatientBody();
   try {
-    const first = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory });
+    const first = await callGeminiAPI({
+      systemInstruction: PATIENT_SYSTEM_PROMPT,
+      contents: APP_STATE.patientHistory,
+      generationConfig: { maxOutputTokens: 600 },
+      onStream: partial => paintBody(body, partial)
+    });
+    paintBody(body, first);
     APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: first }] });
-    renderPatientChatInterface(first);
   } catch (e) {
+    if (body && body.parentElement) body.parentElement.remove();
     renderToolError(e.message, startMedPatientCase);
   } finally {
     setToolLoadingState(false);
@@ -1431,27 +1437,66 @@ function renderPatientChatInterface(initialReply) {
 
 function appendChatBubble(sender, text) {
   const log = $('patientChatLog');
-  if (!log) return;
+  if (!log) return null;
   const bubble = document.createElement('div');
   bubble.className = 'chat-bubble ' + (sender === 'user' ? 'user' : 'patient');
-  bubble.innerHTML = `<b>${sender === 'user' ? 'الطالب:' : 'المريض:'}</b> <div>${renderSafeMarkdown(text)}</div>`;
+  bubble.innerHTML = `<b>${sender === 'user' ? 'الطالب:' : 'المريض:'}</b> <div></div>`;
+  bubble.lastElementChild.innerHTML = sender === 'user' ? '' : renderSafeMarkdown(text);
+  if (sender === 'user') bubble.lastElementChild.textContent = text;
   log.appendChild(bubble);
   log.scrollTop = log.scrollHeight;
+  return bubble;
+}
+
+function lastPatientBody() {
+  const log = $('patientChatLog');
+  return log && log.lastElementChild ? log.lastElementChild.lastElementChild : null;
+}
+
+// يرسم النص الجزئي فور وصوله (البث) حتى لا ينتظر الطالب الرد كاملاً
+function paintBody(body, text) {
+  if (!body) return;
+  body.innerHTML = renderSafeMarkdown(text);
+  const log = $('patientChatLog');
+  if (log) log.scrollTop = log.scrollHeight;
 }
 
 async function sendQuestionToPatient() {
+  if (APP_STATE.isRequestInFlight) return;
   const qInput = $('patientQuestionInput');
   const question = qInput.value.trim();
-  if (!question || APP_STATE.isRequestInFlight) return;
+  if (!question) return;
   qInput.value = '';
-  appendChatBubble('user', question);
+  const userEl = appendChatBubble('user', question);
   APP_STATE.patientHistory.push({ role: 'user', parts: [{ text: question }] });
+  const patientEl = appendChatBubble('patient', '');
+  const body = patientEl.lastElementChild;
+  APP_STATE.isRequestInFlight = true;
   try {
-    const reply = await callGeminiAPI({ systemInstruction: PATIENT_SYSTEM_PROMPT, contents: APP_STATE.patientHistory });
+    const reply = await callGeminiAPI({
+      systemInstruction: PATIENT_SYSTEM_PROMPT,
+      contents: APP_STATE.patientHistory,
+      generationConfig: { maxOutputTokens: 600 },
+      onStream: partial => paintBody(body, partial)
+    });
+    paintBody(body, reply);
     APP_STATE.patientHistory.push({ role: 'model', parts: [{ text: reply }] });
-    appendChatBubble('patient', reply);
   } catch (e) {
-    appendChatBubble('patient', 'عذراً، حدث انقطاع في الاتصال. يرجى إعادة إرسال السؤال.');
+    // السؤال يرجع للحقل ولا تبقى فقاعات فاشلة في السجل
+    APP_STATE.patientHistory.pop();
+    patientEl.remove();
+    if (userEl) userEl.remove();
+    qInput.value = question;
+    const log = $('patientChatLog');
+    if (log) {
+      const n = document.createElement('div');
+      n.className = 'error-alert';
+      n.textContent = 'تعذر إرسال السؤال: ' + e.message;
+      log.appendChild(n);
+      log.scrollTop = log.scrollHeight;
+    }
+  } finally {
+    APP_STATE.isRequestInFlight = false;
   }
 }
 
