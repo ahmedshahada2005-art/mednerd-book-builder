@@ -806,15 +806,27 @@ function xTree(node) {
   }
 }
 
+function withoutI18nObserver(fn) {
+  if (!I18N_OBS) return fn();
+  I18N_OBS.disconnect();
+  try { fn(); }
+  finally {
+    I18N_OBS.takeRecords(); // تجاهل أي سجلات تولّدت من كتابتنا
+    I18N_OBS.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
+  }
+}
+
 function startI18nObserver() {
   if (I18N_OBS || typeof MutationObserver === 'undefined') return;
   I18N_OBS = new MutationObserver(ms => {
     if (LANG !== 'en') return;
-    for (const m of ms) {
-      if (m.type === 'characterData') xText(m.target);
-      else if (m.type === 'attributes') xAttr(m.target, m.attributeName);
-      else m.addedNodes.forEach(xTree);
-    }
+    withoutI18nObserver(() => {
+      for (const m of ms) {
+        if (m.type === 'characterData') xText(m.target);
+        else if (m.type === 'attributes') xAttr(m.target, m.attributeName);
+        else m.addedNodes.forEach(xTree);
+      }
+    });
   });
   I18N_OBS.observe(document.body, { subtree: true, childList: true, characterData: true, attributes: true, attributeFilter: ['placeholder', 'title', 'aria-label'] });
 }
@@ -857,7 +869,7 @@ function setLang(lang, persist = true) {
   if (ap) ap.textContent = 'جميع الأدوات (' + TOOLS.length + ')';
   if ($('toolsContainer') && $('searchInput')) filterTools();
   relabelWorkspace();
-  xTree(document.body); // يترجم إلى الإنجليزية أو يستعيد الأصل العربي؛ لا يُرسل أي طلب API
+  withoutI18nObserver(() => xTree(document.body)); // يترجم إلى الإنجليزية أو يستعيد الأصل العربي؛ لا يُرسل أي طلب API
 }
 function toggleLang() { setLang(LANG === 'ar' ? 'en' : 'ar'); }
 
@@ -1247,15 +1259,24 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
   // مهلة كلية واحدة تغطي الطلب والبث والإعادات، والإلغاء اليدوي على نفس المتحكم
   req.kill = setTimeout(() => { req.timedOut = true; ctl.abort(); }, GEMINI_CONFIG.timeoutMs);
 
-  const url = `${GEMINI_CONFIG.apiBase}/models/${getModel()}:streamGenerateContent?alt=sse`;
-  const doFetch = () => fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': apiKey },
-    body: JSON.stringify(body),
-    signal: ctl.signal
-  });
+  const url = `${GEMINI_CONFIG.apiBase}/models/${getModel()}:streamGenerateContent?alt=sse&key=${encodeURIComponent(apiKey)}`;
+  let useThinking = true;
+  const doFetch = () => {
+    const payload = { ...body, generationConfig: { ...body.generationConfig } };
+    if (!useThinking) delete payload.generationConfig.thinkingConfig;
+    return fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: ctl.signal
+    });
+  };
   try {
     let r = await doFetch();
+    if (r.status === 400 && useThinking) {
+      const d = await readApiError(r.clone());
+      if (/thinking/i.test(d)) { useThinking = false; r = await doFetch(); }
+    }
     for (let a = 0; a < 3 && [502, 503, 504].includes(r.status); a++) {
       await new Promise(res => setTimeout(res, 1500 * Math.pow(2, a)));
       if (ctl.signal.aborted) break;
@@ -1277,6 +1298,7 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
       const lines = buf.split(/\r?\n/);
       buf = lines.pop() || '';
       for (const line of lines) {
+        if (!line || line.startsWith(':')) continue; // تعليقات keep-alive
         if (!line.startsWith('data:')) continue;
         const js = line.slice(5).trim();
         if (!js || js === '[DONE]') continue;
@@ -1521,11 +1543,14 @@ function closeWorkspace(force) {
   cancelToolRequest();
   if (hasData) { APP_STATE.session = null; APP_STATE.patientHistory = []; }
   $('workspaceModal').style.display = 'none';
+  $('workspaceBodyContent').innerHTML = ''; // لا مراجع معلّقة للعناصر والملفات
+  APP_STATE.toolReq = null;
   APP_STATE.activeToolId = null;
   updateBodyScrollLock();
 }
 function resetCurrentTool() {
   if (APP_STATE.isRequestInFlight) return;
+  $('workspaceBodyContent').innerHTML = '';
   APP_STATE.session = null; // زر الإعادة يبدأ جلسة جديدة فعلاً
   if (APP_STATE.activeToolId) openToolWorkspace(APP_STATE.activeToolId);
 }
