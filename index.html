@@ -1277,8 +1277,12 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
       const d = await readApiError(r.clone());
       if (/thinking/i.test(d)) { useThinking = false; r = await doFetch(); }
     }
+    // إعادة محاولة لأخطاء الخادم المؤقتة فقط (502/503/504)، مع احترام Retry-After وسقف للمحاولات
     for (let a = 0; a < 3 && [502, 503, 504].includes(r.status); a++) {
-      await new Promise(res => setTimeout(res, 1500 * Math.pow(2, a)));
+      const ra = Number(r.headers && r.headers.get && r.headers.get('Retry-After'));
+      const backoff = 1500 * Math.pow(2, a);
+      const wait = Math.min(Number.isFinite(ra) && ra > 0 ? ra * 1000 : backoff, 15000);
+      await new Promise(res => setTimeout(res, wait));
       if (ctl.signal.aborted) break;
       r = await doFetch();
     }
