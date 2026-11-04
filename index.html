@@ -236,7 +236,7 @@ html[lang="en"] *{font-family:'Inter','Cairo',sans-serif}
 <div id="apiKeyModal" class="workspace-modal" style="display:none;" role="dialog" aria-modal="true" aria-labelledby="apiModalTitle">
   <div class="workspace-card" style="max-width:580px;">
     <div class="workspace-header">
-      <div class="workspace-title-area"><h2 id="apiModalTitle">إعداد مفتاح Google Gemini API</h2><p>اتصال مباشر وآمن عبر ترويسة x-goog-api-key من متصفحك إلى خوادم Google Gemini</p></div>
+      <div class="workspace-title-area"><h2 id="apiModalTitle">إعداد مفتاح Google Gemini API</h2><p>اتصال مباشر من متصفحك إلى خوادم Google Gemini دون وسيط</p></div>
       <button class="close-btn" onclick="closeApiKeyModal()" aria-label="إغلاق"><i class="fa-solid fa-xmark"></i></button>
     </div>
     <div class="workspace-body">
@@ -277,9 +277,10 @@ html[lang="en"] *{font-family:'Inter','Cairo',sans-serif}
         <label class="form-label" for="apiModelInput">اسم النموذج (متقدم — اتركه فارغاً للافتراضي):</label>
         <input type="text" id="apiModelInput" class="form-input" dir="ltr" autocomplete="off" spellcheck="false" oninput="syncModelChips()">
         <div class="model-presets" dir="ltr">
-          <button type="button" class="model-chip" data-model="gemini-3.8-flash" onclick="selectModelPreset('gemini-3.8-flash')">gemini-3.8-flash (Default)</button>
+          <button type="button" class="model-chip" data-model="gemini-2.5-flash" onclick="selectModelPreset('gemini-2.5-flash')">gemini-2.5-flash (Default)</button>
+          <button type="button" class="model-chip" data-model="gemini-3.8-flash" onclick="selectModelPreset('gemini-3.8-flash')">gemini-3.8-flash</button>
           <button type="button" class="model-chip" data-model="gemini-3.5-flash-lite" onclick="selectModelPreset('gemini-3.5-flash-lite')">gemini-3.5-flash-lite</button>
-          <button type="button" class="model-chip" data-model="gemini-2.5-flash" onclick="selectModelPreset('gemini-2.5-flash')">gemini-2.5-flash</button>
+          <button type="button" class="model-chip" data-model="gemini-2.0-flash" onclick="selectModelPreset('gemini-2.0-flash')">gemini-2.0-flash</button>
         </div>
       </div>
       <div id="modalStatusLine" style="font-size:13px;color:var(--muted-text);margin-bottom:6px;"></div>
@@ -339,13 +340,12 @@ const API_TEST_TIMEOUT_MS = 25000;
 const CONTENT_GENERATION_TIMEOUT_MS = 120000;
 
 const GEMINI_CONFIG = {
-  model: 'gemini-3.8-flash',
-  fallbackModels: ['gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.5-flash'],
+  model: 'gemini-2.5-flash',
+  fallbackModels: ['gemini-2.5-flash', 'gemini-3.8-flash', 'gemini-3.5-flash-lite', 'gemini-2.0-flash'],
   apiBase: 'https://generativelanguage.googleapis.com/v1beta',
-  defaultThinkingLevel: 'low',
   timeoutMs: CONTENT_GENERATION_TIMEOUT_MS,
   testMaxOutputTokens: 256,
-  maxOutputTokens: 16384,
+  maxOutputTokens: 8192,
   maxPdfPages: 25,
   maxFileSizeBytes: 12 * 1024 * 1024
 };
@@ -377,14 +377,9 @@ const store = {
 
 function cleanKey(k) {
   return String(k || '')
-    .trim()
+    .replace(/[^\x21-\x7E]/g, '')
     .replace(/^["']+|["']+$/g, '')
-    .replace(/^Bearer\s+/i, '')
-    .replace(/[^\x21-\x7E]/g, '');
-}
-
-function isValidKeyFormat(k) {
-  return typeof k === 'string' && k.length >= 20 && /^[A-Za-z0-9_\-]+$/.test(k);
+    .replace(/^Bearer/i, '');
 }
 
 function copyTextSafe(text) {
@@ -851,7 +846,7 @@ const EN_EXACT = {
   "تنزيل .md": "Download .md"
 };
 const EN_PAIRS = [
-  ["اتصال مباشر وآمن عبر ترويسة x-goog-api-key من متصفحك إلى خوادم Google Gemini", "Direct, secure connection via x-goog-api-key header from your browser to Google Gemini servers"],
+  ["اتصال مباشر من متصفحك إلى خوادم Google Gemini دون وسيط", "Direct connection from your browser to Google Gemini servers, no middleman"],
   ["فريق MEDNERD", "the MEDNERD team"],
   ["مصمم لطلاب الطب والعلوم الصحية", "Built for medical and health-science students"],
   ["معالجة مباشرة من متصفحك (BYOK)", "Processed directly in your browser (BYOK)"],
@@ -888,7 +883,6 @@ const EN_PAIRS = [
   ["إلغاء الطلب", "Cancel request"],
   ["تم إلغاء الطلب بناءً على طلبك.", "The request was cancelled at your request."],
   ["لم يتم إدخال مفتاح API. أدخل مفتاحاً ثم اضغط «التحقق من المفتاح».", "No API key entered. Enter a key, then click \"Verify key\"."],
-  ["صيغة المفتاح غير صحيحة. تأكد من نسخ مفتاح Gemini API كاملاً بدون مسافات.", "Invalid API key format. Make sure you copied the full Gemini API key without spaces."],
   ["يرجى إدخال مفتاح Gemini API أولاً قبل الحفظ.", "Please enter a Gemini API key first before saving."],
   ["تم حفظ المفتاح محلياً.", "Key saved locally."],
   ["تم تفعيل المفتاح مؤقتاً لهذه الجلسة.", "Key activated for this session."],
@@ -1332,11 +1326,6 @@ function saveApiKey(persistToLocal) {
     res.textContent = trText('يرجى إدخال مفتاح Gemini API أولاً قبل الحفظ.');
     return;
   }
-  if (!isValidKeyFormat(rawKey)) {
-    res.style.color = 'var(--danger)';
-    res.textContent = trText('صيغة المفتاح غير صحيحة. تأكد من نسخ مفتاح Gemini API كاملاً بدون مسافات.');
-    return;
-  }
   cancelVerification();
   if (persistToLocal) { store.set('mednerd_gemini_key', rawKey); APP_STATE.sessionOnlyKey = ''; }
   else { APP_STATE.sessionOnlyKey = rawKey; store.del('mednerd_gemini_key'); }
@@ -1370,32 +1359,8 @@ function getModel() {
   return MODEL_PATTERN.test(m) ? m : GEMINI_CONFIG.model;
 }
 
-function isGemini3OrLater(modelName) {
-  return /^gemini-([3-9]|\d{2,})/i.test(modelName || getModel());
-}
-
-function buildGenerationConfig(overrides = {}, forPing = false) {
-  const model = getModel();
-  const modern = isGemini3OrLater(model);
-  const cfg = {
-    maxOutputTokens: forPing ? GEMINI_CONFIG.testMaxOutputTokens : GEMINI_CONFIG.maxOutputTokens,
-    ...overrides
-  };
-  if (modern) {
-    // في نماذج Gemini 3.x/4.x تحسب توكنات التفكير ضمن maxOutputTokens، ويُنصح بضبط thinkingLevel وعدم خفض temperature
-    delete cfg.temperature;
-    if (!cfg.thinkingConfig) {
-      cfg.thinkingConfig = { thinkingLevel: forPing ? 'low' : (GEMINI_CONFIG.defaultThinkingLevel || 'low') };
-    }
-  } else {
-    delete cfg.thinkingConfig;
-    if (cfg.temperature === undefined && !forPing) cfg.temperature = 0.35;
-  }
-  return cfg;
-}
-
-function modelEndpointUrl(modelName = getModel()) {
-  return `${GEMINI_CONFIG.apiBase}/models/${encodeURIComponent(modelName)}:generateContent`;
+function modelUrl(apiKey, modelName = getModel()) {
+  return `${GEMINI_CONFIG.apiBase}/models/${encodeURIComponent(modelName)}:generateContent?key=${encodeURIComponent(apiKey)}`;
 }
 
 function applyModelInput() {
@@ -1480,18 +1445,42 @@ function abortableDelay(ms, signal) {
 
 async function postGemini(apiKey, body, stage = 'generate', parent = null, ms = GEMINI_CONFIG.timeoutMs) {
   const t0 = performance.now();
-  const send = (limit) => {
-    return timedFetch(stage, modelEndpointUrl(), {
+  const primaryModel = getModel();
+  const candidates = [primaryModel, ...GEMINI_CONFIG.fallbackModels.filter(m => m !== primaryModel)];
+
+  const sendWithModel = (modelName, limit) => {
+    return timedFetch(stage, modelUrl(apiKey, modelName), {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-goog-api-key': apiKey
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body)
     }, Math.max(limit, 3000), parent);
   };
 
-  let r = await send(ms);
+  let activeModel = primaryModel;
+  let r = await sendWithModel(activeModel, ms);
+
+  // إذا كان النموذج المختار غير متاح لهذا المفتاح (404)، جرّب النماذج البديلة تلقائياً
+  if (r.status === 404) {
+    for (let i = 1; i < candidates.length; i++) {
+      const elapsed = performance.now() - t0;
+      if ((ms - elapsed) <= 4000) break;
+      const altModel = candidates[i];
+      console.warn(`[Gemini] النموذج ${activeModel} أعاد 404؛ تجربة البديل ${altModel}...`);
+      const altResp = await sendWithModel(altModel, ms - elapsed);
+      r = altResp;
+      activeModel = altModel;
+      if (r.status !== 404) {
+        if (r.ok) {
+          store.set('mednerd_model', altModel);
+          const mi = $('apiModelInput');
+          if (mi) mi.value = altModel === GEMINI_CONFIG.model ? '' : altModel;
+          syncModelChips();
+        }
+        break;
+      }
+    }
+  }
+
   const delays = [1500, 3000];
   for (let i = 0; i < delays.length; i++) {
     if (r.status !== 503 && r.status !== 502) break;
@@ -1499,7 +1488,7 @@ async function postGemini(apiKey, body, stage = 'generate', parent = null, ms = 
     if ((ms - elapsed) <= delays[i] + 3500) break;
     console.warn(`[Gemini] الخادم مشغول (${r.status})؛ محاولة إعادة إرسال #${i + 1} بعد ${delays[i]}ms...`);
     await abortableDelay(delays[i], parent);
-    r = await send(ms - (performance.now() - t0));
+    r = await sendWithModel(activeModel, ms - (performance.now() - t0));
   }
   return r;
 }
@@ -1548,7 +1537,7 @@ function cancelVerification(userCancelled = false) {
 }
 
 async function testApiConnection() {
-  if (APP_STATE.verify) return;
+  if (APP_STATE.verify) cancelVerification(false);
   applyModelInput();
   syncModelChips();
   const res = $('connectionTestResult'), btn = $('testConnectionBtn'), cancelBtn = $('cancelVerifyBtn');
@@ -1556,13 +1545,8 @@ async function testApiConnection() {
 
   const typedKey = cleanKey($('apiKeyInput').value);
   if (typedKey) {
-    if (!isValidKeyFormat(typedKey)) {
-      setConnectionStatus('invalid');
-      show('var(--danger)', 'صيغة المفتاح غير صحيحة. تأكد من نسخ مفتاح Gemini API كاملاً بدون مسافات.');
-      return;
-    }
     APP_STATE.sessionOnlyKey = typedKey;
-    $('apiKeyInput').value = '';
+    refreshMaskedKeyBanner();
   }
   const keyToTest = getActiveApiKey();
   if (!keyToTest) {
@@ -1570,13 +1554,7 @@ async function testApiConnection() {
     show('var(--danger)', 'لم يتم إدخال مفتاح API. أدخل مفتاحاً ثم اضغط «التحقق من المفتاح».');
     return;
   }
-  if (!isValidKeyFormat(keyToTest)) {
-    setConnectionStatus('invalid');
-    show('var(--danger)', 'صيغة المفتاح غير صحيحة. تأكد من نسخ مفتاح Gemini API كاملاً بدون مسافات.');
-    return;
-  }
 
-  const model = getModel();
   const ms = API_TEST_TIMEOUT_MS;
   const v = { controller: new AbortController(), t0: performance.now(), stage: '', timer: null };
   APP_STATE.verify = v;
@@ -1607,8 +1585,7 @@ async function testApiConnection() {
   try {
     step();
     const r = await postGemini(keyToTest, {
-      contents: [{ role: 'user', parts: [{ text: 'Respond with OK' }] }],
-      generationConfig: buildGenerationConfig({}, true)
+      contents: [{ role: 'user', parts: [{ text: 'Ping' }] }]
     }, 'generate', sig, ms);
 
     if (!alive()) return;
@@ -1621,10 +1598,12 @@ async function testApiConnection() {
     let data = null;
     try { data = await r.json(); } catch (_) {}
     if (!alive()) return;
+    const model = getModel();
     const cand = data && data.candidates && data.candidates[0];
     const text = cand && cand.content && Array.isArray(cand.content.parts)
       ? cand.content.parts.filter(x => !x.thought).map(x => x.text || '').join('').trim() : '';
 
+    if ($('apiKeyInput')) $('apiKeyInput').value = '';
     if (text || cand) {
       end('connected', 'var(--dark-green)', `✓ تم التحقق بنجاح: النموذج (${model}) يعمل.`);
     } else {
@@ -1652,7 +1631,7 @@ async function callGeminiAPI({ systemInstruction, contents, generationConfig = {
   const body = {
     contents,
     systemInstruction: { parts: [{ text: (systemInstruction || '') + langRule + profileRule() }] },
-    generationConfig: buildGenerationConfig(generationConfig, false)
+    generationConfig: { maxOutputTokens: GEMINI_CONFIG.maxOutputTokens, ...generationConfig }
   };
 
   const req = { ctl: new AbortController(), t0: performance.now(), timer: null };
