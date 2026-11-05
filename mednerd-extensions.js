@@ -23,16 +23,561 @@
     .mm-legend-item { display: inline-flex; align-items: center; gap: 5px; }
     .mm-legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
 
-    /* 2. Collaborative Study Room */
-    .csr-grid { display: grid; grid-template-columns: 1fr 1.2fr; gap: 18px; margin-top: 14px; }
-    @media (max-width: 768px) { .csr-grid { grid-template-columns: 1fr; } }
-    .csr-panel { background: var(--bg-main); border: 1px solid var(--border-color); border-radius: 16px; padding: 18px; display: flex; flex-direction: column; gap: 12px; }
-    .csr-timer-display { font-size: 54px; font-weight: 800; font-family: 'Inter', monospace; color: var(--petrol); text-align: center; letter-spacing: 2px; padding: 14px 0; background: var(--white); border-radius: 14px; border: 1px solid var(--border-color); }
-    .csr-dropzone { border: 2px dashed var(--petrol); background: var(--petrol-soft); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: all .2s; font-size: 13.5px; font-weight: 700; color: var(--petrol); }
-    .csr-dropzone.dragover { background: var(--dark-green-soft); border-color: var(--dark-green); color: var(--dark-green); }
-    .csr-dropzone.disabled { opacity: 0.45; cursor: not-allowed; border-color: var(--muted-text); color: var(--muted-text); }
-    .csr-file-item { display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; background: var(--white); border: 1px solid var(--border-color); border-radius: 10px; font-size: 13px; }
+  /* ==========================================================================
+     MODULE 2: COLLABORATIVE STUDY ROOM (UPGRADED: INVITE LINKS + CROSS-DEVICE P2P SYNC)
+     ========================================================================== */
+  const CollaborativeStudyRoom = {
+    state: {
+      channel: null,
+      peer: null,
+      connections: [],
+      isHostPeer: false,
+      roomCode: '',
+      userName: '',
+      role: 'host',
+      focusSec: 1500,
+      breakSec: 300,
+      phase: 'FOCUS',
+      remainingSec: 1500,
+      running: false,
+      intervalId: null,
+      messages: [],
+      files: [],
+      peersCount: 1
+    },
 
+    permissions() {
+      const r = this.state.role;
+      return {
+        canControlTimer: r === 'host',
+        canChat: r === 'host' || r === 'editor',
+        canUpload: r === 'host' || r === 'editor',
+        canDeleteFile: r === 'host',
+        canAskAiCoPilot: r === 'host' || r === 'editor'
+      };
+    },
+
+    cleanup() {
+      if (this.state.intervalId) { clearInterval(this.state.intervalId); this.state.intervalId = null; }
+      if (this.state.channel) { try { this.state.channel.close(); } catch (_) {} this.state.channel = null; }
+      if (this.state.peer) { try { this.state.peer.destroy(); } catch (_) {} this.state.peer = null; }
+      this.state.connections = [];
+    },
+
+    ensurePeerJS() {
+      if (window.Peer) return Promise.resolve();
+      return new Promise((resolve) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+        sc.onload = () => resolve();
+        sc.onerror = () => resolve(); // يستمر بالعمل محلياً إذا تعذر تحميل المكتبة
+        document.head.appendChild(sc);
+      });
+    },
+
+    getInviteUrl() {
+      const base = window.location.origin + window.location.pathname;
+      return `${base}?room=${encodeURIComponent(this.state.roomCode)}`;
+    },
+
+    copyInviteLink(btnEl) {
+      const url = this.getInviteUrl();
+      copyTextSafe(url).then(() => {
+        if (!btnEl) return;
+        const orig = btnEl.innerHTML;
+        btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${LANG === 'en' ? 'Link Copied!' : 'تم نسخ رابط الغرفة!'}`;
+        setTimeout(() => { btnEl.innerHTML = orig; }, 2200);
+      });
+    },
+
+    copyRoomCodeOnly(btnEl) {
+      copyTextSafe(this.state.roomCode).then(() => {
+        if (!btnEl) return;
+        const orig = btnEl.innerHTML;
+        btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${LANG === 'en' ? 'Code Copied!' : 'تم نسخ الرمز!'}`;
+        setTimeout(() => { btnEl.innerHTML = orig; }, 2000);
+      });
+    },
+
+    shareViaTelegram() {
+      const url = this.getInviteUrl();
+      const text = LANG === 'en'
+        ? `Join my MEDNERD Collaborative Study Room (${this.state.roomCode}):`
+        : `انضم إليّ في غرفة الدراسة المشتركة على منصة MEDNERD (رمز الغرفة: ${this.state.roomCode}):`;
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    },
+
+    shareViaWhatsApp() {
+      const url = this.getInviteUrl();
+      const text = LANG === 'en'
+        ? `Join my MEDNERD Study Room (${this.state.roomCode}): ${url}`
+        : `انضم إليّ في غرفة الدراسة المشتركة على MEDNERD (رمز الغرفة: ${this.state.roomCode}):\n${url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    },
+
+    async run() {
+      this.cleanup();
+      const codeRaw = (($('csr_code') && $('csr_code').value.trim()) || 'MED-ROOM-' + Math.floor(1000 + Math.random() * 9000));
+      const code = codeRaw.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+      if ($('csr_code')) $('csr_code').value = code;
+
+      const p = typeof getProfile === 'function' ? getProfile() : null;
+      const name = (($('csr_name') && $('csr_name').value.trim()) || (p && p.name) || (LANG === 'en' ? 'Med Student' : 'طالب طب'));
+      const roleVal = ($('csr_role') && $('csr_role').value) || 'host';
+      const cycleVal = ($('csr_cycle') && $('csr_cycle').value) || '25/5';
+      const [fMin, bMin] = cycleVal.split('/').map(n => parseInt(n, 10) || 25);
+
+      this.state.roomCode = code;
+      this.state.userName = name;
+      this.state.role = roleVal;
+      this.state.focusSec = fMin * 60;
+      this.state.breakSec = bMin * 60;
+      this.state.phase = 'FOCUS';
+      this.state.remainingSec = this.state.focusSec;
+      this.state.running = false;
+      this.state.peersCount = 1;
+
+      const savedRoom = this.loadRoomStorage(code);
+      this.state.messages = savedRoom.messages || [];
+      this.state.files = savedRoom.files || [];
+
+      if (typeof BroadcastChannel !== 'undefined') {
+        this.state.channel = new BroadcastChannel('mednerd_csr_' + code);
+        this.state.channel.onmessage = ev => this.handleIncomingPacket(ev.data, null);
+      }
+
+      this.renderRoomUI();
+      await this.initPeerNetwork(code);
+    },
+
+    async initPeerNetwork(code) {
+      await this.ensurePeerJS();
+      if (!window.Peer) return;
+      const hostPeerId = 'mednerd-room-v2-' + code.toLowerCase();
+
+      const peer = new Peer(hostPeerId);
+      this.state.peer = peer;
+
+      peer.on('open', () => {
+        this.state.isHostPeer = true;
+        this.updateNetStatus(LANG === 'en' ? 'Online Room Ready' : 'الغرفة متصلة وجاهزة لاستقبال الزملاء');
+      });
+
+      peer.on('connection', conn => {
+        this.registerConn(conn);
+      });
+
+      peer.on('error', err => {
+        if (err && err.type === 'unavailable-id') {
+          // الغرفة منشأة مسبقاً من زميل آخر -> ندخل كعضو متصل بالمضيف
+          const guestPeer = new Peer();
+          this.state.peer = guestPeer;
+          this.state.isHostPeer = false;
+          guestPeer.on('open', () => {
+            const conn = guestPeer.connect(hostPeerId, { reliable: true });
+            this.registerConn(conn);
+          });
+        }
+      });
+    },
+
+    registerConn(conn) {
+      conn.on('open', () => {
+        if (!this.state.connections.includes(conn)) this.state.connections.push(conn);
+        this.state.peersCount = this.state.connections.length + 1;
+        this.updateNetStatus(
+          LANG === 'en'
+            ? `Connected (${this.state.peersCount} in room)`
+            : `متصل الآن (${this.state.peersCount} طلاب في الغرفة)`
+        );
+        // إذا كنا المضيف، نرسل الحالة الكاملة للزميل الجديد فور دخوله
+        if (this.state.isHostPeer) {
+          conn.send({
+            type: 'FULL_SYNC',
+            phase: this.state.phase,
+            remainingSec: this.state.remainingSec,
+            running: this.state.running,
+            messages: this.state.messages,
+            files: this.state.files,
+            peersCount: this.state.peersCount
+          });
+        }
+      });
+
+      conn.on('data', data => {
+        this.handleIncomingPacket(data, conn);
+      });
+
+      conn.on('close', () => {
+        this.state.connections = this.state.connections.filter(c => c !== conn);
+        this.state.peersCount = Math.max(1, this.state.connections.length + 1);
+        this.updateNetStatus(
+          LANG === 'en'
+            ? `Online (${this.state.peersCount} in room)`
+            : `متصل (${this.state.peersCount} في الغرفة)`
+        );
+      });
+    },
+
+    updateNetStatus(txt) {
+      const el = $('csrNetBadge');
+      if (el) el.innerHTML = `<i class="fa-solid fa-wifi"></i> ${escapeHtml(txt)}`;
+    },
+
+    loadRoomStorage(code) {
+      try { return JSON.parse(sessionStorage.getItem('mednerd_csr_data_' + code) || '{}'); } catch (_) { return {}; }
+    },
+
+    saveRoomStorage() {
+      try {
+        sessionStorage.setItem('mednerd_csr_data_' + this.state.roomCode, JSON.stringify({
+          messages: this.state.messages.slice(-50),
+          files: this.state.files.slice(-15)
+        }));
+      } catch (_) {}
+    },
+
+    broadcast(payload, excludeConn = null) {
+      if (this.state.channel) { try { this.state.channel.postMessage(payload); } catch (_) {} }
+      this.state.connections.forEach(conn => {
+        if (conn !== excludeConn && conn.open) {
+          try { conn.send(payload); } catch (_) {}
+        }
+      });
+    },
+
+    handleIncomingPacket(msg, senderConn) {
+      if (!msg || typeof msg !== 'object') return;
+      // إذا كنا الـ Host الرئيسي، نعيد بث الرسالة لبقية الزملاء المتصلين
+      if (this.state.isHostPeer && senderConn) {
+        this.broadcast(msg, senderConn);
+      }
+
+      if (msg.type === 'FULL_SYNC') {
+        this.state.phase = msg.phase;
+        this.state.remainingSec = msg.remainingSec;
+        this.state.running = msg.running;
+        this.state.messages = msg.messages || [];
+        this.state.files = msg.files || [];
+        this.saveRoomStorage();
+        this.syncIntervalLoop();
+        this.updateTimerDOM();
+        this.renderChatList();
+        this.renderFileList();
+      } else if (msg.type === 'TIMER_SYNC') {
+        this.state.phase = msg.phase;
+        this.state.remainingSec = msg.remainingSec;
+        this.state.running = msg.running;
+        this.syncIntervalLoop();
+        this.updateTimerDOM();
+      } else if (msg.type === 'CHAT_MSG') {
+        if (!this.state.messages.some(m => m.id === msg.entry.id)) {
+          this.state.messages.push(msg.entry);
+          this.saveRoomStorage();
+          this.renderChatList();
+        }
+      } else if (msg.type === 'FILE_ADD') {
+        if (!this.state.files.some(f => f.id === msg.file.id)) {
+          this.state.files.push(msg.file);
+          this.saveRoomStorage();
+          this.renderFileList();
+        }
+      } else if (msg.type === 'FILE_DEL') {
+        this.state.files = this.state.files.filter(f => f.id !== msg.id);
+        this.saveRoomStorage();
+        this.renderFileList();
+      }
+    },
+
+    formatTime(sec) {
+      const m = Math.floor(Math.max(0, sec) / 60);
+      const s = Math.max(0, sec) % 60;
+      return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+    },
+
+    toggleTimer() {
+      if (!this.permissions().canControlTimer) return;
+      this.state.running = !this.state.running;
+      this.syncIntervalLoop();
+      this.updateTimerDOM();
+      this.broadcast({ type: 'TIMER_SYNC', phase: this.state.phase, remainingSec: this.state.remainingSec, running: this.state.running });
+    },
+
+    switchPhase(newPhase) {
+      if (!this.permissions().canControlTimer) return;
+      this.state.running = false;
+      this.state.phase = newPhase;
+      this.state.remainingSec = newPhase === 'FOCUS' ? this.state.focusSec : this.state.breakSec;
+      this.syncIntervalLoop();
+      this.updateTimerDOM();
+      this.broadcast({ type: 'TIMER_SYNC', phase: this.state.phase, remainingSec: this.state.remainingSec, running: false });
+    },
+
+    syncIntervalLoop() {
+      if (this.state.intervalId) { clearInterval(this.state.intervalId); this.state.intervalId = null; }
+      if (!this.state.running) return;
+      this.state.intervalId = setInterval(() => {
+        if (this.state.remainingSec > 0) {
+          this.state.remainingSec--;
+          this.updateTimerDOM();
+        } else {
+          this.state.phase = this.state.phase === 'FOCUS' ? 'BREAK' : 'FOCUS';
+          this.state.remainingSec = this.state.phase === 'FOCUS' ? this.state.focusSec : this.state.breakSec;
+          this.updateTimerDOM();
+        }
+      }, 1000);
+    },
+
+    updateTimerDOM() {
+      const disp = $('csrTimerClock'), badge = $('csrPhaseBadge'), btn = $('csrStartPauseBtn');
+      if (disp) disp.textContent = this.formatTime(this.state.remainingSec);
+      if (badge) {
+        const isFocus = this.state.phase === 'FOCUS';
+        badge.className = 'mn-ext-pill ' + (isFocus ? 'green' : 'mustard');
+        badge.textContent = isFocus ? (LANG === 'en' ? 'FOCUS SESSION' : 'جلسة تركيز') : (LANG === 'en' ? 'REST BREAK' : 'استراحة');
+      }
+      if (btn) {
+        btn.innerHTML = this.state.running
+          ? `<i class="fa-solid fa-pause"></i> ${LANG === 'en' ? 'Pause' : 'إيقاف مؤقت'}`
+          : `<i class="fa-solid fa-play"></i> ${LANG === 'en' ? 'Start' : 'بدء المؤقت'}`;
+      }
+    },
+
+    changeRoleLive(newRole) {
+      this.state.role = newRole;
+      const sel = $('csr_role');
+      if (sel) sel.value = newRole;
+      this.renderRoomUI();
+    },
+
+    sendChatMessage() {
+      if (!this.permissions().canChat) return;
+      const inp = $('csrChatInput');
+      if (!inp) return;
+      const txt = inp.value.trim();
+      if (!txt) return;
+      inp.value = '';
+      const entry = { id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5), user: this.state.userName, role: this.state.role, text: txt, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      this.state.messages.push(entry);
+      this.saveRoomStorage();
+      this.renderChatList();
+      this.broadcast({ type: 'CHAT_MSG', entry });
+    },
+
+    async askRoomAI() {
+      if (!this.permissions().canAskAiCoPilot || APP_STATE.isRequestInFlight) return;
+      const inp = $('csrChatInput');
+      const question = (inp && inp.value.trim()) || '';
+      if (!question) return;
+      inp.value = '';
+
+      const userEntry = { id: 'm_' + Date.now(), user: this.state.userName + ' (@AI)', role: this.state.role, text: question, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      this.state.messages.push(userEntry);
+      this.renderChatList();
+      this.broadcast({ type: 'CHAT_MSG', entry: userEntry });
+
+      const aiBtn = $('csrAskAiBtn');
+      if (aiBtn) aiBtn.disabled = true;
+
+      try {
+        const sharedContext = this.state.files.filter(f => f.textPreview).map(f => `[File: ${f.name}]\n${f.textPreview.slice(0, 1800)}`).join('\n\n');
+        const reply = await callGeminiAPI({
+          systemInstruction: 'أنت مساعد دراسة طبي تعاوني داخل غرفة مذاكرة. أجب بإيجاز ودقة علمية عالية.' + SAFE_RULES,
+          contents: [{ role: 'user', parts: [{ text: (sharedContext ? `ملفات الغرفة:\n${sharedContext}\n\n` : '') + `سؤال الطالب: ${question}` }] }]
+        });
+        const aiEntry = { id: 'm_' + Date.now() + '_ai', user: 'MEDNERD AI Co-Pilot', role: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        this.state.messages.push(aiEntry);
+        this.saveRoomStorage();
+        this.renderChatList();
+        this.broadcast({ type: 'CHAT_MSG', entry: aiEntry });
+      } catch (e) {
+        renderToolError(e.message);
+      } finally {
+        if (aiBtn) aiBtn.disabled = false;
+      }
+    },
+
+    async handleFilesDropped(fileList) {
+      if (!this.permissions().canUpload || !fileList || !fileList.length) return;
+      for (const file of Array.from(fileList)) {
+        if (file.size > 8 * 1024 * 1024) continue;
+        let textPreview = '';
+        if (file.type === 'text/plain' || file.name.endsWith('.txt') || file.name.endsWith('.md')) {
+          try { textPreview = await file.text(); } catch (_) {}
+        }
+        const b64 = await fileToBase64(file);
+        const item = {
+          id: 'f_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+          name: file.name,
+          sizeKB: Math.max(1, Math.round(file.size / 1024)),
+          dataUrl: `data:${file.type || 'application/octet-stream'};base64,${b64}`,
+          uploader: this.state.userName,
+          textPreview
+        };
+        this.state.files.push(item);
+        this.saveRoomStorage();
+        this.renderFileList();
+        this.broadcast({ type: 'FILE_ADD', file: item });
+      }
+    },
+
+    deleteFile(id) {
+      if (!this.permissions().canDeleteFile) return;
+      this.state.files = this.state.files.filter(f => f.id !== id);
+      this.saveRoomStorage();
+      this.renderFileList();
+      this.broadcast({ type: 'FILE_DEL', id });
+    },
+
+    renderChatList() {
+      const box = $('csrChatLog');
+      if (!box) return;
+      if (!this.state.messages.length) {
+        box.innerHTML = `<p style="color:var(--muted-text);text-align:center;font-size:13px;margin:auto;">${LANG === 'en' ? 'No messages yet. Share the invite link above so your peers can join!' : 'لا توجد رسائل بعد. انسخ رابط الدعوة في الأعلى وأرسله لزملائك ليدخلوا الغرفة!'}</p>`;
+        return;
+      }
+      box.innerHTML = this.state.messages.map(m => `
+        <div class="chat-bubble ${m.user === this.state.userName ? 'user' : 'patient'}" style="max-width:92%;">
+          <div style="display:flex;justify-content:space-between;gap:10px;font-size:11.5px;font-weight:800;margin-bottom:4px;opacity:0.85;">
+            <span>${escapeHtml(m.user)} [${escapeHtml(String(m.role).toUpperCase())}]</span>
+            <span>${escapeHtml(m.time || '')}</span>
+          </div>
+          <div data-notr="1">${m.role === 'ai' ? renderSafeMarkdown(m.text) : escapeHtml(m.text)}</div>
+        </div>
+      `).join('');
+      box.scrollTop = box.scrollHeight;
+    },
+
+    renderFileList() {
+      const listEl = $('csrFileList');
+      if (!listEl) return;
+      const perm = this.permissions();
+      if (!this.state.files.length) {
+        listEl.innerHTML = `<p style="font-size:12.5px;color:var(--muted-text);text-align:center;">${LANG === 'en' ? 'No shared files yet.' : 'لا توجد ملفات مشاركة حالياً.'}</p>`;
+        return;
+      }
+      listEl.innerHTML = this.state.files.map(f => `
+        <div class="csr-file-item">
+          <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:65%;">
+            <i class="fa-solid fa-file-medical" style="color:var(--petrol);margin-inline-end:6px;"></i>
+            <b>${escapeHtml(f.name)}</b> <small style="color:var(--muted-text);">(${f.sizeKB} KB • ${escapeHtml(f.uploader)})</small>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <a href="${f.dataUrl}" download="${escapeHtml(f.name)}" class="btn-secondary" style="padding:4px 10px;font-size:12px;"><i class="fa-solid fa-download"></i></a>
+            ${perm.canDeleteFile ? `<button type="button" class="btn-secondary" style="padding:4px 10px;font-size:12px;border-color:var(--danger);color:var(--danger);" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.deleteFile('${f.id}')"><i class="fa-solid fa-trash"></i></button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    },
+
+    renderRoomUI() {
+      const c = $('toolOutputContainer');
+      if (!c) return;
+      const isEn = LANG === 'en';
+      const perm = this.permissions();
+      const roleLabels = { host: isEn ? 'HOST' : 'مضيف (تحكم كامل)', editor: isEn ? 'EDITOR' : 'محرر', viewer: isEn ? 'VIEWER' : 'مشاهد فقط' };
+      const inviteUrl = this.getInviteUrl();
+
+      c.innerHTML = `
+        <div class="ai-output-box" data-notr="1">
+          <!-- شريط مشاركة الغرفة ودعوة الزملاء -->
+          <div style="background:var(--petrol-soft);border:1.5px solid var(--petrol);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="flex:1;min-width:220px;">
+              <div style="font-weight:800;color:var(--petrol);font-size:14.5px;margin-bottom:4px;">
+                <i class="fa-solid fa-share-nodes"></i> ${isEn ? 'Invite Peers to Join This Room' : 'مشاركة الغرفة ودعوة الزملاء للدخول الفوري'}
+              </div>
+              <input type="text" class="form-input" value="${escapeHtml(inviteUrl)}" readonly dir="ltr" onclick="this.select()" style="font-size:12.5px;padding:6px 10px;background:var(--white);font-family:monospace;">
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="btn-primary" style="padding:9px 14px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.copyInviteLink(this)">
+                <i class="fa-solid fa-link"></i> ${isEn ? 'Copy Invite Link' : 'نسخ رابط الدعوة'}
+              </button>
+              <button type="button" class="btn-secondary" style="padding:9px 12px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.copyRoomCodeOnly(this)">
+                <i class="fa-solid fa-hashtag"></i> ${isEn ? 'Copy Code' : 'نسخ الرمز'}
+              </button>
+              <button type="button" class="btn-telegram" style="padding:9px 12px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.shareViaTelegram()" title="Telegram">
+                <i class="fa-brands fa-telegram"></i> Telegram
+              </button>
+              <button type="button" class="btn-primary" style="padding:9px 12px;font-size:13px;background:#25D366;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.shareViaWhatsApp()" title="WhatsApp">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+
+          <div class="mn-ext-badge-bar" style="justify-content:space-between;">
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+              <span class="mn-ext-pill"><i class="fa-solid fa-door-open"></i> ${escapeHtml(this.state.roomCode)}</span>
+              <span class="mn-ext-pill green"><i class="fa-solid fa-user-check"></i> ${escapeHtml(this.state.userName)}</span>
+              <span class="mn-ext-pill mustard"><i class="fa-solid fa-user-shield"></i> ${roleLabels[this.state.role]}</span>
+              <span id="csrNetBadge" class="mn-ext-pill"><i class="fa-solid fa-wifi"></i> ${isEn ? 'Connecting...' : 'جارٍ الربط...'}</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;">
+              <small style="color:var(--muted-text);font-weight:700;">${isEn ? 'RBAC Role:' : 'تبديل الصلاحية:'}</small>
+              <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px;" onchange="window.MEDNERD_EXT.CollaborativeStudyRoom.changeRoleLive(this.value)">
+                <option value="host" ${this.state.role === 'host' ? 'selected' : ''}>Host</option>
+                <option value="editor" ${this.state.role === 'editor' ? 'selected' : ''}>Editor</option>
+                <option value="viewer" ${this.state.role === 'viewer' ? 'selected' : ''}>Viewer</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="csr-grid">
+            <div style="display:flex;flex-direction:column;gap:16px;">
+              <div class="csr-panel">
+                <div style="display:flex;justify-content:space-between;align-items:center;">
+                  <h4 style="margin:0;"><i class="fa-solid fa-stopwatch"></i> ${isEn ? 'Synced Pomodoro' : 'مؤقت بومودورو المتزامن'}</h4>
+                  <span id="csrPhaseBadge" class="mn-ext-pill green">FOCUS</span>
+                </div>
+                <div id="csrTimerClock" class="csr-timer-display">${this.formatTime(this.state.remainingSec)}</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+                  <button type="button" id="csrStartPauseBtn" class="btn-primary" style="padding:8px 16px;font-size:13.5px;" ${!perm.canControlTimer ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.toggleTimer()">
+                    <i class="fa-solid fa-play"></i> ${isEn ? 'Start' : 'بدء المؤقت'}
+                  </button>
+                  <button type="button" class="btn-secondary" style="padding:8px 12px;font-size:13px;" ${!perm.canControlTimer ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.switchPhase('FOCUS')">${isEn ? 'Focus' : 'تركيز'}</button>
+                  <button type="button" class="btn-secondary" style="padding:8px 12px;font-size:13px;" ${!perm.canControlTimer ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.switchPhase('BREAK')">${isEn ? 'Break' : 'استراحة'}</button>
+                </div>
+              </div>
+
+              <div class="csr-panel">
+                <h4 style="margin:0;"><i class="fa-solid fa-folder-open"></i> ${isEn ? 'File Sharing Hub' : 'مركز مشاركة الملفات'}</h4>
+                <div id="csrDropzone" class="csr-dropzone ${!perm.canUpload ? 'disabled' : ''}">
+                  <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px;margin-bottom:6px;display:block;"></i>
+                  ${perm.canUpload ? (isEn ? 'Drag & drop files or click to browse' : 'اسحب وأفلت ملفات الدراسة هنا أو اضغط للاختيار') : (isEn ? 'Viewer Role: Uploads disabled' : 'صلاحية مشاهد: الرفع غير متاح')}
+                  <input type="file" id="csrHiddenFileInput" style="display:none;" multiple ${!perm.canUpload ? 'disabled' : ''}>
+                </div>
+                <div id="csrFileList" style="display:flex;flex-direction:column;gap:8px;max-height:190px;overflow-y:auto;"></div>
+              </div>
+            </div>
+
+            <div class="csr-panel">
+              <h4 style="margin:0;"><i class="fa-solid fa-comments"></i> ${isEn ? 'Real-Time Room Chat' : 'المحادثة الفورية للغرفة'}</h4>
+              <div id="csrChatLog" class="chat-container" style="height:310px;margin-bottom:6px;"></div>
+              <div style="display:flex;gap:8px;">
+                <input type="text" id="csrChatInput" class="form-input" ${!perm.canChat ? 'disabled' : ''} placeholder="${perm.canChat ? (isEn ? 'Type message or question...' : 'اكتب رسالة أو سؤالاً طبياً...') : (isEn ? 'Read-only' : 'للقراءة فقط')}">
+                <button type="button" class="btn-primary" style="padding:10px 16px;" ${!perm.canChat ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
+                <button type="button" id="csrAskAiBtn" class="btn-secondary" ${!perm.canAskAiCoPilot ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.askRoomAI()"><i class="fa-solid fa-robot"></i> AI</button>
+              </div>
+            </div>
+          </div>
+        </div>`;
+
+      this.updateTimerDOM();
+      this.renderChatList();
+      this.renderFileList();
+
+      const chatInp = $('csrChatInput');
+      if (chatInp) chatInp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); this.sendChatMessage(); } };
+
+      const dz = $('csrDropzone'), fi = $('csrHiddenFileInput');
+      if (dz && fi && perm.canUpload) {
+        dz.onclick = () => fi.click();
+        fi.onchange = () => { this.handleFilesDropped(fi.files); fi.value = ''; };
+        dz.ondragover = e => { e.preventDefault(); dz.classList.add('dragover'); };
+        dz.ondragleave = () => dz.classList.remove('dragover');
+        dz.ondrop = e => { e.preventDefault(); dz.classList.remove('dragover'); this.handleFilesDropped(e.dataTransfer.files); };
+      }
+    }
+  };
     /* 3. Voice Patient Simulation */
     .vp-orb-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 22px; background: var(--bg-elevated); border-radius: 16px; border: 1px solid var(--border-color); margin-bottom: 16px; }
     .vp-mic-btn { width: 82px; height: 82px; border-radius: 50%; border: none; background: var(--petrol); color: #fff; font-size: 30px; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 8px 25px rgba(14,116,144,.35); transition: all .25s; }
@@ -1697,5 +2242,13 @@
     window.addEventListener('DOMContentLoaded', installExtensionHooks);
   } else {
     installExtensionHooks();
+   // فتح الغرفة تلقائياً إذا دخل الطالب عبر رابط دعوة (?room=XXXX)
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitedRoom = urlParams.get('room');
+    if (invitedRoom) {
+      if ($('welcomeModal')) $('welcomeModal').style.display = 'none';
+      openToolWorkspace('study_room');
+      if ($('csr_code')) $('csr_code').value = invitedRoom.toUpperCase();
+      if ($('csr_role')) $('csr_role').value = 'editor'; // يدخل الضيف كمحرر افتراضياً 
   }
 })();
