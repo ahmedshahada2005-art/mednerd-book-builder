@@ -62,6 +62,23 @@
     .fme-rubric-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 18px; }
     .fme-score-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 14px; padding: 16px; text-align: center; }
     .fme-ring { font-size: 30px; font-weight: 800; color: var(--petrol); margin: 6px 0; }
+
+    /* 7. 3D Anatomy Atlas & Studio */
+    .a3d-tabs { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .a3d-tab { padding: 9px 16px; border-radius: 12px; border: 1px solid var(--border-color); background: var(--bg-elevated); color: var(--dark-text); font-weight: 700; font-size: 13.5px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all .2s; }
+    .a3d-tab.active, .a3d-tab:hover { background: var(--petrol); color: #fff; border-color: var(--petrol); }
+    .a3d-organ-chips { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+    .a3d-chip { padding: 6px 13px; border-radius: 20px; border: 1px solid var(--border-color); background: var(--white); color: var(--dark-text); font-size: 13px; font-weight: 700; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 6px; }
+    .a3d-chip.active, .a3d-chip:hover { border-color: var(--petrol); background: var(--petrol-soft); color: var(--petrol); }
+    .a3d-stage { position: relative; width: 100%; height: 500px; background: #0f172a; border-radius: 16px; border: 1px solid var(--border-color); overflow: hidden; box-shadow: var(--shadow-md); }
+    .a3d-stage iframe, .a3d-stage canvas, .a3d-stage model-viewer { width: 100%; height: 100%; border: none; display: block; }
+    .a3d-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-top: 14px; max-height: 290px; overflow-y: auto; padding: 4px; }
+    .a3d-model-card { background: var(--white); border: 1px solid var(--border-color); border-radius: 12px; overflow: hidden; cursor: pointer; transition: all .2s; display: flex; flex-direction: column; }
+    .a3d-model-card:hover { border-color: var(--petrol); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .a3d-model-thumb { width: 100%; height: 110px; object-fit: cover; background: #1e293b; }
+    .a3d-model-info { padding: 8px 10px; font-size: 12.5px; font-weight: 700; color: var(--dark-text); line-height: 1.4; }
+    .a3d-overlay-controls { position: absolute; bottom: 12px; inset-inline-start: 12px; inset-inline-end: 12px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; pointer-events: none; }
+    .a3d-overlay-controls > * { pointer-events: auto; }
   `;
   document.head.appendChild(styleEl);
 
@@ -74,7 +91,8 @@
     "محاكاة صوتية": "Voice Sim",
     "تفريغ صوتي": "Transcriber",
     "امتحان موقّت": "Timed Arena",
-    "تقييم فاينمان": "Feynman Eval"
+    "تقييم فاينمان": "Feynman Eval",
+    "أطلس 3D": "3D Atlas"
   };
   if (typeof EN_EXACT === 'object') Object.assign(EN_EXACT, EXT_EN_EXACT);
 
@@ -144,6 +162,33 @@
       "ld": "Auditing explanation for blind spots & jargon...",
       "v": "Please enter both the medical concept and your explanation.",
       "b": "Analyze My Explanation (Feynman Audit)"
+    },
+    "anatomy_3d_atlas": {
+      "d": "Interactive 3D Anatomy Library powered by Sketchfab 3D API, Three.js WebGL Anatomical Planes Dissector, and Google <model-viewer> (.GLB/AR) with AI landmark explanations.",
+      "l": ["Select Anatomical System / Organ Preset:", "Or Search Any 3D Anatomical Structure (English):", "Study Mode for AI Co-Pilot:"],
+      "p": [null, "e.g., Brachial plexus, Circle of Willis, Sphenoid bone, Heart valves..."],
+      "o": {
+        "preset": [
+          "Heart & Coronary Vessels (القلب والأوعية الإكليلية)",
+          "Brain, Lobes & Cranial Nerves (الدماغ والأعصاب القحفية)",
+          "Skull & Facial Bones (الجمجمة وعظام الوجه)",
+          "Full Skeletal System (الهيكل العظمي الكامل)",
+          "Muscular System (الجهاز العضلي)",
+          "Lungs & Bronchial Tree (الرئتان والشجرة القصبية)",
+          "Digestive System & Liver (الجهاز الهضمي والكبد)",
+          "Kidney & Urinary Tract (الكلية والمسالك البولية)",
+          "Eye & Orbit Anatomy (تشريح العين والحجاج)",
+          "Ear & Vestibular System (الأذن والجهاز الدهليزي)"
+        ],
+        "aimode": [
+          "Comprehensive 3D Landmarks + Relations + Innervation",
+          "Origins, Insertions & Muscle Actions",
+          "Surgical Landmarks & Clinical Correlations (High-Yield)",
+          "3D Spotter Quiz (Test Me on This Structure)"
+        ]
+      },
+      "ld": "Loading 3D Anatomy Studio & AI Guide...",
+      "b": "Launch 3D Anatomy Studio"
     }
   };
   if (typeof EN_TOOLS === 'object') Object.assign(EN_TOOLS, EXT_EN_TOOLS);
@@ -549,10 +594,15 @@
   };
 
   /* ==========================================================================
-     MODULE 2: COLLABORATIVE STUDY ROOM
+     MODULE 2: COLLABORATIVE STUDY ROOM (مع روابط دعوة وزر مشاركة وتزامن P2P)
      ========================================================================== */
   const CollaborativeStudyRoom = {
-    state: { channel: null, roomCode: '', userName: '', role: 'host', focusSec: 1500, breakSec: 300, phase: 'FOCUS', remainingSec: 1500, running: false, intervalId: null, messages: [], files: [] },
+    state: {
+      channel: null, peer: null, connections: [], isHostPeer: false,
+      roomCode: '', userName: '', role: 'host', focusSec: 1500, breakSec: 300,
+      phase: 'FOCUS', remainingSec: 1500, running: false, intervalId: null,
+      messages: [], files: [], peersCount: 1
+    },
 
     permissions() {
       const r = this.state.role;
@@ -568,11 +618,67 @@
     cleanup() {
       if (this.state.intervalId) { clearInterval(this.state.intervalId); this.state.intervalId = null; }
       if (this.state.channel) { try { this.state.channel.close(); } catch (_) {} this.state.channel = null; }
+      if (this.state.peer) { try { this.state.peer.destroy(); } catch (_) {} this.state.peer = null; }
+      this.state.connections = [];
     },
 
-    run() {
+    ensurePeerJS() {
+      if (window.Peer) return Promise.resolve();
+      return new Promise((resolve) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js';
+        sc.onload = () => resolve();
+        sc.onerror = () => resolve();
+        document.head.appendChild(sc);
+      });
+    },
+
+    getInviteUrl() {
+      const base = window.location.origin + window.location.pathname;
+      return `${base}?room=${encodeURIComponent(this.state.roomCode)}`;
+    },
+
+    copyInviteLink(btnEl) {
+      const url = this.getInviteUrl();
+      copyTextSafe(url).then(() => {
+        if (!btnEl) return;
+        const orig = btnEl.innerHTML;
+        btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${LANG === 'en' ? 'Link Copied!' : 'تم نسخ رابط الدعوة!'}`;
+        setTimeout(() => { btnEl.innerHTML = orig; }, 2200);
+      });
+    },
+
+    copyRoomCodeOnly(btnEl) {
+      copyTextSafe(this.state.roomCode).then(() => {
+        if (!btnEl) return;
+        const orig = btnEl.innerHTML;
+        btnEl.innerHTML = `<i class="fa-solid fa-check"></i> ${LANG === 'en' ? 'Code Copied!' : 'تم نسخ الرمز!'}`;
+        setTimeout(() => { btnEl.innerHTML = orig; }, 2000);
+      });
+    },
+
+    shareViaTelegram() {
+      const url = this.getInviteUrl();
+      const text = LANG === 'en'
+        ? `Join my MEDNERD Collaborative Study Room (${this.state.roomCode}):`
+        : `انضم إليّ في غرفة الدراسة المشتركة على منصة MEDNERD (رمز الغرفة: ${this.state.roomCode}):`;
+      window.open(`https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    },
+
+    shareViaWhatsApp() {
+      const url = this.getInviteUrl();
+      const text = LANG === 'en'
+        ? `Join my MEDNERD Study Room (${this.state.roomCode}): ${url}`
+        : `انضم إليّ في غرفة الدراسة المشتركة على MEDNERD (رمز الغرفة: ${this.state.roomCode}):\n${url}`;
+      window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank', 'noopener');
+    },
+
+    async run() {
       this.cleanup();
-      const code = (($('csr_code') && $('csr_code').value.trim()) || 'MEDNERD-ROOM-1').toUpperCase();
+      const codeRaw = (($('csr_code') && $('csr_code').value.trim()) || 'MED-ROOM-' + Math.floor(1000 + Math.random() * 9000));
+      const code = codeRaw.toUpperCase().replace(/[^A-Z0-9_-]/g, '');
+      if ($('csr_code')) $('csr_code').value = code;
+
       const p = typeof getProfile === 'function' ? getProfile() : null;
       const name = (($('csr_name') && $('csr_name').value.trim()) || (p && p.name) || (LANG === 'en' ? 'Med Student' : 'طالب طب'));
       const roleVal = ($('csr_role') && $('csr_role').value) || 'host';
@@ -587,6 +693,7 @@
       this.state.phase = 'FOCUS';
       this.state.remainingSec = this.state.focusSec;
       this.state.running = false;
+      this.state.peersCount = 1;
 
       const savedRoom = this.loadRoomStorage(code);
       this.state.messages = savedRoom.messages || [];
@@ -594,10 +701,69 @@
 
       if (typeof BroadcastChannel !== 'undefined') {
         this.state.channel = new BroadcastChannel('mednerd_csr_' + code);
-        this.state.channel.onmessage = ev => this.handleBroadcast(ev.data);
+        this.state.channel.onmessage = ev => this.handleIncomingPacket(ev.data, null);
       }
 
       this.renderRoomUI();
+      await this.initPeerNetwork(code);
+    },
+
+    async initPeerNetwork(code) {
+      await this.ensurePeerJS();
+      if (!window.Peer) return;
+      const hostPeerId = 'mednerd-room-v2-' + code.toLowerCase();
+
+      const peer = new Peer(hostPeerId);
+      this.state.peer = peer;
+
+      peer.on('open', () => {
+        this.state.isHostPeer = true;
+        this.updateNetStatus(LANG === 'en' ? 'Online Room Ready' : 'الغرفة متصلة وجاهزة لاستقبال الزملاء');
+      });
+
+      peer.on('connection', conn => this.registerConn(conn));
+
+      peer.on('error', err => {
+        if (err && err.type === 'unavailable-id') {
+          const guestPeer = new Peer();
+          this.state.peer = guestPeer;
+          this.state.isHostPeer = false;
+          guestPeer.on('open', () => {
+            const conn = guestPeer.connect(hostPeerId, { reliable: true });
+            this.registerConn(conn);
+          });
+        }
+      });
+    },
+
+    registerConn(conn) {
+      conn.on('open', () => {
+        if (!this.state.connections.includes(conn)) this.state.connections.push(conn);
+        this.state.peersCount = this.state.connections.length + 1;
+        this.updateNetStatus(LANG === 'en' ? `Connected (${this.state.peersCount})` : `متصل الآن (${this.state.peersCount} طلاب في الغرفة)`);
+        if (this.state.isHostPeer) {
+          conn.send({
+            type: 'FULL_SYNC',
+            phase: this.state.phase,
+            remainingSec: this.state.remainingSec,
+            running: this.state.running,
+            messages: this.state.messages,
+            files: this.state.files,
+            peersCount: this.state.peersCount
+          });
+        }
+      });
+      conn.on('data', data => this.handleIncomingPacket(data, conn));
+      conn.on('close', () => {
+        this.state.connections = this.state.connections.filter(c => c !== conn);
+        this.state.peersCount = Math.max(1, this.state.connections.length + 1);
+        this.updateNetStatus(LANG === 'en' ? `Online (${this.state.peersCount})` : `متصل (${this.state.peersCount} في الغرفة)`);
+      });
+    },
+
+    updateNetStatus(txt) {
+      const el = $('csrNetBadge');
+      if (el) el.innerHTML = `<i class="fa-solid fa-wifi"></i> ${escapeHtml(txt)}`;
     },
 
     loadRoomStorage(code) {
@@ -613,26 +779,46 @@
       } catch (_) {}
     },
 
-    broadcast(payload) {
+    broadcast(payload, excludeConn = null) {
       if (this.state.channel) { try { this.state.channel.postMessage(payload); } catch (_) {} }
+      this.state.connections.forEach(conn => {
+        if (conn !== excludeConn && conn.open) { try { conn.send(payload); } catch (_) {} }
+      });
     },
 
-    handleBroadcast(msg) {
+    handleIncomingPacket(msg, senderConn) {
       if (!msg || typeof msg !== 'object') return;
-      if (msg.type === 'TIMER_SYNC') {
+      if (this.state.isHostPeer && senderConn) this.broadcast(msg, senderConn);
+
+      if (msg.type === 'FULL_SYNC') {
+        this.state.phase = msg.phase;
+        this.state.remainingSec = msg.remainingSec;
+        this.state.running = msg.running;
+        this.state.messages = msg.messages || [];
+        this.state.files = msg.files || [];
+        this.saveRoomStorage();
+        this.syncIntervalLoop();
+        this.updateTimerDOM();
+        this.renderChatList();
+        this.renderFileList();
+      } else if (msg.type === 'TIMER_SYNC') {
         this.state.phase = msg.phase;
         this.state.remainingSec = msg.remainingSec;
         this.state.running = msg.running;
         this.syncIntervalLoop();
         this.updateTimerDOM();
       } else if (msg.type === 'CHAT_MSG') {
-        this.state.messages.push(msg.entry);
-        this.saveRoomStorage();
-        this.renderChatList();
+        if (!this.state.messages.some(m => m.id === msg.entry.id)) {
+          this.state.messages.push(msg.entry);
+          this.saveRoomStorage();
+          this.renderChatList();
+        }
       } else if (msg.type === 'FILE_ADD') {
-        this.state.files.push(msg.file);
-        this.saveRoomStorage();
-        this.renderFileList();
+        if (!this.state.files.some(f => f.id === msg.file.id)) {
+          this.state.files.push(msg.file);
+          this.saveRoomStorage();
+          this.renderFileList();
+        }
       } else if (msg.type === 'FILE_DEL') {
         this.state.files = this.state.files.filter(f => f.id !== msg.id);
         this.saveRoomStorage();
@@ -708,7 +894,7 @@
       const txt = inp.value.trim();
       if (!txt) return;
       inp.value = '';
-      const entry = { id: 'm_' + Date.now(), user: this.state.userName, role: this.state.role, text: txt, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+      const entry = { id: 'm_' + Date.now() + '_' + Math.random().toString(36).slice(2, 5), user: this.state.userName, role: this.state.role, text: txt, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
       this.state.messages.push(entry);
       this.saveRoomStorage();
       this.renderChatList();
@@ -736,7 +922,7 @@
           systemInstruction: 'أنت مساعد دراسة طبي تعاوني داخل غرفة مذاكرة. أجب بإيجاز ودقة علمية عالية.' + SAFE_RULES,
           contents: [{ role: 'user', parts: [{ text: (sharedContext ? `ملفات الغرفة:\n${sharedContext}\n\n` : '') + `سؤال الطالب: ${question}` }] }]
         });
-        const aiEntry = { id: 'm_' + Date.now(), user: 'MEDNERD AI Co-Pilot', role: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
+        const aiEntry = { id: 'm_' + Date.now() + '_ai', user: 'MEDNERD AI Co-Pilot', role: 'ai', text: reply, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) };
         this.state.messages.push(aiEntry);
         this.saveRoomStorage();
         this.renderChatList();
@@ -784,7 +970,7 @@
       const box = $('csrChatLog');
       if (!box) return;
       if (!this.state.messages.length) {
-        box.innerHTML = `<p style="color:var(--muted-text);text-align:center;font-size:13px;margin:auto;">${LANG === 'en' ? 'No messages yet.' : 'لا توجد رسائل بعد. ابدأ النقاش العلمي!'}</p>`;
+        box.innerHTML = `<p style="color:var(--muted-text);text-align:center;font-size:13px;margin:auto;">${LANG === 'en' ? 'No messages yet. Share the invite link above!' : 'لا توجد رسائل بعد. انسخ رابط الدعوة في الأعلى وأرسله لزملائك!'}</p>`;
         return;
       }
       box.innerHTML = this.state.messages.map(m => `
@@ -827,17 +1013,42 @@
       const isEn = LANG === 'en';
       const perm = this.permissions();
       const roleLabels = { host: isEn ? 'HOST' : 'مضيف (تحكم كامل)', editor: isEn ? 'EDITOR' : 'محرر', viewer: isEn ? 'VIEWER' : 'مشاهد فقط' };
+      const inviteUrl = this.getInviteUrl();
 
       c.innerHTML = `
         <div class="ai-output-box" data-notr="1">
+          <div style="background:var(--petrol-soft);border:1.5px solid var(--petrol);border-radius:14px;padding:14px 16px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+            <div style="flex:1;min-width:220px;">
+              <div style="font-weight:800;color:var(--petrol);font-size:14.5px;margin-bottom:4px;">
+                <i class="fa-solid fa-share-nodes"></i> ${isEn ? 'Invite Peers to Join This Room' : 'مشاركة الغرفة ودعوة الزملاء للدخول الفوري'}
+              </div>
+              <input type="text" class="form-input" value="${escapeHtml(inviteUrl)}" readonly dir="ltr" onclick="this.select()" style="font-size:12.5px;padding:6px 10px;background:var(--white);font-family:monospace;">
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="btn-primary" style="padding:9px 14px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.copyInviteLink(this)">
+                <i class="fa-solid fa-link"></i> ${isEn ? 'Copy Link' : 'نسخ الرابط'}
+              </button>
+              <button type="button" class="btn-secondary" style="padding:9px 12px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.copyRoomCodeOnly(this)">
+                <i class="fa-solid fa-hashtag"></i> ${isEn ? 'Code' : 'الرمز'}
+              </button>
+              <button type="button" class="btn-telegram" style="padding:9px 12px;font-size:13px;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.shareViaTelegram()">
+                <i class="fa-brands fa-telegram"></i> Telegram
+              </button>
+              <button type="button" class="btn-primary" style="padding:9px 12px;font-size:13px;background:#25D366;" onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.shareViaWhatsApp()">
+                <i class="fa-brands fa-whatsapp"></i> WhatsApp
+              </button>
+            </div>
+          </div>
+
           <div class="mn-ext-badge-bar" style="justify-content:space-between;">
             <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
               <span class="mn-ext-pill"><i class="fa-solid fa-door-open"></i> ${escapeHtml(this.state.roomCode)}</span>
               <span class="mn-ext-pill green"><i class="fa-solid fa-user-check"></i> ${escapeHtml(this.state.userName)}</span>
               <span class="mn-ext-pill mustard"><i class="fa-solid fa-user-shield"></i> ${roleLabels[this.state.role]}</span>
+              <span id="csrNetBadge" class="mn-ext-pill"><i class="fa-solid fa-wifi"></i> ${isEn ? 'Connecting...' : 'جارٍ الربط...'}</span>
             </div>
             <div style="display:flex;gap:6px;align-items:center;">
-              <small style="color:var(--muted-text);font-weight:700;">${isEn ? 'RBAC Role:' : 'تبديل الصلاحية:'}</small>
+              <small style="color:var(--muted-text);font-weight:700;">${isEn ? 'Role:' : 'الصلاحية:'}</small>
               <select class="form-select" style="width:auto;padding:4px 8px;font-size:12px;" onchange="window.MEDNERD_EXT.CollaborativeStudyRoom.changeRoleLive(this.value)">
                 <option value="host" ${this.state.role === 'host' ? 'selected' : ''}>Host</option>
                 <option value="editor" ${this.state.role === 'editor' ? 'selected' : ''}>Editor</option>
@@ -850,7 +1061,7 @@
             <div style="display:flex;flex-direction:column;gap:16px;">
               <div class="csr-panel">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
-                  <h4 style="margin:0;"><i class="fa-solid fa-stopwatch"></i> ${isEn ? 'Synced Pomodoro' : 'مؤقت بومودورو المتزامن'}</h4>
+                  <h4 style="margin:0;"><i class="fa-solid fa-stopwatch"></i> ${isEn ? 'Pomodoro' : 'مؤقت بومودورو'}</h4>
                   <span id="csrPhaseBadge" class="mn-ext-pill green">FOCUS</span>
                 </div>
                 <div id="csrTimerClock" class="csr-timer-display">${this.formatTime(this.state.remainingSec)}</div>
@@ -864,10 +1075,10 @@
               </div>
 
               <div class="csr-panel">
-                <h4 style="margin:0;"><i class="fa-solid fa-folder-open"></i> ${isEn ? 'File Sharing Hub' : 'مركز مشاركة الملفات'}</h4>
+                <h4 style="margin:0;"><i class="fa-solid fa-folder-open"></i> ${isEn ? 'File Hub' : 'مشاركة الملفات'}</h4>
                 <div id="csrDropzone" class="csr-dropzone ${!perm.canUpload ? 'disabled' : ''}">
                   <i class="fa-solid fa-cloud-arrow-up" style="font-size:24px;margin-bottom:6px;display:block;"></i>
-                  ${perm.canUpload ? (isEn ? 'Drag & drop files or click to browse' : 'اسحب وأفلت ملفات الدراسة هنا أو اضغط للاختيار') : (isEn ? 'Viewer Role: Uploads disabled' : 'صلاحية مشاهد: الرفع غير متاح')}
+                  ${perm.canUpload ? (isEn ? 'Drag & drop files' : 'اسحب وأفلت ملفات الدراسة هنا') : (isEn ? 'Disabled' : 'غير متاح')}
                   <input type="file" id="csrHiddenFileInput" style="display:none;" multiple ${!perm.canUpload ? 'disabled' : ''}>
                 </div>
                 <div id="csrFileList" style="display:flex;flex-direction:column;gap:8px;max-height:190px;overflow-y:auto;"></div>
@@ -875,10 +1086,10 @@
             </div>
 
             <div class="csr-panel">
-              <h4 style="margin:0;"><i class="fa-solid fa-comments"></i> ${isEn ? 'Real-Time Room Chat' : 'المحادثة الفورية للغرفة'}</h4>
+              <h4 style="margin:0;"><i class="fa-solid fa-comments"></i> ${isEn ? 'Room Chat' : 'المحادثة الفورية'}</h4>
               <div id="csrChatLog" class="chat-container" style="height:310px;margin-bottom:6px;"></div>
               <div style="display:flex;gap:8px;">
-                <input type="text" id="csrChatInput" class="form-input" ${!perm.canChat ? 'disabled' : ''} placeholder="${perm.canChat ? (isEn ? 'Type message or question...' : 'اكتب رسالة أو سؤالاً طبياً...') : (isEn ? 'Read-only' : 'للقراءة فقط')}">
+                <input type="text" id="csrChatInput" class="form-input" ${!perm.canChat ? 'disabled' : ''} placeholder="${perm.canChat ? (isEn ? 'Type message...' : 'اكتب رسالة أو سؤالاً...') : (isEn ? 'Read-only' : 'للقراءة فقط')}">
                 <button type="button" class="btn-primary" style="padding:10px 16px;" ${!perm.canChat ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.sendChatMessage()"><i class="fa-solid fa-paper-plane"></i></button>
                 <button type="button" id="csrAskAiBtn" class="btn-secondary" ${!perm.canAskAiCoPilot ? 'disabled' : ''} onclick="window.MEDNERD_EXT.CollaborativeStudyRoom.askRoomAI()"><i class="fa-solid fa-robot"></i> AI</button>
               </div>
@@ -909,20 +1120,14 @@
      ========================================================================== */
   const MedPatientVoice = {
     state: { recognition: null, listening: false, speaking: false, autoSpeak: true, vlang: 'ar-SA', complaint: '', tone: '', history: [] },
-
     cleanup() {
       this.stopListening();
       if (window.speechSynthesis) { try { window.speechSynthesis.cancel(); } catch (_) {} }
       this.state.speaking = false;
     },
-
     systemPrompt() {
-      return `أنت مريض حقيقي في محاكاة صوتية سريرية لطلاب الطب.
-- الشكوى الرئيسية: (${this.state.complaint}).
-- الحالة الشعورية: (${this.state.tone}).
-تحدث بلسان المريض فقط بجمل قصيرة وطبيعية (1 إلى 3 جمل) لتناسب النطق الصوتي المباشر (TTS)، ولا تكشف القصة المرضية دفعة واحدة، ولا تذكر التشخيص النهائي أثناء الحوار.`;
+      return `أنت مريض حقيقي في محاكاة صوتية سريرية لطلاب الطب. الشكوى الرئيسية: (${this.state.complaint}). الحالة الشعورية: (${this.state.tone}). تحدث بلسان المريض فقط بجمل قصيرة وطبيعية (1 إلى 3 جمل) ولا تذكر التشخيص النهائي أبداً.`;
     },
-
     async run() {
       if (APP_STATE.isRequestInFlight) return;
       this.cleanup();
@@ -946,7 +1151,6 @@
         setToolLoadingState(false);
       }
     },
-
     mountVoiceUI() {
       const c = $('toolOutputContainer');
       if (!c) return;
@@ -956,79 +1160,51 @@
       c.innerHTML = `
         <div class="ai-output-box" data-notr="1">
           <div class="vp-orb-wrap">
-            <button type="button" id="vpMicBtn" class="vp-mic-btn" onclick="window.MEDNERD_EXT.MedPatientVoice.toggleMic()">
-              <i class="fa-solid fa-microphone"></i>
-            </button>
-            <p id="vpStatusLabel" style="font-weight:800;color:var(--petrol);margin-top:12px;font-size:14.5px;">
-              ${hasSR ? (isEn ? 'Tap microphone to speak (or type below)' : 'اضغط زر الميكروفون للتحدث بصوتك (أو اكتب أدناه)') : (isEn ? 'Use text input below (TTS audio enabled)' : 'استخدم الكتابة أدناه (النطق الصوتي للمريض مفعّل)')}
-            </p>
-            <label class="checkbox-label" style="margin-top:8px;font-size:13px;">
-              <input type="checkbox" checked onchange="window.MEDNERD_EXT.MedPatientVoice.state.autoSpeak = this.checked">
-              <span>${isEn ? 'Auto-speak patient replies (TTS)' : 'نطق ردود المريض صوتياً تلقائياً (TTS)'}</span>
-            </label>
+            <button type="button" id="vpMicBtn" class="vp-mic-btn" onclick="window.MEDNERD_EXT.MedPatientVoice.toggleMic()"><i class="fa-solid fa-microphone"></i></button>
+            <p id="vpStatusLabel" style="font-weight:800;color:var(--petrol);margin-top:12px;font-size:14.5px;">${hasSR ? (isEn ? 'Tap microphone to speak' : 'اضغط زر الميكروفون للتحدث بصوتك') : (isEn ? 'Use text input below' : 'استخدم الكتابة أدناه')}</p>
+            <label class="checkbox-label" style="margin-top:8px;font-size:13px;"><input type="checkbox" checked onchange="window.MEDNERD_EXT.MedPatientVoice.state.autoSpeak = this.checked"><span>${isEn ? 'Auto-speak patient replies' : 'نطق ردود المريض صوتياً تلقائياً'}</span></label>
           </div>
-
           <div id="vpChatLog" class="chat-container" style="max-height:320px;"></div>
-
           <div style="display:flex;gap:8px;margin-bottom:12px;">
-            <input type="text" id="vpTextInput" class="form-input" placeholder="${isEn ? 'Speak via mic or type your question...' : 'تحدث بالميكروفون أو اكتب سؤالك السريري هنا...'}">
+            <input type="text" id="vpTextInput" class="form-input" placeholder="${isEn ? 'Type your clinical question...' : 'اكتب سؤالك السريري هنا...'}">
             <button type="button" id="vpSendBtn" class="btn-primary" style="padding:10px 18px;" onclick="window.MEDNERD_EXT.MedPatientVoice.submitDoctorTurn()"><i class="fa-solid fa-paper-plane"></i></button>
             <button type="button" class="btn-secondary" onclick="window.MEDNERD_EXT.MedPatientVoice.replayLastAudio()"><i class="fa-solid fa-volume-high"></i></button>
           </div>
-
           <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-top:10px;border-top:1px solid var(--border-color);">
-            <input type="text" id="vpProvisionalDx" class="form-input" style="flex:1;min-width:220px;" placeholder="${isEn ? 'Enter Provisional Diagnosis (optional)...' : 'اكتب تشخيصك المبدئي قبل إنهاء المقابلة (اختياري)...'}">
-            <button type="button" id="vpEndBtn" class="btn-secondary" style="border-color:var(--dark-green);color:var(--dark-green);" onclick="window.MEDNERD_EXT.MedPatientVoice.evaluateEncounter()">
-              <i class="fa-solid fa-clipboard-check"></i> ${isEn ? 'End & Get Feedback' : 'إنهاء المقابلة وتقييم القصة المرضية'}
-            </button>
+            <input type="text" id="vpProvisionalDx" class="form-input" style="flex:1;min-width:220px;" placeholder="${isEn ? 'Provisional Diagnosis (optional)...' : 'التشخيص المبدئي (اختياري)...'}">
+            <button type="button" id="vpEndBtn" class="btn-secondary" style="border-color:var(--dark-green);color:var(--dark-green);" onclick="window.MEDNERD_EXT.MedPatientVoice.evaluateEncounter()"><i class="fa-solid fa-clipboard-check"></i> ${isEn ? 'End & Get Feedback' : 'إنهاء وتقييم القصة المرضية'}</button>
           </div>
           <div id="vpFeedbackBox"></div>
         </div>`;
-
       const inp = $('vpTextInput');
       if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); this.submitDoctorTurn(); } };
     },
-
     toggleMic() {
       if (this.state.listening) { this.stopListening(); return; }
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) return;
       if (window.speechSynthesis) window.speechSynthesis.cancel();
-
       const rec = new SR();
       rec.lang = this.state.vlang;
       rec.interimResults = true;
       rec.continuous = false;
-
-      rec.onstart = () => {
-        this.state.listening = true;
-        const btn = $('vpMicBtn'), st = $('vpStatusLabel');
-        if (btn) btn.classList.add('listening');
-        if (st) st.textContent = LANG === 'en' ? 'Listening... Speak now' : 'جارٍ الاستماع لسؤالك... تحدث الآن';
-      };
+      rec.onstart = () => { this.state.listening = true; $('vpMicBtn')?.classList.add('listening'); };
       rec.onresult = event => {
-        let transcript = '';
-        for (let i = event.resultIndex; i < event.results.length; i++) transcript += event.results[i][0].transcript;
-        const inp = $('vpTextInput');
-        if (inp) inp.value = transcript;
-        if (event.results[event.results.length - 1].isFinal) {
-          this.stopListening();
-          this.submitDoctorTurn();
-        }
+        let t = '';
+        for (let i = event.resultIndex; i < event.results.length; i++) t += event.results[i][0].transcript;
+        const inp = $('vpTextInput'); if (inp) inp.value = t;
+        if (event.results[event.results.length - 1].isFinal) { this.stopListening(); this.submitDoctorTurn(); }
       };
       rec.onerror = () => this.stopListening();
       rec.onend = () => this.stopListening();
       this.state.recognition = rec;
       rec.start();
     },
-
     stopListening() {
       this.state.listening = false;
       if (this.state.recognition) { try { this.state.recognition.stop(); } catch (_) {} this.state.recognition = null; }
-      const btn = $('vpMicBtn');
-      if (btn) btn.classList.remove('listening');
+      $('vpMicBtn')?.classList.remove('listening');
     },
-
     speakText(rawText) {
       if (!this.state.autoSpeak || !window.speechSynthesis) return;
       try {
@@ -1036,47 +1212,32 @@
         const clean = String(rawText || '').replace(/[*_#`~>]/g, '').replace(/\(.*?\)/g, '');
         const utter = new SpeechSynthesisUtterance(clean);
         utter.lang = this.state.vlang;
-        const btn = $('vpMicBtn');
-        utter.onstart = () => { this.state.speaking = true; if (btn) btn.classList.add('speaking'); };
-        utter.onend = () => { this.state.speaking = false; if (btn) btn.classList.remove('speaking'); };
+        utter.onstart = () => { this.state.speaking = true; $('vpMicBtn')?.classList.add('speaking'); };
+        utter.onend = () => { this.state.speaking = false; $('vpMicBtn')?.classList.remove('speaking'); };
         window.speechSynthesis.speak(utter);
       } catch (_) {}
     },
-
     replayLastAudio() {
-      const lastModel = [...this.state.history].reverse().find(m => m.role === 'model');
-      if (lastModel && lastModel.parts && lastModel.parts[0]) this.speakText(lastModel.parts[0].text);
+      const last = [...this.state.history].reverse().find(m => m.role === 'model');
+      if (last && last.parts && last.parts[0]) this.speakText(last.parts[0].text);
     },
-
     appendVoiceLog(role, text) {
       const log = $('vpChatLog');
       if (!log) return;
       const b = document.createElement('div');
       b.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'patient');
-      const header = document.createElement('div');
-      header.style.cssText = 'font-weight:800;font-size:12px;margin-bottom:4px;';
-      header.textContent = role === 'user' ? (LANG === 'en' ? 'Doctor (You):' : 'الطبيب (أنت):') : (LANG === 'en' ? 'Patient:' : 'المريض:');
-      const content = document.createElement('div');
-      content.textContent = text;
-      b.append(header, content);
+      b.innerHTML = `<div style="font-weight:800;font-size:12px;margin-bottom:4px;">${role === 'user' ? 'الطبيب (أنت):' : 'المريض:'}</div><div>${escapeHtml(text)}</div>`;
       log.appendChild(b);
       log.scrollTop = log.scrollHeight;
     },
-
     async submitDoctorTurn() {
       if (APP_STATE.isRequestInFlight) return;
-      const inp = $('vpTextInput');
-      if (!inp) return;
-      const q = inp.value.trim();
-      if (!q) return;
+      const inp = $('vpTextInput'); if (!inp) return;
+      const q = inp.value.trim(); if (!q) return;
       inp.value = '';
-
       this.appendVoiceLog('user', q);
       this.state.history.push({ role: 'user', parts: [{ text: q }] });
       APP_STATE.isRequestInFlight = true;
-      const sendBtn = $('vpSendBtn');
-      if (sendBtn) sendBtn.disabled = true;
-
       try {
         const reply = await callGeminiAPI({ systemInstruction: this.systemPrompt() + SAFE_RULES, contents: this.state.history, generationConfig: { maxOutputTokens: 1024 } });
         this.state.history.push({ role: 'model', parts: [{ text: reply }] });
@@ -1087,31 +1248,24 @@
         renderToolError(e.message);
       } finally {
         APP_STATE.isRequestInFlight = false;
-        if (sendBtn) sendBtn.disabled = false;
       }
     },
-
     async evaluateEncounter() {
       if (APP_STATE.isRequestInFlight) return;
       this.cleanup();
-      const provDx = ($('vpProvisionalDx') && $('vpProvisionalDx').value.trim()) || (LANG === 'en' ? 'Not provided' : 'لم يُذكر');
-      const box = $('vpFeedbackBox'), endBtn = $('vpEndBtn');
+      const provDx = ($('vpProvisionalDx') && $('vpProvisionalDx').value.trim()) || 'لم يُذكر';
+      const box = $('vpFeedbackBox');
       APP_STATE.isRequestInFlight = true;
-      if (endBtn) endBtn.disabled = true;
-
-      const evalPrompt = `[تقييم المقابلة الصوتية السريرية]: التشخيص المبدئي المقترح من الطالب: (${provDx}). اخرج من دور المريض وقدّم تقريراً تقييمياً شاملاً: 1) أسلوب أخذ القصة المرضية 2) المفاتيح والـ Red Flags التي سأل عنها والتي أغفلها 3) تقييم التشخيص المبدئي ومقارنته بالتشخيص التفريقي 4) الدرجة من 100.`;
-
       try {
-        const report = await callGeminiAPI({ systemInstruction: this.systemPrompt() + SAFE_RULES, contents: [...this.state.history, { role: 'user', parts: [{ text: evalPrompt }] }] });
+        const report = await callGeminiAPI({ systemInstruction: this.systemPrompt() + SAFE_RULES, contents: [...this.state.history, { role: 'user', parts: [{ text: `[تقييم المقابلة الصوتية]: التشخيص المبدئي: (${provDx}). قدّم تقريراً شاملاً لأسلوب أخذ القصة والدرجة من 100.` }] }] });
         if (box) {
           box.innerHTML = `<div style="margin-top:18px;padding:20px;border-radius:14px;background:var(--dark-green-soft);border:1px solid var(--dark-green);"><div data-notr="1">${renderSafeMarkdown(report)}</div></div>`;
-          addExportBar(box.firstElementChild, report, 'mednerd-voice-encounter-report');
+          addExportBar(box.firstElementChild, report, 'mednerd-voice-report');
         }
       } catch (e) {
         if (box) box.innerHTML = `<div class="error-alert">${escapeHtml(e.message)}</div>`;
       } finally {
         APP_STATE.isRequestInFlight = false;
-        if (endBtn) endBtn.disabled = false;
       }
     }
   };
@@ -1121,13 +1275,11 @@
      ========================================================================== */
   const MedicalTranscriber = {
     state: { mediaRecorder: null, chunks: [], recordedBlob: null, recordedMime: '', isRecording: false, secElapsed: 0, timerId: null },
-
     cleanup() {
       if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
       if (this.state.mediaRecorder && this.state.isRecording) { try { this.state.mediaRecorder.stop(); } catch (_) {} }
       this.state.isRecording = false;
     },
-
     injectRecorderWidget() {
       const fileInput = $('at_file');
       if (!fileInput || $('atLiveRecorderWidget')) return;
@@ -1140,29 +1292,21 @@
           <span id="atRecDot" class="at-rec-dot"></span>
           <div>
             <div style="font-weight:800;font-size:14px;color:var(--petrol);">${isEn ? 'Live Lecture Recorder' : 'مسجل المحاضرات الصوتي المباشر'}</div>
-            <small id="atRecStatus" style="color:var(--muted-text);">${isEn ? 'Record from mic or upload file above' : 'سجّل مباشرة من الميكروفون أو ارفع ملفاً صوتياً أعلاه'}</small>
+            <small id="atRecStatus" style="color:var(--muted-text);">${isEn ? 'Record from mic or upload file above' : 'سجّل من الميكروفون أو ارفع ملفاً أعلاه'}</small>
           </div>
         </div>
         <div style="display:flex;gap:8px;align-items:center;">
-          <button type="button" id="atRecBtn" class="btn-secondary" onclick="window.MEDNERD_EXT.MedicalTranscriber.toggleRecording()">
-            <i class="fa-solid fa-microphone-lines"></i> <span>${isEn ? 'Start Recording' : 'بدء التسجيل'}</span>
-          </button>
+          <button type="button" id="atRecBtn" class="btn-secondary" onclick="window.MEDNERD_EXT.MedicalTranscriber.toggleRecording()"><i class="fa-solid fa-microphone-lines"></i> <span>${isEn ? 'Start Recording' : 'بدء التسجيل'}</span></button>
           <audio id="atAudioPreview" controls style="display:none;height:36px;max-width:220px;"></audio>
         </div>`;
       fileInput.parentElement.insertAdjacentElement('afterend', wrap);
     },
-
     async toggleRecording() {
       const isEn = LANG === 'en';
       if (this.state.isRecording) {
         this.cleanup();
-        const btn = $('atRecBtn'), dot = $('atRecDot');
-        if (dot) dot.classList.remove('active');
-        if (btn) btn.innerHTML = `<i class="fa-solid fa-microphone-lines"></i> <span>${isEn ? 'Re-record' : 'إعادة التسجيل'}</span>`;
-        return;
-      }
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        renderToolError(isEn ? 'Microphone recording not supported.' : 'التسجيل الصوتي غير مدعوم في هذا المتصفح.');
+        $('atRecDot')?.classList.remove('active');
+        const btn = $('atRecBtn'); if (btn) btn.innerHTML = `<i class="fa-solid fa-microphone-lines"></i> <span>${isEn ? 'Re-record' : 'إعادة التسجيل'}</span>`;
         return;
       }
       try {
@@ -1180,35 +1324,26 @@
           this.state.recordedBlob = new Blob(this.state.chunks, { type: mime });
           const audioEl = $('atAudioPreview');
           if (audioEl) { audioEl.src = URL.createObjectURL(this.state.recordedBlob); audioEl.style.display = 'block'; }
-          const st = $('atRecStatus');
-          if (st) st.textContent = isEn ? `Recorded ${this.state.secElapsed}s — Ready` : `تم تسجيل ${this.state.secElapsed} ثانية — جاهز للتفريغ`;
+          const st = $('atRecStatus'); if (st) st.textContent = isEn ? `Recorded ${this.state.secElapsed}s — Ready` : `تم تسجيل ${this.state.secElapsed} ثانية — جاهز للتفريغ`;
         };
 
         mr.start();
         this.state.mediaRecorder = mr;
         this.state.isRecording = true;
-        const btn = $('atRecBtn'), dot = $('atRecDot'), st = $('atRecStatus');
-        if (dot) dot.classList.add('active');
-        if (btn) btn.innerHTML = `<i class="fa-solid fa-stop" style="color:var(--danger);"></i> <span>${isEn ? 'Stop' : 'إيقاف التسجيل'}</span>`;
+        $('atRecDot')?.classList.add('active');
+        const btn = $('atRecBtn'); if (btn) btn.innerHTML = `<i class="fa-solid fa-stop" style="color:var(--danger);"></i> <span>${isEn ? 'Stop' : 'إيقاف'}</span>`;
         this.state.timerId = setInterval(() => {
           this.state.secElapsed++;
-          if (st) st.textContent = (isEn ? 'Recording... ' : 'جارٍ التسجيل... ') + this.state.secElapsed + 's';
+          const st = $('atRecStatus'); if (st) st.textContent = (isEn ? 'Recording... ' : 'جارٍ التسجيل... ') + this.state.secElapsed + 's';
         }, 1000);
       } catch (e) {
         renderToolError(e.message);
       }
     },
-
     resolveAudioMime(file) {
       if (file.type && file.type.startsWith('audio/')) return file.type;
-      const n = file.name.toLowerCase();
-      if (n.endsWith('.wav')) return 'audio/wav';
-      if (n.endsWith('.m4a') || n.endsWith('.mp4')) return 'audio/mp4';
-      if (n.endsWith('.ogg')) return 'audio/ogg';
-      if (n.endsWith('.webm')) return 'audio/webm';
       return 'audio/mp3';
     },
-
     async run() {
       if (APP_STATE.isRequestInFlight) return;
       const fileInp = $('at_file');
@@ -1218,28 +1353,21 @@
 
       let targetBlob = null, mimeType = '';
       if (uploadedFile) {
-        if (uploadedFile.size > GEMINI_CONFIG.maxFileSizeBytes) {
-          renderToolError(LANG === 'en' ? 'Audio file exceeds 12 MB limit.' : 'حجم الملف الصوتي يتجاوز 12 ميجابايت.');
-          return;
-        }
-        targetBlob = uploadedFile;
-        mimeType = this.resolveAudioMime(uploadedFile);
+        if (uploadedFile.size > GEMINI_CONFIG.maxFileSizeBytes) { renderToolError('حجم الملف الصوتي يتجاوز 12 ميجابايت.'); return; }
+        targetBlob = uploadedFile; mimeType = this.resolveAudioMime(uploadedFile);
       } else if (this.state.recordedBlob) {
-        targetBlob = this.state.recordedBlob;
-        mimeType = this.state.recordedMime || 'audio/webm';
+        targetBlob = this.state.recordedBlob; mimeType = this.state.recordedMime || 'audio/webm';
       } else {
-        renderToolError(LANG === 'en' ? 'Upload an audio file or record live audio first.' : 'يرجى رفع ملف صوتي أو تسجيل مقطع صوتي أولاً.');
+        renderToolError('يرجى رفع ملف صوتي أو تسجيل مقطع صوتي أولاً.');
         return;
       }
 
-      setToolLoadingState(true, LANG === 'en' ? EXT_EN_TOOLS.audio_transcriber.ld : 'جارٍ تفريغ الصوت وضبط المصطلحات الطبية...');
+      setToolLoadingState(true, 'جارٍ تفريغ الصوت وضبط المصطلحات الطبية...');
       $('toolOutputContainer').innerHTML = '';
 
       try {
         const b64 = await fileToBase64(targetBlob);
-        const sysPrompt = `أنت محرر ومحاضر طبي متخصص في تفريغ المحاضرات الصوتية الطبية بدقة قياسية في المصطلحات التشريحية والدوائية والسريرية (التخصص: ${spec} | الوضع: ${mode}).
-قدّم المخرجات منسقة في: 1) النص المفرّغ الكامل (Verbatim Medical Transcript) 2) ملاحظات المحاضرة المنظمة (Structured Lecture Notes) 3) الخلاصات الذهبية وأسئلة الامتحانات (Key Takeaways & Exam Pearls).`;
-
+        const sysPrompt = `أنت محرر ومحاضر طبي متخصص في تفريغ المحاضرات الصوتية الطبية بدقة (التخصص: ${spec} | الوضع: ${mode}). قدم: 1) النص المفرّغ 2) ملاحظات منظمة 3) نقاط امتحانية.`;
         const output = await callGeminiAPI({
           systemInstruction: sysPrompt + SAFE_RULES,
           contents: [{ role: 'user', parts: [{ text: `فرّغ وحلّل هذا التسجيل الصوتي الطبي.` }, { inlineData: { mimeType, data: b64 } }] }]
@@ -1258,11 +1386,7 @@
      ========================================================================== */
   const TimedExamArena = {
     state: { questions: [], currentIndex: 0, timerMode: 'total', secPerQ: 60, remainingSec: 0, timerId: null, qStartTimestamp: 0, finished: false },
-
-    cleanup() {
-      if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; }
-    },
-
+    cleanup() { if (this.state.timerId) { clearInterval(this.state.timerId); this.state.timerId = null; } },
     async run() {
       if (APP_STATE.isRequestInFlight) return;
       this.cleanup();
@@ -1271,26 +1395,15 @@
       const tmode = ($('tea_tmode') && $('tea_tmode').value) || 'total';
       const tsec = parseInt(($('tea_tsec') && $('tea_tsec').value) || '60', 10) || 60;
 
-      if (!topic) {
-        renderToolError(LANG === 'en' ? EXT_EN_TOOLS.timed_exam_arena.v : 'يرجى تحديد موضوع الامتحان أو لصق المادة العلمية.');
-        return;
-      }
+      if (!topic) { renderToolError('يرجى تحديد موضوع الامتحان.'); return; }
 
-      setToolLoadingState(true, LANG === 'en' ? EXT_EN_TOOLS.timed_exam_arena.ld : 'جارٍ إعداد الحالات السريرية الموقّتة...');
+      setToolLoadingState(true, 'جارٍ إعداد الحالات السريرية الموقّتة...');
       $('toolOutputContainer').innerHTML = '';
 
-      const sysPrompt = `أنت رئيس لجنة امتحانات سريرية (USMLE Step 2 CK). أنشئ (${count}) أسئلة سريرية (Clinical Vignettes) حول الموضوع المحدد.
-أخرج JSON فقط دون أي نص خارجه وفق الهيكل:
+      const sysPrompt = `أنت رئيس لجنة امتحانات سريرية. أنشئ (${count}) أسئلة سريرية حول الموضوع المحدد بصيغة JSON فقط:
 {
   "questions": [
-    {
-      "id": 1,
-      "domain": "اسم التخصص الفرعي",
-      "stem": "نص الحالة السريرية والسؤال",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ..."],
-      "correctIndex": 0,
-      "rationale": "التفسير العلمي المفصل للصحيح والخاطئ"
-    }
+    { "id": 1, "domain": "التخصص", "stem": "الحالة", "options": ["A", "B", "C", "D"], "correctIndex": 0, "rationale": "التفسير العلمي" }
   ]
 }`;
 
@@ -1300,14 +1413,10 @@
         if (!parsed.questions || !parsed.questions.length) throw new Error('No questions generated.');
 
         this.state.questions = parsed.questions.map((q, idx) => ({
-          id: idx + 1,
-          domain: q.domain || 'Clinical Medicine',
-          stem: q.stem || '',
+          id: idx + 1, domain: q.domain || 'Clinical Medicine', stem: q.stem || '',
           options: Array.isArray(q.options) ? q.options.slice(0, 5) : ['A', 'B', 'C', 'D'],
           correctIndex: Number.isInteger(q.correctIndex) ? q.correctIndex : 0,
-          rationale: q.rationale || '',
-          selected: null,
-          timeSpentSec: 0
+          rationale: q.rationale || '', selected: null, timeSpentSec: 0
         }));
 
         this.state.currentIndex = 0;
@@ -1325,14 +1434,12 @@
         setToolLoadingState(false);
       }
     },
-
     recordElapsedForCurrent() {
       const q = this.state.questions[this.state.currentIndex];
       if (!q || !this.state.qStartTimestamp) return;
       q.timeSpentSec += Math.max(0, Math.round((Date.now() - this.state.qStartTimestamp) / 1000));
       this.state.qStartTimestamp = Date.now();
     },
-
     startCountdown() {
       this.cleanup();
       this.state.timerId = setInterval(() => {
@@ -1356,13 +1463,11 @@
         }
       }, 1000);
     },
-
     selectOption(optIdx) {
       if (this.state.finished) return;
       this.state.questions[this.state.currentIndex].selected = optIdx;
       this.renderActiveQuestion();
     },
-
     goToQuestion(newIdx) {
       if (this.state.finished) return;
       this.recordElapsedForCurrent();
@@ -1370,52 +1475,33 @@
       if (this.state.timerMode === 'per_question') this.state.remainingSec = this.state.secPerQ;
       this.renderActiveQuestion();
     },
-
     renderActiveQuestion() {
-      const c = $('toolOutputContainer');
-      if (!c) return;
+      const c = $('toolOutputContainer'); if (!c) return;
       const isEn = LANG === 'en';
-      const q = this.state.questions[this.state.currentIndex];
-      const total = this.state.questions.length;
+      const q = this.state.questions[this.state.currentIndex], total = this.state.questions.length;
       const m = Math.floor(this.state.remainingSec / 60), s = this.state.remainingSec % 60;
 
       c.innerHTML = `
         <div class="ai-output-box" data-notr="1">
           <div class="tea-topbar">
-            <div>
-              <span class="mn-ext-pill">${isEn ? 'Question' : 'السؤال'} ${this.state.currentIndex + 1} / ${total}</span>
-              <span class="mn-ext-pill green" style="margin-inline-start:6px;">${escapeHtml(q.domain)}</span>
-            </div>
-            <span id="teaClockText" class="mn-ext-pill danger" style="font-size:15px;font-family:monospace;">
-              ${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}
-            </span>
+            <div><span class="mn-ext-pill">${isEn ? 'Question' : 'السؤال'} ${this.state.currentIndex + 1} / ${total}</span><span class="mn-ext-pill green" style="margin-inline-start:6px;">${escapeHtml(q.domain)}</span></div>
+            <span id="teaClockText" class="mn-ext-pill danger" style="font-size:15px;font-family:monospace;">${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}</span>
           </div>
           <p style="font-size:16px;font-weight:700;line-height:1.8;margin-bottom:18px;">${escapeHtml(q.stem)}</p>
-          <div>
-            ${q.options.map((opt, idx) => `
-              <button type="button" class="tea-option ${q.selected === idx ? 'selected' : ''}" onclick="window.MEDNERD_EXT.TimedExamArena.selectOption(${idx})">
-                <span style="font-weight:800;color:var(--petrol);">${idx + 1}.</span>
-                <span>${escapeHtml(opt)}</span>
-              </button>
-            `).join('')}
-          </div>
+          <div>${q.options.map((opt, idx) => `<button type="button" class="tea-option ${q.selected === idx ? 'selected' : ''}" onclick="window.MEDNERD_EXT.TimedExamArena.selectOption(${idx})"><b style="color:var(--petrol);">${idx + 1}.</b> <span>${escapeHtml(opt)}</span></button>`).join('')}</div>
           <div style="display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding-top:14px;border-top:1px solid var(--border-color);flex-wrap:wrap;gap:10px;">
             <div style="display:flex;gap:8px;">
               ${this.state.timerMode === 'total' ? `<button type="button" class="btn-secondary" ${this.state.currentIndex === 0 ? 'disabled' : ''} onclick="window.MEDNERD_EXT.TimedExamArena.goToQuestion(${this.state.currentIndex - 1})">${isEn ? 'Previous' : 'السابق'}</button>` : ''}
               ${this.state.currentIndex < total - 1 ? `<button type="button" class="btn-primary" onclick="window.MEDNERD_EXT.TimedExamArena.goToQuestion(${this.state.currentIndex + 1})">${isEn ? 'Next' : 'التالي'}</button>` : ''}
             </div>
-            <button type="button" class="btn-primary" style="background:var(--dark-green);" onclick="window.MEDNERD_EXT.TimedExamArena.finishExam()">
-              <i class="fa-solid fa-flag-checkered"></i> ${isEn ? 'Submit & Analytics' : 'تسليم الامتحان وعرض لوحة الأداء'}
-            </button>
+            <button type="button" class="btn-primary" style="background:var(--dark-green);" onclick="window.MEDNERD_EXT.TimedExamArena.finishExam()"><i class="fa-solid fa-flag-checkered"></i> ${isEn ? 'Submit' : 'تسليم الامتحان'}</button>
           </div>
         </div>`;
     },
-
     finishExam() {
       this.recordElapsedForCurrent();
       this.state.finished = true;
       this.cleanup();
-
       const qs = this.state.questions, total = qs.length;
       let correctCount = 0, totalTime = 0;
       const domainMap = {};
@@ -1425,46 +1511,35 @@
         if (ok) correctCount++;
         totalTime += q.timeSpentSec;
         if (!domainMap[q.domain]) domainMap[q.domain] = { total: 0, correct: 0, time: 0 };
-        domainMap[q.domain].total++;
-        if (ok) domainMap[q.domain].correct++;
+        domainMap[q.domain].total++; if (ok) domainMap[q.domain].correct++;
         domainMap[q.domain].time += q.timeSpentSec;
       });
 
-      const scorePct = Math.round((correctCount / total) * 100);
-      const avgTime = Math.round(totalTime / total);
+      const scorePct = Math.round((correctCount / total) * 100), avgTime = Math.round(totalTime / total);
       const isEn = LANG === 'en';
 
       const domainRowsHtml = Object.entries(domainMap).map(([dom, st]) => {
         const pct = Math.round((st.correct / st.total) * 100);
         const col = pct >= 70 ? 'var(--dark-green)' : pct >= 50 ? 'var(--mustard)' : 'var(--danger)';
-        return `<div style="margin-bottom:12px;">
-          <div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;">
-            <span>${escapeHtml(dom)}</span><span style="color:${col};">${st.correct}/${st.total} (${pct}%) • ${st.time}s</span>
-          </div>
-          <div class="tea-bar-track"><div class="tea-bar-fill" style="width:${pct}%;background:${col};"></div></div>
-        </div>`;
+        return `<div style="margin-bottom:12px;"><div style="display:flex;justify-content:space-between;font-size:13.5px;font-weight:700;"><span>${escapeHtml(dom)}</span><span style="color:${col};">${st.correct}/${st.total} (${pct}%)</span></div><div class="tea-bar-track"><div class="tea-bar-fill" style="width:${pct}%;background:${col};"></div></div></div>`;
       }).join('');
 
       const reviewCardsHtml = qs.map((q, i) => {
         const ok = q.selected === q.correctIndex;
         return `<div style="padding:18px;border:1px solid var(--border-color);border-radius:14px;background:var(--white);margin-bottom:14px;">
-          <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
-            <span class="mn-ext-pill ${ok ? 'green' : 'danger'}">${ok ? (isEn ? '✓ Correct' : '✓ صحيحة') : (isEn ? '✗ Incorrect' : '✗ خاطئة')}</span>
-            <small style="font-weight:700;color:var(--muted-text);">${q.timeSpentSec}s</small>
-          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:10px;"><span class="mn-ext-pill ${ok ? 'green' : 'danger'}">${ok ? '✓ صحيحة' : '✗ خاطئة'}</span><small>${q.timeSpentSec}s</small></div>
           <p style="font-weight:700;margin-bottom:12px;">Q${i + 1}: ${escapeHtml(q.stem)}</p>
           ${q.options.map((opt, oIdx) => `<div class="tea-option ${oIdx === q.correctIndex ? 'correct' : (q.selected === oIdx ? 'wrong' : '')}" style="cursor:default;"><span>${escapeHtml(opt)}</span></div>`).join('')}
-          <div style="margin-top:10px;padding:12px 14px;border-radius:10px;background:var(--petrol-soft);font-size:14px;">${renderSafeMarkdown(q.rationale)}</div>
+          <div style="margin-top:10px;padding:12px;background:var(--petrol-soft);border-radius:10px;font-size:14px;">${renderSafeMarkdown(q.rationale)}</div>
         </div>`;
       }).join('');
 
-      const c = $('toolOutputContainer');
-      if (!c) return;
+      const c = $('toolOutputContainer'); if (!c) return;
       c.innerHTML = `<div class="ai-output-box" data-notr="1">
-        <h3><i class="fa-solid fa-chart-pie"></i> ${isEn ? 'Performance Metrics & Review' : 'لوحة مؤشرات الأداء والمراجعة التفصيلية'}</h3>
+        <h3><i class="fa-solid fa-chart-pie"></i> ${isEn ? 'Performance Metrics' : 'لوحة مؤشرات الأداء والمراجعة'}</h3>
         <div class="tea-kpi-grid">
           <div class="tea-kpi-card"><div class="tea-kpi-val">${scorePct}%</div><small>${correctCount}/${total}</small></div>
-          <div class="tea-kpi-card"><div class="tea-kpi-val">${avgTime}s</div><small>${isEn ? 'Avg Time/Q' : 'متوسط زمن السؤال'}</small></div>
+          <div class="tea-kpi-card"><div class="tea-kpi-val">${avgTime}s</div><small>${isEn ? 'Avg Time/Q' : 'متوسط الزمن'}</small></div>
           <div class="tea-kpi-card"><div class="tea-kpi-val">${totalTime}s</div><small>${isEn ? 'Total Time' : 'إجمالي الزمن'}</small></div>
         </div>
         <div style="padding:16px;background:var(--white);border:1px solid var(--border-color);border-radius:14px;margin-bottom:20px;">${domainRowsHtml}</div>
@@ -1483,29 +1558,22 @@
       const explanation = ($('fme_exp') && $('fme_exp').value.trim()) || '';
       const aud = ($('fme_aud') && $('fme_aud').value) || 'Peer';
 
-      if (!concept || !explanation) {
-        renderToolError(LANG === 'en' ? EXT_EN_TOOLS.feynman_engine.v : 'يرجى إدخال المفهوم الطبي وشرحك الشخصي له أولاً.');
-        return;
-      }
+      if (!concept || !explanation) { renderToolError('يرجى إدخال المفهوم وشرحك الشخصي له.'); return; }
 
-      setToolLoadingState(true, LANG === 'en' ? EXT_EN_TOOLS.feynman_engine.ld : 'جارٍ فحص شرحك واكتشاف الفجوات المفاهيمية...');
+      setToolLoadingState(true, 'جارٍ فحص شرحك واكتشاف الفجوات المفاهيمية...');
       $('toolOutputContainer').innerHTML = '';
 
-      const sysPrompt = `أنت مقيم أكاديمي خبير بتقنية فاينمان الطبية. حلّل شرح الطالب للمفهوم (${concept}) الموجه لجمهور (${aud}).
-أخرج JSON فقط دون أي نص خارجه وفق الهيكل:
+      const sysPrompt = `أنت مقيم أكاديمي خبير بتقنية فاينمان الطبية. حلّل شرح الطالب للمفهوم (${concept}) الموجه لجمهور (${aud}). أخرج JSON فقط:
 {
   "scores": { "clarity": 85, "accuracy": 90, "depth": 75, "overall": 83 },
-  "blindSpots": ["نقطة أغفلها الطالب أو أخطأ فيها"],
-  "jargonDetected": [{ "term": "المصطلح", "issue": "مشكلة الفهم", "simplerRewrite": "البديل المبسط" }],
-  "analogies": ["تشبيه مقترح لتبسيط الآلية"],
+  "blindSpots": ["فجوة أو خطأ"],
+  "jargonDetected": [{ "term": "المصطلح", "issue": "المشكلة", "simplerRewrite": "البديل" }],
+  "analogies": ["تشبيه مقترح"],
   "idealFeynmanRewrite": "إعادة صياغة نموذجية"
 }`;
 
       try {
-        const raw = await callGeminiAPI({
-          systemInstruction: sysPrompt + SAFE_RULES,
-          contents: [{ role: 'user', parts: [{ text: `المفهوم: ${concept}\n\nشرح الطالب:\n${explanation}` }] }]
-        });
+        const raw = await callGeminiAPI({ systemInstruction: sysPrompt + SAFE_RULES, contents: [{ role: 'user', parts: [{ text: `المفهوم: ${concept}\n\nشرح الطالب:\n${explanation}` }] }] });
         this.renderReport(extractJsonBlock(raw), concept);
       } catch (e) {
         renderToolError(e.message, () => this.run());
@@ -1513,45 +1581,575 @@
         setToolLoadingState(false);
       }
     },
-
     renderReport(d, concept) {
-      const c = $('toolOutputContainer');
-      if (!c) return;
+      const c = $('toolOutputContainer'); if (!c) return;
       const isEn = LANG === 'en';
       const sc = d.scores || { clarity: 0, accuracy: 0, depth: 0, overall: 0 };
-      const blind = Array.isArray(d.blindSpots) ? d.blindSpots : [];
-      const jargon = Array.isArray(d.jargonDetected) ? d.jargonDetected : [];
-      const analogies = Array.isArray(d.analogies) ? d.analogies : [];
-
-      const jargonRows = jargon.length
-        ? `<table><thead><tr><th>${isEn ? 'Jargon Term' : 'المصطلح'}</th><th>${isEn ? 'Issue' : 'المشكلة'}</th><th>${isEn ? 'Plain Rewrite' : 'البديل الواضح'}</th></tr></thead>
-            <tbody>${jargon.map(j => `<tr><td><b>${escapeHtml(j.term || '')}</b></td><td>${escapeHtml(j.issue || '')}</td><td>${escapeHtml(j.simplerRewrite || '')}</td></tr>`).join('')}</tbody></table>`
-        : `<p>${isEn ? 'No unexplained jargon detected.' : 'لم يُرصد اتكاء مفرط على مصطلحات غامضة.'}</p>`;
+      const blind = Array.isArray(d.blindSpots) ? d.blindSpots : [], jargon = Array.isArray(d.jargonDetected) ? d.jargonDetected : [], analogies = Array.isArray(d.analogies) ? d.analogies : [];
 
       c.innerHTML = `<div class="ai-output-box" data-notr="1">
-        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> ${isEn ? 'Feynman Rubric Audit' : 'تقرير تقييم فاينمان وفحص الفهم العميق'}</h3>
+        <h3><i class="fa-solid fa-magnifying-glass-chart"></i> ${isEn ? 'Feynman Audit' : 'تقرير تقييم فاينمان وفحص الفهم'}</h3>
         <div class="fme-rubric-grid">
           <div class="fme-score-card"><div>${isEn ? 'Clarity' : 'الوضوح'}</div><div class="fme-ring">${sc.clarity}/100</div></div>
-          <div class="fme-score-card"><div>${isEn ? 'Accuracy' : 'الدقة العلمية'}</div><div class="fme-ring" style="color:var(--dark-green);">${sc.accuracy}/100</div></div>
-          <div class="fme-score-card"><div>${isEn ? 'Depth' : 'العمق السببي'}</div><div class="fme-ring" style="color:var(--mustard);">${sc.depth}/100</div></div>
+          <div class="fme-score-card"><div>${isEn ? 'Accuracy' : 'الدقة'}</div><div class="fme-ring" style="color:var(--dark-green);">${sc.accuracy}/100</div></div>
+          <div class="fme-score-card"><div>${isEn ? 'Depth' : 'العمق'}</div><div class="fme-ring" style="color:var(--mustard);">${sc.depth}/100</div></div>
           <div class="fme-score-card"><div>${isEn ? 'Overall' : 'الدرجة الكلية'}</div><div class="fme-ring">${sc.overall}/100</div></div>
         </div>
-        <h4>${isEn ? 'a) Conceptual Blind Spots' : 'أ) الفجوات المفاهيمية والأخطاء المرصودة'}</h4>
-        <ul>${blind.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
-        <h4>${isEn ? 'b) Medical Jargon Detector' : 'ب) كاشف الاتكاء على المصطلحات دون شرح الآلية'}</h4>
-        ${jargonRows}
-        <h4>${isEn ? 'c) Suggested Analogies' : 'ج) تشبيهات مقترحة للتبسيط'}</h4>
-        <ul>${analogies.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>
-        <h4>${isEn ? 'Model Feynman Explanation' : 'الصياغة النموذجية بطريقة فاينمان'}</h4>
-        <blockquote>${renderSafeMarkdown(d.idealFeynmanRewrite || '')}</blockquote>
+        <h4>أ) الفجوات المفاهيمية</h4><ul>${blind.map(b => `<li>${escapeHtml(b)}</li>`).join('')}</ul>
+        <h4>ب) المصطلحات غير المفسرة</h4>
+        ${jargon.length ? `<table><thead><tr><th>المصطلح</th><th>المشكلة</th><th>البديل</th></tr></thead><tbody>${jargon.map(j => `<tr><td><b>${escapeHtml(j.term)}</b></td><td>${escapeHtml(j.issue)}</td><td>${escapeHtml(j.simplerRewrite)}</td></tr>`).join('')}</tbody></table>` : '<p>ممتاز!</p>'}
+        <h4>ج) تشبيهات مقترحة</h4><ul>${analogies.map(a => `<li>${escapeHtml(a)}</li>`).join('')}</ul>
+        <h4>الصياغة النموذجية</h4><blockquote>${renderSafeMarkdown(d.idealFeynmanRewrite || '')}</blockquote>
       </div>`;
     }
   };
 
   /* ==========================================================================
-     تسجيل الأدوات الـ 6 وربطها التلقائي بالواجهة
+     MODULE 7: 3D ANATOMY ATLAS & STUDIO
+     External Libraries:
+     1) Sketchfab 3D API v3 (Live Public Medical 3D Search + Interactive 3D Embeds)
+     2) Three.js WebGL Engine (Interactive 3D Organ & Anatomical Planes Dissector)
+     3) Google <model-viewer> (Local .GLB/.GLTF 3D Loader + AR View)
+     ========================================================================== */
+  const Anatomy3DStudio = {
+    state: {
+      activeTab: 'sketchfab', // sketchfab | threejs | glb
+      currentQuery: 'Human Heart Anatomy',
+      currentModelUid: '',
+      currentModelTitle: '',
+      searchResults: [],
+      threeAnimId: null,
+      threeRenderer: null,
+      threeScene: null,
+      threeCamera: null,
+      threeGroup: null,
+      planesVisible: { sagittal: true, coronal: true, axial: true },
+      wireframe: false,
+      autoRotate: true
+    },
+
+    ORGAN_PRESETS: [
+      { id: 'heart',      q: 'Human Heart Anatomy Valves Chambers', labelAr: 'القلب والصمامات', labelEn: 'Heart & Valves', icon: 'fa-heart-pulse' },
+      { id: 'brain',      q: 'Human Brain Anatomy Lobes Cranial',   labelAr: 'الدماغ والأعصاب', labelEn: 'Brain & Nerves', icon: 'fa-brain' },
+      { id: 'skull',      q: 'Human Skull Anatomy Bones Foramina',  labelAr: 'الجمجمة والعظام', labelEn: 'Skull & Bones',  icon: 'fa-skull' },
+      { id: 'skeleton',   q: 'Human Skeleton Full Anatomy',         labelAr: 'الهيكل العظمي',   labelEn: 'Full Skeleton',  icon: 'fa-bone' },
+      { id: 'muscles',    q: 'Human Muscular System Ecorche',       labelAr: 'الجهاز العضلي',   labelEn: 'Muscular System',icon: 'fa-person-running' },
+      { id: 'lungs',      q: 'Lungs Bronchial Tree Respiratory',    labelAr: 'الرئتان والقصبات', labelEn: 'Lungs & Airway', icon: 'fa-lungs' },
+      { id: 'digestive',  q: 'Digestive System Liver Stomach',      labelAr: 'الجهاز الهضمي',   labelEn: 'Digestive Tract',icon: 'fa-Kit-medical' },
+      { id: 'kidney',     q: 'Kidney Anatomy Nephron Renal',        labelAr: 'الكلية والنفرون', labelEn: 'Kidney & Renal', icon: 'fa-filter' },
+      { id: 'eye',        q: 'Human Eye Anatomy Orbit',             labelAr: 'العين والحجاج',   labelEn: 'Eye & Orbit',    icon: 'fa-eye' },
+      { id: 'ear',        q: 'Inner Ear Anatomy Cochlea',           labelAr: 'الأذن الداخلية',  labelEn: 'Ear & Cochlea',  icon: 'fa-ear-listen' }
+    ],
+
+    cleanup() {
+      if (this.state.threeAnimId) {
+        cancelAnimationFrame(this.state.threeAnimId);
+        this.state.threeAnimId = null;
+      }
+      if (this.state.threeRenderer) {
+        try { this.state.threeRenderer.dispose(); } catch (_) {}
+        this.state.threeRenderer = null;
+      }
+    },
+
+    ensureThreeJS() {
+      if (window.THREE) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const sc = document.createElement('script');
+        sc.src = 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js';
+        sc.onload = () => resolve();
+        sc.onerror = () => reject(new Error('Failed to load Three.js library from CDN.'));
+        document.head.appendChild(sc);
+      });
+    },
+
+    ensureModelViewer() {
+      if (window.customElements && window.customElements.get('model-viewer')) return Promise.resolve();
+      return new Promise((resolve) => {
+        const sc = document.createElement('script');
+        sc.type = 'module';
+        sc.src = 'https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js';
+        sc.onload = () => resolve();
+        sc.onerror = () => resolve();
+        document.head.appendChild(sc);
+      });
+    },
+
+    async run() {
+      this.cleanup();
+      const customSearch = ($('a3d_search') && $('a3d_search').value.trim()) || '';
+      const presetVal = ($('a3d_preset') && $('a3d_preset').value) || 'Human Heart Anatomy Valves Chambers';
+      this.state.currentQuery = customSearch || presetVal;
+
+      this.mountStudioShell();
+      await this.searchSketchfabModels(this.state.currentQuery);
+      this.generateAiStudyGuide(this.state.currentQuery);
+    },
+
+    mountStudioShell() {
+      const c = $('toolOutputContainer');
+      if (!c) return;
+      const isEn = LANG === 'en';
+
+      const chipsHtml = this.ORGAN_PRESETS.map(p => `
+        <button type="button" class="a3d-chip" onclick="window.MEDNERD_EXT.Anatomy3DStudio.selectOrganChip('${p.q.replace(/'/g, "\\'")}')">
+          <i class="fa-solid ${p.icon}"></i>
+          <span>${isEn ? p.labelEn : p.labelAr}</span>
+        </button>
+      `).join('');
+
+      c.innerHTML = `
+        <div class="ai-output-box" data-notr="1">
+          <!-- شريط اختيار محرك الـ 3D الخارجي -->
+          <div class="a3d-tabs">
+            <button type="button" id="a3dTabSketchfab" class="a3d-tab active" onclick="window.MEDNERD_EXT.Anatomy3DStudio.switchEngine('sketchfab')">
+              <i class="fa-solid fa-cube"></i>
+              <span>${isEn ? '1. Sketchfab 3D Medical Atlas (Online)' : '1. أطلس Sketchfab الطبي ثلاثي الأبعاد'}</span>
+            </button>
+            <button type="button" id="a3dTabThree" class="a3d-tab" onclick="window.MEDNERD_EXT.Anatomy3DStudio.switchEngine('threejs')">
+              <i class="fa-solid fa-layer-group"></i>
+              <span>${isEn ? '2. Three.js WebGL Anatomical Planes & Dissector' : '2. محاكي المستويات التشريحية (Three.js WebGL)'}</span>
+            </button>
+            <button type="button" id="a3dTabGlb" class="a3d-tab" onclick="window.MEDNERD_EXT.Anatomy3DStudio.switchEngine('glb')">
+              <i class="fa-solid fa-vr-cardboard"></i>
+              <span>${isEn ? '3. Google <model-viewer> (.GLB / AR Loader)' : '3. عارض ملفات GLB والواقع المعزز (AR)'}</span>
+            </button>
+          </div>
+
+          <!-- أزرار الأعضاء السريعة + شريط البحث الفوري -->
+          <div id="a3dSketchfabControls">
+            <div class="a3d-organ-chips">${chipsHtml}</div>
+            <div style="display:flex;gap:8px;margin-bottom:14px;flex-wrap:wrap;">
+              <input type="text" id="a3dLiveQueryInput" class="form-input" style="flex:1;min-width:220px;" value="${escapeHtml(this.state.currentQuery)}" placeholder="${isEn ? 'Search 3D model in English (e.g., Brachial plexus, Circle of Willis, Femur)...' : 'ابحث بالإنجليزية عن أي مجسم تشريحي 3D (مثال: Sphenoid bone, Circle of Willis, Heart)...'}">
+              <button type="button" class="btn-primary" style="padding:10px 18px;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.triggerLiveSearch()">
+                <i class="fa-solid fa-magnifying-glass"></i> ${isEn ? 'Search 3D Atlas' : 'بحث في مكتبة 3D'}
+              </button>
+              <button type="button" class="btn-secondary" style="padding:10px 16px;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.generateAiStudyGuide()">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> ${isEn ? 'Explain 3D Landmarks (AI)' : 'شرح معالم المجسم بالذكاء الاصطناعي'}
+              </button>
+            </div>
+          </div>
+
+          <!-- شاشة العرض ثلاثية الأبعاد الرئيسية -->
+          <div id="a3dStageContainer" class="a3d-stage">
+            <div style="display:flex;align-items:center;justify-content:center;height:100%;color:#fff;font-weight:700;">
+              <span class="loading-spinner" style="margin-inline-end:10px;"></span>
+              <span>${isEn ? 'Loading 3D WebGL Viewport...' : 'جارٍ تحميل المجسم ثلاثي الأبعاد...'}</span>
+            </div>
+          </div>
+
+          <!-- معرض المجسمات البديلة المطابقة للبحث -->
+          <div id="a3dGalleryWrap" style="margin-top:16px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <h4 style="margin:0;"><i class="fa-solid fa-cubes"></i> ${isEn ? 'Matching 3D Anatomical Models (Click any model to load in 3D viewer)' : 'المجسمات ثلاثية الأبعاد المطابقة (اضغط على أي مجسم لفتحه في شاشة الـ 3D)'}</h4>
+              <small id="a3dResultCount" style="color:var(--muted-text);font-weight:700;"></small>
+            </div>
+            <div id="a3dResultsGrid" class="a3d-results-grid"></div>
+          </div>
+
+          <!-- الشرح التشريحي السريري المرافق للمجسم -->
+          <div id="a3dAiGuideBox" style="margin-top:20px;padding-top:16px;border-top:1px solid var(--border-color);"></div>
+        </div>`;
+
+      const inp = $('a3dLiveQueryInput');
+      if (inp) inp.onkeydown = e => { if (e.key === 'Enter') { e.preventDefault(); this.triggerLiveSearch(); } };
+    },
+
+    switchEngine(tab) {
+      this.cleanup();
+      this.state.activeTab = tab;
+      [' Sketchfab', 'Three', 'Glb'].forEach(k => {
+        const el = $('a3dTab' + k.trim());
+        if (el) el.classList.remove('active');
+      });
+      if (tab === 'sketchfab') {
+        $('a3dTabSketchfab')?.classList.add('active');
+        if ($('a3dSketchfabControls')) $('a3dSketchfabControls').style.display = 'block';
+        if ($('a3dGalleryWrap')) $('a3dGalleryWrap').style.display = 'block';
+        if (this.state.currentModelUid) {
+          this.loadSketchfabIframe(this.state.currentModelUid, this.state.currentModelTitle);
+        } else {
+          this.searchSketchfabModels(this.state.currentQuery);
+        }
+      } else if (tab === 'threejs') {
+        $('a3dTabThree')?.classList.add('active');
+        if ($('a3dSketchfabControls')) $('a3dSketchfabControls').style.display = 'none';
+        if ($('a3dGalleryWrap')) $('a3dGalleryWrap').style.display = 'none';
+        this.mountThreeJsDissector();
+      } else if (tab === 'glb') {
+        $('a3dTabGlb')?.classList.add('active');
+        if ($('a3dSketchfabControls')) $('a3dSketchfabControls').style.display = 'none';
+        if ($('a3dGalleryWrap')) $('a3dGalleryWrap').style.display = 'none';
+        this.mountGlbViewer();
+      }
+    },
+
+    selectOrganChip(query) {
+      this.state.currentQuery = query;
+      const inp = $('a3dLiveQueryInput');
+      if (inp) inp.value = query;
+      this.searchSketchfabModels(query);
+      this.generateAiStudyGuide(query);
+    },
+
+    triggerLiveSearch() {
+      const inp = $('a3dLiveQueryInput');
+      const q = (inp && inp.value.trim()) || this.state.currentQuery;
+      if (!q) return;
+      this.state.currentQuery = q;
+      this.searchSketchfabModels(q);
+      this.generateAiStudyGuide(q);
+    },
+
+    async searchSketchfabModels(query) {
+      const grid = $('a3dResultsGrid');
+      const countEl = $('a3dResultCount');
+      const stage = $('a3dStageContainer');
+      const isEn = LANG === 'en';
+
+      if (grid) grid.innerHTML = `<p style="color:var(--muted-text);font-size:13px;">${isEn ? 'Searching Sketchfab 3D Medical Repository...' : 'جارٍ البحث في مستودع Sketchfab 3D الطبي...'}</p>`;
+
+      try {
+        const url = `https://api.sketchfab.com/v3/search?type=models&q=${encodeURIComponent(query + ' anatomy')}&sort_by=-relevance&count=12`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Sketchfab API HTTP ' + resp.status);
+        const data = await resp.json();
+        const list = (data && Array.isArray(data.results)) ? data.results : [];
+
+        if (!list.length) {
+          if (grid) grid.innerHTML = `<p style="color:var(--mustard);font-size:13.5px;">${isEn ? 'No exact 3D models found. Try English anatomical terms (e.g., Heart, Skull, Brain).' : 'لم يُعثر على مجسمات مطابقة. جرب كتابة المصطلح التشريحي بالإنجليزية (مثل Heart, Skull, Brain).'}</p>`;
+          return;
+        }
+
+        this.state.searchResults = list;
+        if (countEl) countEl.textContent = `${list.length} ${isEn ? '3D models available' : 'مجسم 3D متاح'}`;
+
+        // تحميل أول مجسم تلقائياً في شاشة العرض الثلاثية الأبعاد
+        const first = list[0];
+        this.loadSketchfabIframe(first.uid, first.name);
+
+        if (grid) {
+          grid.innerHTML = list.map(item => {
+            const imgs = (item.thumbnails && Array.isArray(item.thumbnails.images)) ? item.thumbnails.images : [];
+            const thumb = (imgs.find(im => im.width >= 200 && im.width <= 450) || imgs[0] || {}).url || '';
+            const author = (item.user && item.user.displayName) || 'Medical 3D';
+            return `
+              <div class="a3d-model-card" onclick="window.MEDNERD_EXT.Anatomy3DStudio.loadSketchfabIframe('${escapeHtml(item.uid)}', '${escapeHtml(item.name.replace(/'/g, "\\'"))}')">
+                ${thumb ? `<img class="a3d-model-thumb" src="${escapeHtml(thumb)}" alt="${escapeHtml(item.name)}" loading="lazy">` : `<div class="a3d-model-thumb"></div>`}
+                <div class="a3d-model-info">
+                  <div style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${escapeHtml(item.name)}">${escapeHtml(item.name)}</div>
+                  <small style="color:var(--muted-text);font-weight:500;">${escapeHtml(author)}</small>
+                </div>
+              </div>`;
+          }).join('');
+        }
+      } catch (err) {
+        if (stage) {
+          stage.innerHTML = `<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;color:#fff;padding:20px;text-align:center;">
+            <p style="margin-bottom:12px;">${isEn ? 'Could not reach Sketchfab API. Switching to local Three.js 3D Engine...' : 'تعذر الوصول لمستودع Sketchfab الخارجي. يمكنك استخدام محاكي Three.js WebGL المحلي مباشرة:'}</p>
+            <button type="button" class="btn-primary" onclick="window.MEDNERD_EXT.Anatomy3DStudio.switchEngine('threejs')">تشغيل محرك Three.js 3D المحلي</button>
+          </div>`;
+        }
+      }
+    },
+
+    loadSketchfabIframe(uid, title) {
+      this.state.currentModelUid = uid;
+      this.state.currentModelTitle = title || this.state.currentQuery;
+      const stage = $('a3dStageContainer');
+      if (!stage) return;
+      const embedUrl = `https://sketchfab.com/models/${encodeURIComponent(uid)}/embed?autostart=1&ui_infos=0&ui_watermark=0&ui_theme=dark`;
+      stage.innerHTML = `
+        <iframe
+          title="${escapeHtml(this.state.currentModelTitle)}"
+          src="${embedUrl}"
+          allow="autoplay; fullscreen; xr-spatial-tracking"
+          allowfullscreen
+          mozallowfullscreen="true"
+          webkitallowfullscreen="true">
+        </iframe>`;
+    },
+
+    async mountThreeJsDissector() {
+      const stage = $('a3dStageContainer');
+      if (!stage) return;
+      const isEn = LANG === 'en';
+      stage.innerHTML = `<div id="a3dThreeMount" style="width:100%;height:100%;position:relative;"></div>`;
+      const mount = $('a3dThreeMount');
+
+      try {
+        await this.ensureThreeJS();
+        const THREE = window.THREE;
+        const w = mount.clientWidth || 800;
+        const h = mount.clientHeight || 500;
+
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0f172a);
+
+        const camera = new THREE.PerspectiveCamera(45, w / h, 0.1, 1000);
+        camera.position.set(4.2, 3.2, 5.5);
+        camera.lookAt(0, 0, 0);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true });
+        renderer.setSize(w, h);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+        mount.appendChild(renderer.domElement);
+
+        const ambLight = new THREE.AmbientLight(0xffffff, 0.65);
+        scene.add(ambLight);
+        const dirLight = new THREE.DirectionalLight(0x22d3ee, 0.9);
+        dirLight.position.set(5, 8, 6);
+        scene.add(dirLight);
+        const rimLight = new THREE.DirectionalLight(0xf43f5e, 0.6);
+        rimLight.position.set(-5, -4, -4);
+        scene.add(rimLight);
+
+        const group = new THREE.Group();
+        scene.add(group);
+
+        // 1. مجسم مركزي ثلاثي الأبعاد يمثل العضو/القلب/الدماغ مع فصوص وأوعية رئيسية
+        const coreGeo = new THREE.IcosahedronGeometry(1.25, 3);
+        const coreMat = new THREE.MeshPhongMaterial({
+          color: 0xe11d48,
+          shininess: 90,
+          transparent: true,
+          opacity: 0.88,
+          wireframe: this.state.wireframe
+        });
+        const coreMesh = new THREE.Mesh(coreGeo, coreMat);
+        group.add(coreMesh);
+
+        // الشريان الأبهر / القوس الوعائي العلوي
+        const archGeo = new THREE.TorusGeometry(0.85, 0.18, 16, 50, Math.PI);
+        const archMat = new THREE.MeshPhongMaterial({ color: 0xdc2626, wireframe: this.state.wireframe });
+        const archMesh = new THREE.Mesh(archGeo, archMat);
+        archMesh.position.set(0, 1.05, 0);
+        group.add(archMesh);
+
+        // الوريد الأجوف العلوي والسفلي (أزرق)
+        const veinGeo = new THREE.CylinderGeometry(0.18, 0.18, 2.8, 20);
+        const veinMat = new THREE.MeshPhongMaterial({ color: 0x2563eb, wireframe: this.state.wireframe });
+        const veinMesh = new THREE.Mesh(veinGeo, veinMat);
+        veinMesh.position.set(-0.75, 0.2, 0.4);
+        group.add(veinMesh);
+
+        // 2. المستويات التشريحية القاطعة الثلاثة (Sagittal, Coronal, Axial Planes)
+        const planeGeo = new THREE.PlaneGeometry(3.8, 3.8);
+
+        // Sagittal Plane (المستوى السهمي الناصف - يقسم يمين/يسار)
+        const sagMat = new THREE.MeshBasicMaterial({ color: 0x22d3ee, side: THREE.DoubleSide, transparent: true, opacity: 0.22 });
+        const sagPlane = new THREE.Mesh(planeGeo, sagMat);
+        sagPlane.rotation.y = Math.PI / 2;
+        sagPlane.name = 'sagittal';
+        group.add(sagPlane);
+
+        // Coronal Plane (المستوى الإكليلي/الجبهي - يقسم أمام/خلف)
+        const corMat = new THREE.MeshBasicMaterial({ color: 0x4ade80, side: THREE.DoubleSide, transparent: true, opacity: 0.22 });
+        const corPlane = new THREE.Mesh(planeGeo, corMat);
+        corPlane.name = 'coronal';
+        group.add(corPlane);
+
+        // Axial/Transverse Plane (المستوى المعترض/الأفقي - يقسم أعلى/أسفل)
+        const axiMat = new THREE.MeshBasicMaterial({ color: 0xfbbf24, side: THREE.DoubleSide, transparent: true, opacity: 0.22 });
+        const axiPlane = new THREE.Mesh(planeGeo, axiMat);
+        axiPlane.rotation.x = Math.PI / 2;
+        axiPlane.name = 'axial';
+        group.add(axiPlane);
+
+        // لوحة التحكم العائمة فوق WebGL
+        const ctrlBar = document.createElement('div');
+        ctrlBar.className = 'a3d-overlay-controls';
+        ctrlBar.innerHTML = `
+          <div style="display:flex;gap:6px;flex-wrap:wrap;background:rgba(15,23,42,.85);padding:8px 12px;border-radius:12px;border:1px solid #334155;">
+            <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px;color:#22d3ee;border-color:#22d3ee;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.togglePlane('sagittal')">
+              ${isEn ? 'Sagittal Plane' : 'المستوى السهمي (Sagittal)'}
+            </button>
+            <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px;color:#4ade80;border-color:#4ade80;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.togglePlane('coronal')">
+              ${isEn ? 'Coronal Plane' : 'المستوى الإكليلي (Coronal)'}
+            </button>
+            <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px;color:#fbbf24;border-color:#fbbf24;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.togglePlane('axial')">
+              ${isEn ? 'Axial Plane' : 'المستوى المعترض (Axial)'}
+            </button>
+            <button type="button" class="btn-secondary" style="padding:5px 10px;font-size:12px;color:#fff;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.toggleWireframe()">
+              <i class="fa-solid fa-border-all"></i> ${isEn ? 'Wireframe / X-Ray' : 'وضع الشبكة / الأشعة'}
+            </button>
+          </div>
+          <span style="background:rgba(15,23,42,.85);color:#cbd5e1;padding:6px 12px;border-radius:10px;font-size:12px;">
+            ${isEn ? 'Drag to rotate 3D • Scroll to zoom' : 'اسحب بالماوس أو الإصبع لتدوير المجسم بـ 360°'}
+          </span>`;
+        mount.appendChild(ctrlBar);
+
+        // تدوير بالماوس أو اللمس
+        let dragging = false, prevX = 0, prevY = 0;
+        renderer.domElement.addEventListener('pointerdown', e => { dragging = true; prevX = e.clientX; prevY = e.clientY; });
+        window.addEventListener('pointerup', () => { dragging = false; });
+        renderer.domElement.addEventListener('pointermove', e => {
+          if (!dragging) return;
+          group.rotation.y += (e.clientX - prevX) * 0.01;
+          group.rotation.x += (e.clientY - prevY) * 0.01;
+          prevX = e.clientX; prevY = e.clientY;
+        });
+        renderer.domElement.addEventListener('wheel', e => {
+          e.preventDefault();
+          camera.position.multiplyScalar(e.deltaY > 0 ? 1.08 : 0.92);
+        });
+
+        this.state.threeRenderer = renderer;
+        this.state.threeScene = scene;
+        this.state.threeCamera = camera;
+        this.state.threeGroup = group;
+        this.state.coreMat = coreMat;
+        this.state.archMat = archMat;
+        this.state.veinMat = veinMat;
+
+        const animate = () => {
+          this.state.threeAnimId = requestAnimationFrame(animate);
+          if (!dragging && this.state.autoRotate) group.rotation.y += 0.0045;
+          renderer.render(scene, camera);
+        };
+        animate();
+      } catch (e) {
+        stage.innerHTML = `<div class="error-alert">${escapeHtml(e.message)}</div>`;
+      }
+    },
+
+    togglePlane(planeName) {
+      const g = this.state.threeGroup;
+      if (!g) return;
+      const obj = g.getObjectByName(planeName);
+      if (obj) obj.visible = !obj.visible;
+    },
+
+    toggleWireframe() {
+      this.state.wireframe = !this.state.wireframe;
+      ['coreMat', 'archMat', 'veinMat'].forEach(k => {
+        if (this.state[k]) this.state[k].wireframe = this.state.wireframe;
+      });
+    },
+
+    async mountGlbViewer() {
+      await this.ensureModelViewer();
+      const stage = $('a3dStageContainer');
+      if (!stage) return;
+      const isEn = LANG === 'en';
+      stage.innerHTML = `
+        <div style="display:flex;flex-direction:column;height:100%;background:#0f172a;padding:16px;color:#fff;">
+          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">
+            <label class="btn-primary" style="padding:8px 16px;font-size:13px;cursor:pointer;">
+              <i class="fa-solid fa-upload"></i> ${isEn ? 'Load .GLB / .GLTF 3D File from Device' : 'اختر ملف مجسم ثلاثي الأبعاد (.GLB / .GLTF) من جهازك'}
+              <input type="file" id="a3dGlbFileInput" accept=".glb,.gltf" style="display:none;">
+            </label>
+            <input type="text" id="a3dGlbUrlInput" class="form-input" style="flex:1;min-width:220px;background:#1e293b;color:#fff;border-color:#334155;" placeholder="${isEn ? 'Or paste direct .glb URL...' : 'أو ألصق رابط مباشر لملف .glb...'}">
+            <button type="button" class="btn-secondary" style="color:#22d3ee;border-color:#22d3ee;" onclick="window.MEDNERD_EXT.Anatomy3DStudio.loadCustomGlbUrl()">
+              ${isEn ? 'Load URL' : 'عرض الرابط'}
+            </button>
+          </div>
+          <div id="a3dModelViewerHost" style="flex:1;border-radius:12px;overflow:hidden;background:#1e293b;display:flex;align-items:center;justify-content:center;">
+            <model-viewer
+              id="a3dMvElement"
+              src="https://modelviewer.dev/shared-assets/models/Astronaut.glb"
+              camera-controls
+              auto-rotate
+              ar
+              shadow-intensity="1"
+              style="width:100%;height:100%;">
+            </model-viewer>
+          </div>
+        </div>`;
+
+      const fi = $('a3dGlbFileInput');
+      if (fi) {
+        fi.onchange = () => {
+          const f = fi.files && fi.files[0];
+          if (!f) return;
+          const blobUrl = URL.createObjectURL(f);
+          const mv = $('a3dMvElement');
+          if (mv) mv.setAttribute('src', blobUrl);
+        };
+      }
+    },
+
+    loadCustomGlbUrl() {
+      const inp = $('a3dGlbUrlInput');
+      const mv = $('a3dMvElement');
+      if (inp && mv && inp.value.trim()) {
+        mv.setAttribute('src', inp.value.trim());
+      }
+    },
+
+    async generateAiStudyGuide(customTopic) {
+      if (APP_STATE.isRequestInFlight) return;
+      const box = $('a3dAiGuideBox');
+      if (!box) return;
+      const topic = customTopic || this.state.currentModelTitle || this.state.currentQuery;
+      const aimode = ($('a3d_aimode') && $('a3d_aimode').value) || 'Comprehensive';
+      const isEn = LANG === 'en';
+
+      box.innerHTML = `<div style="padding:14px;color:var(--petrol);font-weight:700;"><span class="loading-spinner req-spin" style="margin-inline-end:8px;"></span>${isEn ? 'Preparing 3D anatomical landmarks & clinical guide...' : 'جارٍ إعداد دليل المعالم التشريحية الثلاثية الأبعاد والشرح السريري...'}</div>`;
+
+      const sysPrompt = `أنت أستاذ علم التشريح السريري والجراحي. الطالب يستعرض الآن مجسماً ثلاثي الأبعاد لـ (${topic}) بوضع دراسة (${aimode}).
+قدّم دليلاً تشريحياً منظماً يساعده أثناء تدوير المجسم الـ 3D:
+1. **قائمة المعالم التشريحية (3D Landmarks Checklist)**: أهم التراكيب البارزة التي يجب على الطالب البحث عنها وتحديدها على المجسم الثلاثي الأبعاد (مع المصطلح الإنجليزي الدقيق).
+2. **العلاقات التشريحية المكانية (3D Spatial Relations)**: ماذا يقع في الأمام (Anterior)، الخلف (Posterior)، الأعلى (Superior)، الأسفل (Inferior)، الأنسي (Medial)، والوحشي (Lateral).
+3. **التروية الدموية والتعصيب والمنشأ/المرتكز (Vascular Supply, Innervation & Attachments)**.
+4. **الأهمية السريرية والجراحية (Clinical & Surgical Pearls)**: إصابات الأعصاب أو الأوعية المرتبطة وكيف تُسأل في الامتحانات العملية (Spotter / OSCE).`;
+
+      try {
+        const md = await callGeminiAPI({
+          systemInstruction: sysPrompt + SAFE_RULES,
+          contents: [{ role: 'user', parts: [{ text: `التركيب التشريحي الثلاثي الأبعاد: ${topic}\nنمط الدراسة: ${aimode}` }] }]
+        });
+        box.innerHTML = `
+          <div style="background:var(--white);border:1px solid var(--border-color);border-radius:14px;padding:20px;">
+            <h3 style="margin-top:0;color:var(--petrol);"><i class="fa-solid fa-compass-drafting"></i> ${isEn ? '3D Anatomical Guide: ' : 'الدليل التشريحي المرافق للمجسم: '} ${escapeHtml(topic)}</h3>
+            <div data-notr="1">${renderSafeMarkdown(md)}</div>
+          </div>`;
+        addExportBar(box.firstElementChild, md, 'mednerd-3d-anatomy-guide');
+      } catch (e) {
+        box.innerHTML = `<div class="error-alert">${escapeHtml(e.message)}</div>`;
+      }
+    }
+  };
+
+  /* ==========================================================================
+     تسجيل الأدوات الـ 7 وربطها التلقائي بالواجهة
      ========================================================================== */
   const EXT_TOOL_DEFINITIONS = [
+    {
+      id: 'anatomy_3d_atlas', category: 'science', name: '3D Anatomy Studio & Atlas', icon: 'fa-cubes', badge: 'أطلس 3D', custom: true,
+      desc: 'مكتبة وأطلس التشريح ثلاثي الأبعاد (3D): استعراض وتدوير مجسمات الأعضاء والعظام والأعصاب بـ 360° عبر Sketchfab 3D API ومحرك Three.js WebGL وعارض GLB/AR مع شرح المعالم التشريحية.',
+      keywords: '3d anatomy atlas studio sketchfab threejs webgl glb bones muscles heart brain تشريح ثلاثي الابعاد مجسمات اطلس عظام عضلات',
+      btn: ['fa-cube', 'فتح استوديو ومكتبة التشريح 3D'],
+      fields: [
+        [
+          {
+            id: 'a3d_preset', type: 'select', label: 'اختر الجهاز أو العضو التشريحي (3D Preset):',
+            opts: [
+              ['Human Heart Anatomy Valves Chambers', 'القلب والصمامات والأوعية الإكليلية (Heart 3D)'],
+              ['Human Brain Anatomy Lobes Cranial', 'الدماغ والفصوص والأعصاب القحفية (Brain 3D)'],
+              ['Human Skull Anatomy Bones Foramina', 'الجمجمة وعظام القحف والثقوب (Skull 3D)'],
+              ['Human Skeleton Full Anatomy', 'الهيكل العظمي البشري الكامل (Full Skeleton 3D)'],
+              ['Human Muscular System Ecorche', 'الجهاز العضلي السطحي والعميق (Muscular 3D)'],
+              ['Lungs Bronchial Tree Respiratory', 'الرئتان والشجرة القصبية (Respiratory 3D)'],
+              ['Digestive System Liver Stomach', 'الجهاز الهضمي والكبد والطرق الصفراوية (Digestive 3D)'],
+              ['Kidney Anatomy Nephron Renal', 'الكلية والمقطع الكلوي والمسالك (Kidney 3D)'],
+              ['Human Eye Anatomy Orbit', 'تشريح العين وعضلات الحجاج (Eye & Orbit 3D)'],
+              ['Inner Ear Anatomy Cochlea', 'الأذن الوسطى والداخلية والحلزون (Ear 3D)']
+            ]
+          },
+          {
+            id: 'a3d_aimode', type: 'select', label: 'نمط الشرح التشريحي المرافق للمجسم:',
+            opts: [
+              ['شامل: المعالم الثلاثية الأبعاد + العلاقات + التعصيب والتروية', 'شامل (المعالم 3D + العلاقات + التروية والتعصيب)'],
+              ['المنشأ والمرتكز والعمل العضلي (Origins & Insertions)', 'المنشأ والمرتكز والعمل الحركي'],
+              ['المعالم الجراحية والسريرية عالية العائد (Surgical & Clinical)', 'المعالم الجراحية والأهمية السريرية'],
+              ['اختبار عملي على معالم المجسم (3D Spotter Quiz)', 'اختبار عملي (Spotter Quiz)']
+            ]
+          }
+        ],
+        { id: 'a3d_search', type: 'text', label: 'أو ابحث مباشرةً عن أي تركيب تشريحي خاص بالإنجليزية (اختياري):', ph: 'مثال: Brachial plexus, Circle of Willis, Sphenoid bone, Inguinal canal...' }
+      ]
+    },
     {
       id: 'mindmap_studio', category: 'memory', name: 'MindMap Studio', icon: 'fa-sitemap', badge: 'خرائط ذهنية', custom: true,
       desc: 'لوحة خرائط ذهنية طبية تفاعلية قابلة للسحب والتكبير والطي وتلوين التصنيفات الطبية مع تصدير مباشر بصيغتي SVG وPNG.',
@@ -1567,7 +2165,7 @@
     },
     {
       id: 'study_room', category: 'study', name: 'Collaborative Study Room', icon: 'fa-users-rectangle', badge: 'غرفة دراسة', custom: true,
-      desc: 'غرفة مذاكرة جماعية متزامنة تضم مؤقت بومودورو مشترك، محادثة فورية، مركز رفع ومشاركة ملفات بالسحب والإفلات، ونظام صلاحيات (Host, Editor, Viewer).',
+      desc: 'غرفة مذاكرة جماعية متزامنة تضم مؤقت بومودورو مشترك، محادثة فورية، مركز مشاركة ملفات بالسحب والإفلات، ونظام صلاحيات وروابط دعوة مباشرة.',
       keywords: 'collaborative study room pomodoro chat files rbac غرفة دراسة جماعية بومودورو مشاركة ملفات',
       btn: ['fa-door-open', 'دخول / إنشاء غرفة الدراسة المشتركة'],
       fields: [
@@ -1636,6 +2234,7 @@
   ];
 
   const CUSTOM_RUNNERS = {
+    anatomy_3d_atlas:  () => Anatomy3DStudio.run(),
     mindmap_studio:    () => MindMapStudio.run(),
     study_room:        () => CollaborativeStudyRoom.run(),
     voice_patient:     () => MedPatientVoice.run(),
@@ -1645,6 +2244,7 @@
   };
 
   function cleanupAllExtensionModules() {
+    Anatomy3DStudio.cleanup();
     CollaborativeStudyRoom.cleanup();
     MedPatientVoice.cleanup();
     MedicalTranscriber.cleanup();
@@ -1689,9 +2289,29 @@
     if (typeof filterTools === 'function') filterTools();
     const ap = $('allPill');
     if (ap) ap.textContent = (LANG === 'en' ? 'All tools (' : 'جميع الأدوات (') + TOOLS.length + ')';
+
+    // فتح غرفة الدراسة تلقائياً إذا دخل الطالب عبر رابط دعوة (?room=XXXX)
+    const urlParams = new URLSearchParams(window.location.search);
+    const invitedRoom = urlParams.get('room');
+    if (invitedRoom) {
+      if ($('welcomeModal')) $('welcomeModal').style.display = 'none';
+      openToolWorkspace('study_room');
+      setTimeout(() => {
+        if ($('csr_code')) $('csr_code').value = invitedRoom.toUpperCase();
+        if ($('csr_role')) $('csr_role').value = 'editor';
+      }, 100);
+    }
   }
 
-  window.MEDNERD_EXT = { MindMapStudio, CollaborativeStudyRoom, MedPatientVoice, MedicalTranscriber, TimedExamArena, FeynmanEngine };
+  window.MEDNERD_EXT = {
+    Anatomy3DStudio,
+    MindMapStudio,
+    CollaborativeStudyRoom,
+    MedPatientVoice,
+    MedicalTranscriber,
+    TimedExamArena,
+    FeynmanEngine
+  };
 
   if (document.readyState === 'loading') {
     window.addEventListener('DOMContentLoaded', installExtensionHooks);
