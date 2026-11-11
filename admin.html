@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEDNERD AI | لوحة تحكم الأدمن</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: radial-gradient(circle at top right, #1e1b4b, #0f172a 55%, #020617);
+      min-height: 100vh;
+      color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.78);
+      backdrop-filter: blur(16px);
+      border: 1px solid rgba(99, 102, 241, 0.22);
+    }
+    .input-field {
+      background: rgba(30, 41, 59, 0.75);
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      transition: all 0.2s ease;
+    }
+    .input-field:focus {
+      outline: none;
+      border-color: #6366f1;
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.22);
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+
+  <!-- شاشة قفل الأدمن -->
+  <div id="adminLockScreen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-xl">
+    <div class="glass-card w-full max-w-md rounded-3xl p-7 shadow-2xl text-center">
+      <div class="w-16 h-16 rounded-2xl bg-indigo-600/20 border border-indigo-500/40 flex items-center justify-center mx-auto mb-4 text-3xl">
+        🛡️
+      </div>
+      <h1 class="text-2xl font-black text-white mb-1">بوابة الأدمن - MEDNERD AI</h1>
+      <p class="text-xs text-slate-400 mb-6">أدخل رمز المرور السري لعرض إحصائيات وبيانات المسجلين</p>
+
+      <form id="adminPinForm" class="space-y-4">
+        <input
+          type="password"
+          id="adminPinInput"
+          placeholder="كلمة مرور الأدمن..."
+          required
+          class="input-field w-full rounded-xl px-4 py-3 text-center text-lg font-bold text-white tracking-widest placeholder-slate-500"
+        />
+        <p id="pinErrorMsg" class="hidden text-xs font-bold text-rose-400">رمز المرور غير صحيح! حاول مرة أخرى.</p>
+        <button
+          type="submit"
+          class="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-extrabold text-sm shadow-lg shadow-indigo-600/30 transition"
+        >
+          فتح لوحة التحكم 🔓
+        </button>
+      </form>
+      <a href="index.html" class="inline-block mt-5 text-xs text-slate-400 hover:text-indigo-400 transition">
+        ← العودة إلى المنصة الرئيسية
+      </a>
+    </div>
+  </div>
+
+  <!-- محتوى لوحة التحكم -->
+  <div id="adminDashboard" class="max-w-7xl mx-auto hidden">
+    <!-- الهيدر -->
+    <header class="glass-card rounded-3xl p-5 md:p-6 mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center gap-3.5">
+        <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-black text-xl shadow-lg">
+          M
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-xl md:text-2xl font-black text-white">لوحة تحكم الأدمن - MEDNERD AI</h1>
+            <span id="syncBadge" class="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+              متصل بـ Google Sheets
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 mt-0.5">متابعة حية لجميع الطلاب والأطباء المسجلين في المنصة</p>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <button
+          onclick="fetchUsersFromCloud()"
+          id="refreshBtn"
+          class="px-4 py-2.5 rounded-xl bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/40 text-indigo-200 text-xs font-bold flex items-center gap-2 transition"
+        >
+          <span>🔄</span> تحديث البيانات
+        </button>
+        <button
+          onclick="exportUsersCSV()"
+          class="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-extrabold flex items-center gap-2 shadow-lg shadow-emerald-600/25 transition"
+        >
+          <span>📥</span> تصدير Excel (CSV)
+        </button>
+        <a
+          href="index.html"
+          class="px-4 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-bold transition"
+        >
+          المنصة الرئيسية ←
+        </a>
+        <button
+          onclick="lockAdmin()"
+          class="px-3.5 py-2.5 rounded-xl bg-rose-500/15 hover:bg-rose-500/25 border border-rose-500/30 text-rose-300 text-xs font-bold transition"
+          title="قفل اللوحة"
+        >
+          🔒 خروج
+        </button>
+      </div>
+    </header>
+
+    <!-- بطاقات الإحصائيات -->
+    <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-400">إجمالي المسجلين</span>
+          <span class="w-9 h-9 rounded-xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-lg">👥</span>
+        </div>
+        <div id="statTotalUsers" class="text-3xl font-black text-white">0</div>
+        <p id="statLastSync" class="text-[11px] text-slate-400 mt-1">بانتظار المزامنة...</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-400">الطلاب المسجلون</span>
+          <span class="w-9 h-9 rounded-xl bg-sky-500/15 border border-sky-500/30 flex items-center justify-center text-lg">🎓</span>
+        </div>
+        <div id="statStudents" class="text-3xl font-black text-sky-400">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">طالب جامعي أو مدرسي</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-400">الأطباء والمحاضرون</span>
+          <span class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-lg">🩺</span>
+        </div>
+        <div id="statDoctors" class="text-3xl font-black text-emerald-400">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">طبيب / دكتور جامعي / معلم</p>
+      </div>
+
+      <div class="glass-card rounded-2xl p-5">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-slate-400">الدول المشاركة</span>
+          <span class="w-9 h-9 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-lg">🌍</span>
+        </div>
+        <div id="statCountries" class="text-3xl font-black text-amber-400">0</div>
+        <p class="text-[11px] text-slate-400 mt-1">دولة مسجلة في النظام</p>
+      </div>
+    </section>
+
+    <!-- شريط البحث والفلترة -->
+    <section class="glass-card rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex-1 min-w-[240px]">
+        <input
+          type="text"
+          id="searchInput"
+          oninput="renderUsersTable()"
+          placeholder="🔍 ابحث بالاسم، البريد الإلكتروني، الكلية، أو البلد..."
+          class="input-field w-full rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-400"
+        />
+      </div>
+
+      <div class="flex flex-wrap items-center gap-2.5">
+        <select
+          id="filterRole"
+          onchange="renderUsersTable()"
+          class="input-field rounded-xl px-3.5 py-2.5 text-xs font-bold text-white"
+        >
+          <option value="all" class="bg-slate-900">كل الصفات (الكل)</option>
+          <option value="student" class="bg-slate-900">طالب (Student)</option>
+          <option value="doctor" class="bg-slate-900">طبيب (Doctor)</option>
+          <option value="instructor" class="bg-slate-900">دكتور جامعي / محاضر</option>
+          <option value="teacher" class="bg-slate-900">معلم / مدرس</option>
+        </select>
+
+        <select
+          id="filterLevel"
+          onchange="renderUsersTable()"
+          class="input-field rounded-xl px-3.5 py-2.5 text-xs font-bold text-white"
+        >
+          <option value="all" class="bg-slate-900">كل المراحل الدراسية</option>
+          <option value="university" class="bg-slate-900">جامعي / دراسات عليا</option>
+          <option value="secondary" class="bg-slate-900">ثانوي</option>
+          <option value="prep" class="bg-slate-900">إعدادي / متوسط</option>
+          <option value="primary" class="bg-slate-900">ابتدائي</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- جدول المستخدمين -->
+    <section class="glass-card rounded-3xl overflow-hidden shadow-2xl">
+      <div class="overflow-x-auto">
+        <table class="w-full text-right text-sm">
+          <thead class="bg-slate-900/90 text-slate-300 text-xs uppercase border-b border-slate-800">
+            <tr>
+              <th class="py-3.5 px-4 font-bold">#</th>
+              <th class="py-3.5 px-4 font-bold">الاسم الكامل</th>
+              <th class="py-3.5 px-4 font-bold">البريد الإلكتروني</th>
+              <th class="py-3.5 px-4 font-bold">الكلية / التخصص</th>
+              <th class="py-3.5 px-4 font-bold">البلد</th>
+              <th class="py-3.5 px-4 font-bold">الصفة</th>
+              <th class="py-3.5 px-4 font-bold">المرحلة</th>
+              <th class="py-3.5 px-4 font-bold">طريقة الدخول</th>
+              <th class="py-3.5 px-4 font-bold">تاريخ التسجيل</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody" class="divide-y divide-slate-800/70 text-slate-200">
+            <tr>
+              <td colspan="9" class="py-10 text-center text-slate-400">جاري تحميل بيانات المسجلين...</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // =========================================================================
+    // إعدادات الأدمن والربط المباشر مع Google Sheets
+    // =========================================================================
+    const ADMIN_CONFIG = {
+      // رمز الدخول للوحة الأدمن (يمكنك تغييره لأي رقم سري تريده)
+      ADMIN_PIN: "2026",
+
+      // رابط Google Apps Script الخاص بك (مربوط وجاهز)
+      CLOUD_SHEET_API: "https://script.google.com/macros/s/AKfycbzOqH0GBrayXZr6VssaGA3KSLCw_bZrZAyCINCDNBu5aYuUWAdo0gB3r3aRpxzRNHRftg/exec"
+    };
+
+    const STORAGE_KEYS = {
+      USERS_LIST: "mednerd_registered_users_list",
+      ADMIN_SESSION: "mednerd_admin_unlocked"
+    };
+
+    let allUsers = [];
+
+    const ROLE_LABELS = {
+      student: "طالب 🎓",
+      doctor: "طبيب 🩺",
+      instructor: "محاضر جامعي 👨‍🏫",
+      teacher: "معلم 📚"
+    };
+
+    const LEVEL_LABELS = {
+      university: "جامعي",
+      secondary: "ثانوي",
+      prep: "إعدادي",
+      primary: "ابتدائي"
+    };
+
+    // التحقق من جلسة الأدمن
+    document.addEventListener("DOMContentLoaded", () => {
+      if (sessionStorage.getItem(STORAGE_KEYS.ADMIN_SESSION) === "true") {
+        unlockAdminDashboard();
+      }
+
+      document.getElementById("adminPinForm").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const entered = document.getElementById("adminPinInput").value.trim();
+        if (entered === ADMIN_CONFIG.ADMIN_PIN) {
+          sessionStorage.setItem(STORAGE_KEYS.ADMIN_SESSION, "true");
+          document.getElementById("pinErrorMsg").classList.add("hidden");
+          unlockAdminDashboard();
+        } else {
+          document.getElementById("pinErrorMsg").classList.remove("hidden");
+        }
+      });
+    });
+
+    function unlockAdminDashboard() {
+      document.getElementById("adminLockScreen").classList.add("hidden");
+      document.getElementById("adminDashboard").classList.remove("hidden");
+      fetchUsersFromCloud();
+    }
+
+    function lockAdmin() {
+      sessionStorage.removeItem(STORAGE_KEYS.ADMIN_SESSION);
+      window.location.reload();
+    }
+
+    function getLocalUsers() {
+      try {
+        return JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS_LIST) || "[]");
+      } catch (e) {
+        return [];
+      }
+    }
+
+    async function fetchUsersFromCloud() {
+      const refreshBtn = document.getElementById("refreshBtn");
+      const syncBadge = document.getElementById("syncBadge");
+      const lastSyncEl = document.getElementById("statLastSync");
+
+      if (refreshBtn) refreshBtn.innerHTML = "<span>⏳</span> جاري الجلب...";
+
+      const localUsers = getLocalUsers();
+
+      try {
+        const res = await fetch(ADMIN_CONFIG.CLOUD_SHEET_API + "?t=" + Date.now(), {
+          method: "GET",
+          headers: { "Accept": "application/json" }
+        });
+        const cloudData = await res.json();
+
+        const normalizedCloud = Array.isArray(cloudData)
+          ? cloudData
+              .filter((r) => r && (r.email || r.name))
+              .map((r) => ({
+                name: String(r.name || "").trim(),
+                email: String(r.email || "").trim().toLowerCase(),
+                faculty: String(r.faculty || "").trim(),
+                country: String(r.country || "").trim(),
+                level: String(r.level || "university").trim(),
+                role: String(r.role || "student").trim(),
+                authProvider: String(r.provider || r.authProvider || "google").trim(),
+                loginAt: r.date || r.loginAt || ""
+              }))
+          : [];
+
+        // دمج بيانات السحابة مع البيانات المحلية بدون تكرار الإيميل
+        const mergedMap = new Map();
+        [...localUsers, ...normalizedCloud].forEach((u) => {
+          const key = (u.email || u.name || Math.random().toString()).toLowerCase();
+          if (key) mergedMap.set(key, u);
+        });
+
+        allUsers = Array.from(mergedMap.values()).reverse();
+
+        if (syncBadge) {
+          syncBadge.textContent = "متصل بـ Google Sheets ✅";
+          syncBadge.className = "px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30";
+        }
+        if (lastSyncEl) {
+          lastSyncEl.textContent = "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG");
+        }
+      } catch (err) {
+        allUsers = localUsers.slice().reverse();
+        if (syncBadge) {
+          syncBadge.textContent = "وضع محلي (تعذر الاتصال بالسحابة)";
+          syncBadge.className = "px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30";
+        }
+        if (lastSyncEl) {
+          lastSyncEl.textContent = "يعرض المسجلين محلياً فقط";
+        }
+      } finally {
+        if (refreshBtn) refreshBtn.innerHTML = "<span>🔄</span> تحديث البيانات";
+        updateStats();
+        renderUsersTable();
+      }
+    }
+
+    function updateStats() {
+      document.getElementById("statTotalUsers").textContent = allUsers.length;
+      const students = allUsers.filter((u) => u.role === "student").length;
+      const doctors = allUsers.filter((u) => u.role && u.role !== "student").length;
+      const countries = new Set(
+        allUsers.map((u) => (u.country || "").trim()).filter(Boolean)
+      ).size;
+
+      document.getElementById("statStudents").textContent = students;
+      document.getElementById("statDoctors").textContent = doctors;
+      document.getElementById("statCountries").textContent = countries;
+    }
+
+    function escapeHtml(str) {
+      return String(str || "")
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;");
+    }
+
+    function formatDate(d) {
+      if (!d) return "—";
+      const parsed = new Date(d);
+      if (isNaN(parsed.getTime())) return escapeHtml(d);
+      return parsed.toLocaleString("ar-EG", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit"
+      });
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById("usersTableBody");
+      const q = (document.getElementById("searchInput").value || "").trim().toLowerCase();
+      const roleFilter = document.getElementById("filterRole").value;
+      const levelFilter = document.getElementById("filterLevel").value;
+
+      const filtered = allUsers.filter((u) => {
+        const matchesQuery =
+          !q ||
+          (u.name || "").toLowerCase().includes(q) ||
+          (u.email || "").toLowerCase().includes(q) ||
+          (u.faculty || "").toLowerCase().includes(q) ||
+          (u.country || "").toLowerCase().includes(q);
+
+        const matchesRole = roleFilter === "all" || u.role === roleFilter;
+        const matchesLevel = levelFilter === "all" || u.level === levelFilter;
+        return matchesQuery && matchesRole && matchesLevel;
+      });
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="9" class="py-12 text-center text-slate-400">
+              لا يوجد مستخدمون مسجلون مطابقون للبحث حالياً.
+            </td>
+          </tr>
+        `;
+        return;
+      }
+
+      tbody.innerHTML = filtered
+        .map((u, idx) => {
+          const roleBadge = ROLE_LABELS[u.role] || escapeHtml(u.role || "طالب");
+          const levelBadge = LEVEL_LABELS[u.level] || escapeHtml(u.level || "جامعي");
+          const isGoogle = String(u.authProvider || "").toLowerCase().includes("google");
+          return `
+            <tr class="hover:bg-slate-800/50 transition">
+              <td class="py-3 px-4 font-bold text-slate-400">${idx + 1}</td>
+              <td class="py-3 px-4 font-extrabold text-white">${escapeHtml(u.name)}</td>
+              <td class="py-3 px-4 text-indigo-300 font-mono text-xs">${escapeHtml(u.email)}</td>
+              <td class="py-3 px-4">${escapeHtml(u.faculty || "—")}</td>
+              <td class="py-3 px-4">${escapeHtml(u.country || "—")}</td>
+              <td class="py-3 px-4">
+                <span class="px-2.5 py-1 rounded-lg bg-indigo-500/15 border border-indigo-500/30 text-indigo-200 text-xs font-bold">
+                  ${roleBadge}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-300">${levelBadge}</td>
+              <td class="py-3 px-4 text-xs">
+                <span class="px-2 py-0.5 rounded-md ${
+                  isGoogle
+                    ? "bg-emerald-500/15 text-emerald-300 border border-emerald-500/30"
+                    : "bg-slate-700 text-slate-300"
+                }">
+                  ${isGoogle ? "Google" : escapeHtml(u.authProvider || "نموذج")}
+                </span>
+              </td>
+              <td class="py-3 px-4 text-xs text-slate-400">${formatDate(u.loginAt)}</td>
+            </tr>
+          `;
+        })
+        .join("");
+    }
+
+    function exportUsersCSV() {
+      if (!allUsers.length) {
+        alert("لا توجد بيانات لتصديرها حالياً.");
+        return;
+      }
+      const headers = ["الاسم الكامل", "البريد الإلكتروني", "الكلية/التخصص", "البلد", "الصفة", "المرحلة", "طريقة الدخول", "تاريخ التسجيل"];
+      const rows = allUsers.map((u) => [
+        u.name || "",
+        u.email || "",
+        u.faculty || "",
+        u.country || "",
+        ROLE_LABELS[u.role] || u.role || "",
+        LEVEL_LABELS[u.level] || u.level || "",
+        u.authProvider || "",
+        u.loginAt || ""
+      ]);
+
+      const csvContent =
+        "\uFEFF" +
+        [headers, ...rows]
+          .map((row) => row.map((cell) => `"${String(cell).replace(/"/g, '""')}"`).join(","))
+          .join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `mednerd_users_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+  </script>
+</body>
+</html>
