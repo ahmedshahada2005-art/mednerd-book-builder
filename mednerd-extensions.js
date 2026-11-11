@@ -1,4 +1,22 @@
-(function () {
+/* === MEDNERD Mandatory Auth Guard & Logout Button === */
+(function(){
+  try {
+    var auth = JSON.parse(localStorage.getItem("mednerd_auth_user") || "null");
+    if (!auth || !auth.loggedIn || auth.guest === true || !auth.email) {
+      window.location.replace("login.html");
+      return;
+    }
+    window.addEventListener("DOMContentLoaded", function(){
+      var bar = document.createElement("div");
+      bar.style.cssText = "position:fixed;bottom:14px;left:14px;z-index:9999;display:flex;align-items:center;gap:8px;background:rgba(15,23,42,0.92);color:#fff;padding:6px 12px;border-radius:999px;font-size:12px;font-family:Cairo,sans-serif;border:1px solid rgba(99,102,241,0.4);box-shadow:0 8px 20px rgba(0,0,0,0.3);";
+      bar.innerHTML = '<span>👤 ' + (auth.name || auth.email) + '</span>' +
+        '<button onclick="localStorage.removeItem(\'mednerd_auth_user\');location.replace(\'login.html\');" style="background:#ef4444;color:#fff;border:none;border-radius:999px;padding:3px 10px;cursor:pointer;font-weight:bold;font-size:11px;">خروج</button>';
+      document.body.appendChild(bar);
+    });
+  } catch (e) {
+    window.location.replace("login.html");
+  }
+})();(function () {
   'use strict';
   if (window.MEDNERD_EXT_LOADED) return;
   window.MEDNERD_EXT_LOADED = true;
