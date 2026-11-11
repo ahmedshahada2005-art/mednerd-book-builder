@@ -1,1103 +1,678 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl" data-theme="light">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<script>
-  try {
-    if (localStorage.getItem("mednerd_lang") === "en") {
-      var h = document.documentElement;
-      h.lang = "en";
-      h.dir = "ltr";
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MEDNERD AI | بوابة الدخول الأكاديمية</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --med-primary: #1A7398;
+      --med-primary-dark: #135875;
+      --med-primary-soft: #EBF5F9;
+      --med-navy: #0F172A;
+      --med-slate: #334155;
+      --med-muted: #64748B;
+      --med-amber: #C06A23;
+      --med-amber-bg: #FFFBEB;
+      --med-bg: #F8F9FA;
+      --med-card: #FFFFFF;
+      --med-box: #F8FAFC;
+      --med-border: #E2E8F0;
     }
-    var savedTheme = localStorage.getItem("mednerd_theme");
-    if (savedTheme === "dark" || savedTheme === "light") {
-      document.documentElement.setAttribute("data-theme", savedTheme);
-    }
-  } catch (e) {}
-</script>
-<title>MEDNERD | تسجيل الدخول الإلزامي</title>
-<meta name="description" content="تسجيل الدخول الإلزامي إلى منصة MEDNERD AI التعليمية الطبية باستخدام حساب Google.">
-<meta name="theme-color" content="#0e7490">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230e7490'/%3E%3Ctext x='32' y='44' font-size='36' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 
-<style>
-:root {
-  --bg-main: #fdfbf7;
-  --bg-elevated: #f5f2eb;
-  --petrol: #0e7490;
-  --petrol-hover: #0b5c73;
-  --petrol-soft: rgba(14, 116, 144, .08);
-  --dark-green: #14532d;
-  --dark-green-soft: rgba(20, 83, 45, .1);
-  --mustard: #b45309;
-  --mustard-soft: rgba(180, 83, 9, .09);
-  --white: #ffffff;
-  --dark-text: #17202a;
-  --muted-text: #4b5563;
-  --border-color: #e5e7eb;
-  --danger: #dc2626;
-  --danger-soft: rgba(220, 38, 38, .08);
-  --shadow-lg: 0 25px 50px -12px rgba(14, 116, 144, .14), 0 8px 20px -6px rgba(0, 0, 0, .06);
-}
-[data-theme="dark"] {
-  --bg-main: #0f172a;
-  --bg-elevated: #1e293b;
-  --petrol: #22d3ee;
-  --petrol-hover: #06b6d4;
-  --petrol-soft: rgba(34, 211, 238, .12);
-  --dark-green: #4ade80;
-  --dark-green-soft: rgba(74, 222, 128, .14);
-  --mustard: #fbbf24;
-  --mustard-soft: rgba(251, 191, 36, .12);
-  --white: #1e293b;
-  --dark-text: #f1f5f9;
-  --muted-text: #94a3b8;
-  --border-color: #334155;
-  --danger: #f87171;
-  --danger-soft: rgba(248, 113, 113, .12);
-  --shadow-lg: 0 25px 50px -12px rgba(0, 0, 0, .55);
-}
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: 'Cairo', 'Inter', sans-serif;
-}
-html[lang="en"] * {
-  font-family: 'Inter', 'Cairo', sans-serif;
-}
-body {
-  background: var(--bg-main);
-  color: var(--dark-text);
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  overflow-x: hidden;
-  transition: background-color .25s, color .25s;
-  line-height: 1.6;
-  background-image:
-    radial-gradient(circle at 15% 20%, var(--petrol-soft) 0%, transparent 45%),
-    radial-gradient(circle at 85% 80%, var(--dark-green-soft) 0%, transparent 45%);
-}
-.top-bar {
-  max-width: 1200px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 18px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.brand-link {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  text-decoration: none;
-  user-select: none;
-}
-.brand-icon {
-  width: 40px;
-  height: 40px;
-  background: #0e7490;
-  color: #fff;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  font-weight: 800;
-}
-.brand-name {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--petrol);
-}
-.top-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.icon-btn {
-  background: var(--white);
-  color: var(--dark-text);
-  border: 1px solid var(--border-color);
-  height: 40px;
-  min-width: 40px;
-  padding: 0 12px;
-  border-radius: 12px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 15px;
-  font-weight: 800;
-  transition: all .2s;
-}
-.icon-btn:hover {
-  border-color: var(--petrol);
-  color: var(--petrol);
-}
-.auth-wrapper {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 16px;
-}
-.auth-container {
-  display: grid;
-  grid-template-columns: 1.05fr 1fr;
-  max-width: 980px;
-  width: 100%;
-  background: var(--white);
-  border: 1px solid var(--border-color);
-  border-radius: 28px;
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  animation: scaleUp .35s ease both;
-}
-@keyframes scaleUp {
-  from { opacity: 0; transform: translateY(10px) scale(.98); }
-  to { opacity: 1; transform: none; }
-}
-.auth-showcase {
-  background: linear-gradient(155deg, #0e7490 0%, #0b4f6c 60%, #14532d 100%);
-  color: #ffffff;
-  padding: 44px 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  position: relative;
-  overflow: hidden;
-}
-.auth-showcase::after {
-  content: '';
-  position: absolute;
-  inset: -40% -20% auto auto;
-  width: 280px;
-  height: 280px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, .06);
-  pointer-events: none;
-}
-.bismillah {
-  font-size: 22px;
-  font-weight: 800;
-  color: #a7f3d0;
-  margin-bottom: 6px;
-}
-.dua-text {
-  font-size: 14px;
-  color: rgba(255, 255, 255, .86);
-  margin-bottom: 24px;
-}
-.showcase-title {
-  font-size: 30px;
-  font-weight: 800;
-  line-height: 1.3;
-  margin-bottom: 12px;
-}
-.showcase-sub {
-  font-size: 15px;
-  color: rgba(255, 255, 255, .88);
-  line-height: 1.75;
-  margin-bottom: 24px;
-}
-.feature-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  margin-bottom: 28px;
-}
-.feature-list li {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 14.5px;
-  font-weight: 600;
-}
-.feature-list i {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, .14);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #a7f3d0;
-  flex-shrink: 0;
-}
-.showcase-stats {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
-  border-top: 1px solid rgba(255, 255, 255, .16);
-  padding-top: 20px;
-}
-.stat-pill {
-  background: rgba(255, 255, 255, .12);
-  padding: 8px 14px;
-  border-radius: 14px;
-  font-size: 13px;
-  font-weight: 700;
-}
-.auth-form-side {
-  padding: 40px 36px;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-}
-.heart-pulse {
-  width: 28px;
-  height: 28px;
-  flex-shrink: 0;
-}
-.heart-pulse path {
-  fill: var(--petrol-soft);
-  stroke: var(--petrol);
-  stroke-width: 1.7;
-  transform-origin: 12px 13px;
-  animation: heartbeat 1.6s ease-in-out infinite;
-}
-@keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  14% { transform: scale(1.15); }
-  28% { transform: scale(1); }
-  42% { transform: scale(1.08); }
-  56% { transform: scale(1); }
-}
-.ecg-line {
-  display: block;
-  width: 180px;
-  height: 24px;
-  margin-bottom: 10px;
-}
-.ecg-line polyline {
-  fill: none;
-  stroke: var(--petrol);
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-dasharray: 320;
-  stroke-dashoffset: 320;
-  animation: ecgDraw 3.2s linear infinite;
-}
-@keyframes ecgDraw {
-  0% { stroke-dashoffset: 320; }
-  60%, 100% { stroke-dashoffset: 0; }
-}
-.mandatory-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  align-self: flex-start;
-  font-size: 12px;
-  font-weight: 800;
-  padding: 4px 12px;
-  border-radius: 20px;
-  background: var(--petrol-soft);
-  color: var(--petrol);
-  border: 1px solid var(--border-color);
-  margin-bottom: 10px;
-}
-.form-title {
-  font-size: 24px;
-  font-weight: 800;
-  color: var(--petrol);
-  margin-bottom: 4px;
-}
-.form-subtitle {
-  font-size: 13.5px;
-  color: var(--muted-text);
-  margin-bottom: 20px;
-}
-.google-btn-container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.custom-google-btn {
-  width: 100%;
-  padding: 13px 20px;
-  border-radius: 14px;
-  border: 1.5px solid var(--border-color);
-  background: var(--bg-main);
-  color: var(--dark-text);
-  font-size: 15px;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  transition: all .2s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
-}
-.custom-google-btn:hover {
-  border-color: var(--petrol);
-  background: var(--petrol-soft);
-  transform: translateY(-1px);
-}
-.google-g-logo {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-}
-.divider {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--muted-text);
-  font-size: 12.5px;
-  font-weight: 700;
-  margin: 14px 0;
-}
-.divider::before,
-.divider::after {
-  content: '';
-  flex: 1;
-  height: 1px;
-  background: var(--border-color);
-}
-.form-group {
-  margin-bottom: 12px;
-}
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.form-label {
-  display: block;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--petrol);
-  margin-bottom: 5px;
-}
-.req-star {
-  color: var(--danger);
-  margin-inline-start: 2px;
-}
-.form-input,
-.form-select {
-  width: 100%;
-  padding: 10px 13px;
-  border: 1px solid var(--border-color);
-  border-radius: 12px;
-  font-size: 14px;
-  color: var(--dark-text);
-  background: var(--bg-main);
-  outline: none;
-  transition: border-color .2s, box-shadow .2s;
-}
-.form-input:focus,
-.form-select:focus {
-  border-color: var(--petrol);
-  box-shadow: 0 0 0 3px var(--petrol-soft);
-}
-.btn-primary {
-  width: 100%;
-  background: #0e7490;
-  color: #fff;
-  border: none;
-  padding: 13px 24px;
-  font-size: 15.5px;
-  font-weight: 700;
-  border-radius: 14px;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  box-shadow: 0 4px 12px rgba(14, 116, 144, .25);
-  transition: all .2s;
-}
-.btn-primary:hover:not(:disabled) {
-  background: #0b5c73;
-  transform: translateY(-1px);
-}
-.btn-primary:disabled {
-  opacity: .65;
-  cursor: not-allowed;
-}
-.user-card {
-  display: none;
-  background: var(--petrol-soft);
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  padding: 14px;
-  margin-bottom: 14px;
-  align-items: center;
-  gap: 12px;
-}
-.user-avatar {
-  width: 50px;
-  height: 50px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 2px solid var(--petrol);
-  background: #0e7490;
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 19px;
-  font-weight: 800;
-  flex-shrink: 0;
-}
-.user-info {
-  flex: 1;
-  min-width: 0;
-}
-.user-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: var(--dark-text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.user-email {
-  font-size: 12.5px;
-  color: var(--muted-text);
-  direction: ltr;
-  text-align: start;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.status-alert {
-  display: none;
-  padding: 11px 14px;
-  border-radius: 12px;
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 14px;
-  align-items: flex-start;
-  gap: 10px;
-}
-.status-alert.error {
-  display: flex;
-  background: var(--danger-soft);
-  border: 1px solid var(--danger);
-  color: var(--danger);
-}
-.status-alert.info {
-  display: flex;
-  background: var(--mustard-soft);
-  border: 1px solid var(--mustard);
-  color: var(--mustard);
-}
-.status-alert.success {
-  display: flex;
-  background: var(--dark-green-soft);
-  border: 1px solid var(--dark-green);
-  color: var(--dark-green);
-}
-.privacy-footer {
-  font-size: 12px;
-  color: var(--muted-text);
-  margin-top: 14px;
-  text-align: center;
-  line-height: 1.65;
-}
-.page-footer {
-  text-align: center;
-  padding: 14px;
-  font-size: 12.5px;
-  color: var(--muted-text);
-}
-[dir="ltr"] .fa-arrow-left {
-  transform: scaleX(-1);
-}
-@media (max-width: 820px) {
-  .auth-container {
-    grid-template-columns: 1fr;
-  }
-  .auth-showcase {
-    padding: 30px 22px;
-  }
-  .auth-form-side {
-    padding: 30px 22px;
-  }
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-}
-</style>
+    [data-theme="dark"] {
+      --med-primary: #2292C0;
+      --med-primary-dark: #1A7398;
+      --med-primary-soft: rgba(26, 115, 152, 0.18);
+      --med-navy: #F8FAFC;
+      --med-slate: #CBD5E1;
+      --med-muted: #94A3B8;
+      --med-amber: #E08A3C;
+      --med-amber-bg: rgba(192, 106, 35, 0.14);
+      --med-bg: #0B1120;
+      --med-card: #111827;
+      --med-box: #1E293B;
+      --med-border: #26334D;
+    }
+
+    body {
+      font-family: 'Cairo', Tahoma, Arial, sans-serif;
+      background-color: var(--med-bg);
+      color: var(--med-slate);
+      min-height: 100vh;
+      transition: background-color 0.25s ease, color 0.25s ease;
+      background-image:
+        radial-gradient(circle at 85% 10%, rgba(26, 115, 152, 0.09) 0%, transparent 45%),
+        radial-gradient(circle at 12% 88%, rgba(192, 106, 35, 0.07) 0%, transparent 40%);
+    }
+
+    .med-card {
+      background-color: var(--med-card);
+      border: 1px solid var(--med-border);
+      box-shadow: 0 18px 45px -15px rgba(15, 23, 42, 0.08);
+    }
+
+    .med-input {
+      background-color: var(--med-box);
+      border: 1.5px solid var(--med-border);
+      color: var(--med-navy);
+      transition: all 0.2s ease;
+    }
+
+    .med-input:focus {
+      outline: none;
+      border-color: #1A7398;
+      background-color: var(--med-card);
+      box-shadow: 0 0 0 3px rgba(26, 115, 152, 0.16);
+    }
+
+    .med-tab-bar {
+      background-color: var(--med-box);
+      border: 1px solid var(--med-border);
+    }
+
+    .med-tab-btn {
+      color: var(--med-muted);
+      transition: all 0.2s ease;
+    }
+
+    .med-tab-btn.active {
+      background-color: #1A7398;
+      color: #FFFFFF;
+      box-shadow: 0 6px 16px -3px rgba(26, 115, 152, 0.4);
+    }
+
+    .med-btn-primary {
+      background: linear-gradient(135deg, #1A7398 0%, #135875 100%);
+      color: #FFFFFF;
+      box-shadow: 0 10px 22px -5px rgba(26, 115, 152, 0.45);
+      transition: all 0.2s ease;
+    }
+
+    .med-btn-primary:hover {
+      background: linear-gradient(135deg, #1d80a8 0%, #166485 100%);
+      transform: translateY(-1px);
+    }
+
+    .clinical-pearl {
+      border-right: 4px solid #C06A23;
+      background-color: var(--med-amber-bg);
+      border-top: 1px solid var(--med-border);
+      border-bottom: 1px solid var(--med-border);
+      border-left: 1px solid var(--med-border);
+    }
+  </style>
 </head>
-<body>
+<body class="flex flex-col justify-between p-4 md:p-6">
 
-<header class="top-bar">
-  <div class="brand-link" aria-label="MEDNERD">
-    <div class="brand-icon">M</div>
-    <span class="brand-name">MEDNERD</span>
-    <svg class="heart-pulse" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 21s-7-4.6-9.3-9A5.4 5.4 0 0 1 12 6.2 5.4 5.4 0 0 1 21.3 12C19 16.4 12 21 12 21z"/>
-    </svg>
-  </div>
-  <div class="top-actions">
-    <button type="button" class="icon-btn" id="langBtn" onclick="toggleLang()" title="English">EN</button>
-    <button type="button" class="icon-btn" id="themeBtn" onclick="toggleTheme()" aria-label="تبديل الوضع الليلي">
-      <i class="fa-solid fa-moon" id="themeIcon"></i>
-    </button>
-  </div>
-</header>
-
-<main class="auth-wrapper">
-  <div class="auth-container">
-    <section class="auth-showcase">
+  <!-- شريط علوي بهوية MEDNERD Oceanic Clean -->
+  <header class="w-full max-w-lg mx-auto pt-1 pb-3 flex items-center justify-between border-b-2 border-[#1A7398]">
+    <div class="flex items-center gap-2.5">
+      <div class="w-10 h-10 rounded-xl bg-[#1A7398] text-white font-black text-xl flex items-center justify-center shadow-sm tracking-wider">
+        M
+      </div>
       <div>
-        <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ</div>
-        <div class="dua-text" data-i18n="dua">اللهم انفعنا بما علّمتنا، وعلّمنا ما ينفعنا، وزدنا علماً.</div>
-        <h1 class="showcase-title" data-i18n="heroTitle">بوابتك الذكية للتعلم الطبي والتدريب السريري</h1>
-        <p class="showcase-sub" data-i18n="heroSub">تسجيل الدخول بحساب Google وإكمال بياناتك الأكاديمية خطوة إلزامية للوصول إلى 32 أداة طبية ذكية للمذاكرة، الذاكرة، التفكير السريري، والـ OSCE.</p>
-        <ul class="feature-list">
-          <li><i class="fa-solid fa-wand-magic-sparkles"></i><span data-i18n="f1">32 أداة طبية ذكية للمحاضرات والحالات السريرية</span></li>
-          <li><i class="fa-solid fa-user-graduate"></i><span data-i18n="f2">تكييف تلقائي للشرح حسب مرحلتك الدراسية وصفتك</span></li>
-          <li><i class="fa-solid fa-shield-halved"></i><span data-i18n="f3">خصوصية تامة: بياناتك ومفتاحك محفوظة في متصفحك فقط</span></li>
-        </ul>
+        <span class="text-xl font-black text-[#1A7398] tracking-wider block leading-none">MEDNERD</span>
+        <span class="text-[10px] font-bold text-[#64748B] tracking-widest uppercase">ACADEMIC MEDICAL AI</span>
       </div>
-      <div class="showcase-stats">
-        <span class="stat-pill"><i class="fa-solid fa-cubes"></i> <span data-i18n="s1">32 أداة تفاعلية</span></span>
-        <span class="stat-pill"><i class="fa-solid fa-bolt"></i> <span data-i18n="s2">BYOK Gemini API</span></span>
-        <span class="stat-pill"><i class="fa-solid fa-user-check"></i> <span data-i18n="s3">دخول معتمد بحساب Google</span></span>
-      </div>
-    </section>
+    </div>
 
-    <section class="auth-form-side">
-      <svg class="ecg-line" viewBox="0 0 200 30" aria-hidden="true">
-        <polyline points="0,15 55,15 62,15 68,4 75,26 82,15 100,15 108,10 116,15 200,15"/>
-      </svg>
-      <div class="mandatory-badge">
-        <i class="fa-solid fa-lock"></i>
-        <span data-i18n="mandatoryBadge">تسجيل الدخول إلزامي للوصول إلى المنصة</span>
-      </div>
-      <h2 class="form-title" data-i18n="loginTitle">تسجيل الدخول بحساب Google</h2>
-      <p class="form-subtitle" data-i18n="loginSub">أدخل حسابك في Google وبياناتك الأكاديمية للمتابعة إلى أدوات MEDNERD الـ 32</p>
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        onclick="toggleTheme()"
+        id="themeToggleBtn"
+        class="px-3 py-1.5 rounded-lg text-xs font-extrabold border border-[#E2E8F0] bg-white/80 text-[#0F172A] hover:border-[#1A7398] transition"
+        title="تبديل المظهر"
+      >
+        🌙 الوضع الليلي
+      </button>
+    </div>
+  </header>
 
-      <div id="statusAlert" class="status-alert" role="alert"></div>
+  <!-- البطاقة المركزية -->
+  <main class="w-full max-w-lg mx-auto my-auto py-5">
+    <div class="med-card rounded-2xl p-6 md:p-7">
 
-      <div id="userCard" class="user-card">
-        <div id="userAvatarWrap"></div>
-        <div class="user-info">
-          <div id="userNameText" class="user-name"></div>
-          <div id="userEmailText" class="user-email"></div>
+      <!-- ترويسة البطاقة -->
+      <div class="mb-5 pb-3 border-b border-[var(--med-border)] flex items-center justify-between">
+        <div>
+          <h1 class="text-lg md:text-xl font-black" style="color: var(--med-navy);">
+            بوابة الوصول الأكاديمي المعتمدة
+          </h1>
+          <p class="text-xs font-semibold mt-0.5" style="color: var(--med-muted);">
+            منظومة MEDNERD المتكاملة (32 أداة طبية وتعليمية ذكية)
+          </p>
         </div>
-        <button type="button" class="icon-btn" onclick="signOutGoogle()" title="تبديل الحساب" style="color:var(--danger);border-color:var(--danger);">
-          <i class="fa-solid fa-right-from-bracket"></i>
+        <span class="px-2.5 py-1 rounded-md text-[11px] font-extrabold bg-[#EBF5F9] text-[#1A7398] border border-[#1A7398]/25">
+          دخول إلزامي
+        </span>
+      </div>
+
+      <!-- تبويبات: تسجيل الدخول / إنشاء حساب جديد -->
+      <div id="authTabs" class="med-tab-bar grid grid-cols-2 gap-1.5 p-1.5 rounded-xl mb-5">
+        <button
+          type="button"
+          id="tabLoginBtn"
+          onclick="switchTab('login')"
+          class="med-tab-btn active py-2.5 px-4 rounded-lg text-xs md:text-sm font-extrabold"
+        >
+          تسجيل الدخول
+        </button>
+        <button
+          type="button"
+          id="tabSignupBtn"
+          onclick="switchTab('signup')"
+          class="med-tab-btn py-2.5 px-4 rounded-lg text-xs md:text-sm font-extrabold"
+        >
+          إنشاء حساب جديد
         </button>
       </div>
 
-      <div id="googleButtonsArea" class="google-btn-container">
-        <div id="g_id_onload_btn"></div>
+      <!-- صندوق التنبيهات والرسائل (بهوية Clinical Note عند التنبيه) -->
+      <div id="alertBox" class="hidden mb-5 p-3.5 rounded-xl text-xs font-bold leading-relaxed"></div>
 
-        <button type="button" class="custom-google-btn" id="customGoogleBtn" onclick="handleCustomGoogleClick()">
-          <svg class="google-g-logo" viewBox="0 0 48 48" aria-hidden="true">
-            <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z"/>
-            <path fill="#FF3D00" d="m6.306 14.691 6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z"/>
-            <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238A11.91 11.91 0 0 1 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z"/>
-            <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303a12.04 12.04 0 0 1-4.087 5.571l.003-.002 6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z"/>
-          </svg>
-          <span data-i18n="googleBtn">تسجيل الدخول باستخدام حساب Google</span>
+      <!-- ================================================= -->
+      <!-- 1) نموذج تسجيل الدخول (لحساب مسجل مسبقاً)          -->
+      <!-- ================================================= -->
+      <form id="loginForm" class="space-y-4">
+        <div>
+          <label class="block text-xs font-extrabold mb-1.5" style="color: var(--med-navy);">
+            البريد الإلكتروني الأكاديمي أو الشخصي (Gmail)
+          </label>
+          <input
+            type="email"
+            id="loginEmail"
+            required
+            placeholder="doctor.name@gmail.com"
+            dir="ltr"
+            class="med-input w-full rounded-xl px-4 py-3 text-sm font-semibold placeholder-slate-400"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold mb-1.5" style="color: var(--med-navy);">
+            كلمة المرور
+          </label>
+          <input
+            type="password"
+            id="loginPassword"
+            required
+            placeholder="••••••••"
+            dir="ltr"
+            class="med-input w-full rounded-xl px-4 py-3 text-sm font-semibold placeholder-slate-400"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="loginSubmitBtn"
+          class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2"
+        >
+          <span>دخول إلى منصة MEDNERD</span>
+          <span>←</span>
         </button>
-      </div>
 
-      <div class="divider"><span data-i18n="orComplete">البيانات الأكاديمية الإلزامية</span></div>
+        <div class="clinical-pearl p-3 rounded-l-xl text-[12px] leading-relaxed mt-3">
+          <span class="font-black text-[#C06A23] block text-xs mb-0.5">ملاحظة أكاديمية (Academic Access Note):</span>
+          <span style="color: var(--med-slate);">
+            إذا كنت تستخدم المنصة لأول مرة، انتقل إلى تبويب
+            <button type="button" onclick="switchTab('signup')" class="text-[#1A7398] font-black underline">إنشاء حساب جديد</button>
+            ليصلك كود التفعيل الفوري على بريدك الإلكتروني.
+          </span>
+        </div>
+      </form>
 
-      <form id="authProfileForm" onsubmit="submitLoginForm(event)" novalidate>
-        <div class="form-group">
-          <label class="form-label" for="login_email"><span data-i18n="lblEmail">حساب Google (البريد الإلكتروني):</span><span class="req-star">*</span></label>
-          <input type="email" id="login_email" class="form-input" maxlength="120" placeholder="yourname@gmail.com" dir="ltr" autocomplete="email" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="login_name"><span data-i18n="lblName">الاسم الكامل:</span><span class="req-star">*</span></label>
-          <input type="text" id="login_name" class="form-input" maxlength="80" placeholder="مثال: د. أحمد الشحادة" autocomplete="name" required>
-        </div>
-        <div class="form-group">
-          <label class="form-label" for="login_faculty"><span data-i18n="lblFaculty">الكلية / الجامعة / المدرسة:</span><span class="req-star">*</span></label>
-          <input type="text" id="login_faculty" class="form-input" maxlength="120" placeholder="مثال: كلية الطب البشري" required>
-        </div>
-        <div class="form-row">
+      <!-- ================================================= -->
+      <!-- 2) نموذج إنشاء حساب جديد (يرسل كود تفعيل للإيميل) -->
+      <!-- ================================================= -->
+      <form id="signupForm" class="space-y-3.5 hidden">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="form-label" for="login_country"><span data-i18n="lblCountry">الدولة:</span><span class="req-star">*</span></label>
-            <select id="login_country" class="form-select" required>
-              <option value="" data-i18n="optSelect">— اختر —</option>
-              <option value="سوريا">سوريا</option>
-              <option value="الأردن">الأردن</option>
-              <option value="فلسطين">فلسطين</option>
-              <option value="لبنان">لبنان</option>
-              <option value="العراق">العراق</option>
-              <option value="مصر">مصر</option>
-              <option value="السعودية">السعودية</option>
-              <option value="الإمارات">الإمارات</option>
-              <option value="الكويت">الكويت</option>
-              <option value="قطر">قطر</option>
-              <option value="البحرين">البحرين</option>
-              <option value="عُمان">عُمان</option>
-              <option value="اليمن">اليمن</option>
-              <option value="ليبيا">ليبيا</option>
-              <option value="تونس">تونس</option>
-              <option value="الجزائر">الجزائر</option>
-              <option value="المغرب">المغرب</option>
-              <option value="السودان">السودان</option>
-              <option value="موريتانيا">موريتانيا</option>
-              <option value="الصومال">الصومال</option>
-              <option value="جيبوتي">جيبوتي</option>
-              <option value="جزر القمر">جزر القمر</option>
-              <option value="أخرى">أخرى</option>
-            </select>
+            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الاسم الثلاثي الكامل *</label>
+            <input
+              type="text"
+              id="signupName"
+              required
+              placeholder="د. أحمد محمد..."
+              class="med-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold placeholder-slate-400"
+            />
           </div>
+
           <div>
-            <label class="form-label" for="login_level"><span data-i18n="lblLevel">المرحلة التعليمية:</span><span class="req-star">*</span></label>
-            <select id="login_level" class="form-select" required>
-              <option value="" data-i18n="optSelect">— اختر —</option>
-              <option value="university" data-i18n="lvlUni">جامعية</option>
-              <option value="secondary" data-i18n="lvlSec">ثانوية</option>
-              <option value="prep" data-i18n="lvlPrep">إعدادية</option>
-              <option value="primary" data-i18n="lvlPri">ابتدائية</option>
-            </select>
+            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">البلد / المدينة *</label>
+            <input
+              type="text"
+              id="signupCountry"
+              required
+              placeholder="سوريا، مصر، السعودية..."
+              class="med-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold placeholder-slate-400"
+            />
           </div>
         </div>
 
-        <div class="form-group">
-          <label class="form-label" for="login_role"><span data-i18n="lblRole">الصفة:</span><span class="req-star">*</span></label>
-          <select id="login_role" class="form-select" required>
-            <option value="" data-i18n="optSelect">— اختر —</option>
-            <option value="student" data-i18n="roleStudent">طالب</option>
-            <option value="doctor" data-i18n="roleDoctor">طبيب</option>
-            <option value="instructor" data-i18n="roleInstructor">مدرس</option>
-            <option value="teacher" data-i18n="roleTeacher">معلم</option>
-          </select>
+        <div>
+          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">
+            البريد الإلكتروني (سيتم إرسال كود التفعيل من 6 أرقام إليه) *
+          </label>
+          <input
+            type="email"
+            id="signupEmail"
+            required
+            placeholder="yourname@gmail.com"
+            dir="ltr"
+            class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
+          />
         </div>
 
-        <div style="margin-top:16px;">
-          <button type="submit" id="submitLoginBtn" class="btn-primary">
-            <span data-i18n="btnContinue">تأكيد الدخول إلى المنصة</span>
-            <i class="fa-solid fa-arrow-left"></i>
+        <div>
+          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">تعيين كلمة مرور للحساب *</label>
+          <input
+            type="password"
+            id="signupPassword"
+            required
+            minlength="4"
+            placeholder="أدخل كلمة مرور يسهل عليك تذكرها..."
+            dir="ltr"
+            class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
+          />
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الكلية / التخصص أو المؤسسة التعليمية *</label>
+          <input
+            type="text"
+            id="signupFaculty"
+            required
+            placeholder="كلية الطب البشري / طب الأسنان / الصيدلة..."
+            class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
+          />
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">المرحلة الدراسية *</label>
+            <select
+              id="signupLevel"
+              class="med-input w-full rounded-xl px-3.5 py-2.5 text-xs font-extrabold"
+            >
+              <option value="university">جامعي / دراسات عليا (University)</option>
+              <option value="secondary">ثانوي / بكالوريا (Secondary)</option>
+              <option value="prep">إعدادي / متوسط (Preparatory)</option>
+              <option value="primary">ابتدائي (Primary)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الصفة الأكاديمية *</label>
+            <select
+              id="signupRole"
+              class="med-input w-full rounded-xl px-3.5 py-2.5 text-xs font-extrabold"
+            >
+              <option value="student">طالب (Student)</option>
+              <option value="doctor">طبيب سريري (Clinical Doctor)</option>
+              <option value="instructor">محاضر / دكتور جامعي (Instructor)</option>
+              <option value="teacher">معلم / مدرس (Teacher)</option>
+            </select>
+          </div>
+        </div>
+
+        <button
+          type="submit"
+          id="signupSubmitBtn"
+          class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 mt-2"
+        >
+          <span>إرسال كود التفعيل إلى البريد الإلكتروني</span>
+          <span>←</span>
+        </button>
+      </form>
+
+      <!-- ================================================= -->
+      <!-- 3) شاشة إدخال كود التفعيل (OTP من 6 أرقام)       -->
+      <!-- ================================================= -->
+      <form id="otpForm" class="space-y-4 hidden">
+        <div class="p-4 rounded-xl border-2 border-dashed border-[#1A7398] bg-[var(--med-box)] text-center">
+          <span class="text-xs font-black text-[#1A7398] tracking-wider uppercase block mb-1">
+            EMAIL VERIFICATION CODE (OTP)
+          </span>
+          <h2 class="text-base font-black" style="color: var(--med-navy);">أدخل كود التفعيل المرسل لبريدك</h2>
+          <p class="text-xs mt-1" style="color: var(--med-muted);">
+            تم إرسال كود مكوّن من 6 أرقام إلى البريد:
+            <span id="otpTargetEmail" class="text-[#1A7398] font-black block mt-1" dir="ltr"></span>
+          </p>
+        </div>
+
+        <div>
+          <input
+            type="text"
+            id="otpCodeInput"
+            maxlength="6"
+            required
+            placeholder="000000"
+            dir="ltr"
+            class="med-input w-full rounded-xl px-4 py-3.5 text-center text-2xl font-black tracking-[0.5em]"
+          />
+        </div>
+
+        <button
+          type="submit"
+          id="verifyOtpBtn"
+          class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm"
+        >
+          تأكيد الكود وتفعيل الحساب الأكاديمي
+        </button>
+
+        <div class="flex items-center justify-between text-xs pt-1 font-bold">
+          <button
+            type="button"
+            onclick="resendOtpCode()"
+            id="resendOtpBtn"
+            class="text-[#1A7398] hover:underline"
+          >
+            إعادة إرسال الكود مرة أخرى
+          </button>
+          <button
+            type="button"
+            onclick="backToSignup()"
+            style="color: var(--med-muted);"
+            class="hover:underline"
+          >
+            تعديل البريد الإلكتروني ←
           </button>
         </div>
       </form>
 
-      <p class="privacy-footer" data-i18n="privacyNote">
-        جميع الحقول إلزامية. تُحفظ بياناتك لتخصيص مستوى الشرح وتوثيق اشتراكك في المنصة.
-      </p>
-    </section>
-  </div>
-</main>
+    </div>
+  </main>
 
-<footer class="page-footer">
-  MEDNERD AI · Developed by Ahmad Al Shhada &amp; Tamim Al Ammari
-</footer>
+  <!-- الفوتر المعتمد لهوية MEDNERD -->
+  <footer class="w-full max-w-lg mx-auto pt-2 pb-1">
+    <div class="border-t border-[var(--med-border)] pt-2 flex justify-between items-center text-[11px] font-bold" style="color: var(--med-muted);">
+      <span class="tracking-wider">MEDNERD ACADEMIC SYSTEM</span>
+      <a href="admin.html" class="text-[#1A7398] hover:underline">بوابة المشرف (Admin)</a>
+    </div>
+  </footer>
 
-<script>
-const AUTH_CONFIG = {
-  GOOGLE_CLIENT_ID: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-  REQUIRE_GOOGLE_POPUP: true,
-  REDIRECT_URL: 'index.html',
-  AUTH_STORAGE_KEY: 'mednerd_auth_user',
-  PROFILE_STORAGE_KEY: 'mednerd_profile',
-  LOCAL_USERS_LIST_KEY: 'mednerd_registered_users_list',
-  CLOUD_WEBHOOK_URL: 'https://script.google.com/macros/s/AKfycbzOqH0GBrayXZr6VssaGA3KSLCw_bZrZAyCINCDNBu5aYuUWAdo0gB3r3aRpxzRNHRftg/exec'
-};
+  <script>
+    // =========================================================================
+    // إعدادات الربط مع Google Apps Script (مربوط بالرابط المعتمد الخاص بك)
+    // =========================================================================
+    const AUTH_CONFIG = {
+      CLOUD_WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbxff4fkS46SAudNpuLP64pQHKEBfqQF3EH9LprQfUpMe4JXxsk885xVbvDWemvZcUqqog/exec",
+      REDIRECT_AFTER_LOGIN: "index.html"
+    };
 
-let currentLang = document.documentElement.lang === 'en' ? 'en' : 'ar';
-let googleUserPayload = null;
+    const STORAGE_KEYS = {
+      AUTH_USER: "mednerd_auth_user",
+      PROFILE: "mednerd_profile",
+      USERS_LIST: "mednerd_registered_users_list",
+      THEME: "mednerd_theme"
+    };
 
-const I18N = {
-  ar: {
-    dua: 'اللهم انفعنا بما علّمتنا، وعلّمنا ما ينفعنا، وزدنا علماً.',
-    heroTitle: 'بوابتك الذكية للتعلم الطبي والتدريب السريري',
-    heroSub: 'تسجيل الدخول بحساب Google وإكمال بياناتك الأكاديمية خطوة إلزامية للوصول إلى 32 أداة طبية ذكية للمذاكرة، الذاكرة، التفكير السريري، والـ OSCE.',
-    f1: '32 أداة طبية ذكية للمحاضرات والحالات السريرية',
-    f2: 'تكييف تلقائي للشرح حسب مرحلتك الدراسية وصفتك',
-    f3: 'خصوصية تامة: بياناتك ومفتاحك محفوظة في متصفحك فقط',
-    s1: '32 أداة تفاعلية',
-    s2: 'BYOK Gemini API',
-    s3: 'دخول معتمد بحساب Google',
-    mandatoryBadge: 'تسجيل الدخول إلزامي للوصول إلى المنصة',
-    loginTitle: 'تسجيل الدخول بحساب Google',
-    loginSub: 'أدخل حسابك في Google وبياناتك الأكاديمية للمتابعة إلى أدوات MEDNERD الـ 32',
-    googleBtn: 'تسجيل الدخول باستخدام حساب Google',
-    orComplete: 'البيانات الأكاديمية الإلزامية',
-    lblEmail: 'حساب Google (البريد الإلكتروني):',
-    lblName: 'الاسم الكامل:',
-    lblFaculty: 'الكلية / الجامعة / المدرسة:',
-    lblCountry: 'الدولة:',
-    lblLevel: 'المرحلة التعليمية:',
-    lblRole: 'الصفة:',
-    optSelect: '— اختر —',
-    lvlUni: 'جامعية',
-    lvlSec: 'ثانوية',
-    lvlPrep: 'إعدادية',
-    lvlPri: 'ابتدائية',
-    roleStudent: 'طالب',
-    roleDoctor: 'طبيب',
-    roleInstructor: 'مدرس',
-    roleTeacher: 'معلم',
-    btnContinue: 'تأكيد الدخول إلى المنصة',
-    privacyNote: 'جميع الحقول إلزامية. تُحفظ بياناتك لتخصيص مستوى الشرح وتوثيق اشتراكك في المنصة.',
-    errGooglePopup: 'يرجى تسجيل الدخول باستخدام زر Google أولاً للمتابعة.',
-    errEmail: 'يرجى إدخال بريد Google إلكتروني صحيح (مثل example@gmail.com).',
-    errName: 'يرجى إدخال الاسم الكامل (حرفان على الأقل).',
-    errFaculty: 'يرجى إدخال اسم الكلية أو الجامعة أو المدرسة.',
-    errCountry: 'يرجى اختيار الدولة.',
-    errLevel: 'يرجى اختيار المرحلة التعليمية.',
-    errRole: 'يرجى اختيار الصفة.',
-    googleReadyMsg: 'تم التحقق من حساب Google بنجاح! أكمل الحقول الأكاديمية أدناه ثم اضغط «تأكيد الدخول إلى المنصة».',
-    loginSuccessRedirect: 'تم تسجيل الدخول بنجاح! جارٍ تحويلك إلى المنصة...',
-    clientIdNotice: 'أدخل بريدك في Google (Gmail) وبياناتك الأكاديمية في الحقول الإلزامية أدناه ثم اضغط «تأكيد الدخول إلى المنصة».'
-  },
-  en: {
-    dua: 'O Allah, benefit us with what You have taught us, teach us what will benefit us, and increase us in knowledge.',
-    heroTitle: 'Your Smart Gateway to Medical Learning & Clinical Practice',
-    heroSub: 'Signing in with your Google account and completing your academic profile is mandatory to access all 32 smart medical tools.',
-    f1: '32 smart medical tools for lectures & clinical cases',
-    f2: 'Automatic explanation tuning for your academic stage & role',
-    f3: 'Full privacy: your data and API key stay in your browser only',
-    s1: '32 Interactive Tools',
-    s2: 'BYOK Gemini API',
-    s3: 'Verified Google Sign-In',
-    mandatoryBadge: 'Mandatory Sign-In Required',
-    loginTitle: 'Sign in with Google',
-    loginSub: 'Enter your Google account and academic details to access all 32 MEDNERD tools',
-    googleBtn: 'Sign in with Google',
-    orComplete: 'Mandatory Academic Profile',
-    lblEmail: 'Google Account (Email):',
-    lblName: 'Full name:',
-    lblFaculty: 'Faculty / University / School:',
-    lblCountry: 'Country:',
-    lblLevel: 'Education level:',
-    lblRole: 'Role:',
-    optSelect: '— Select —',
-    lvlUni: 'University',
-    lvlSec: 'Secondary',
-    lvlPrep: 'Preparatory',
-    lvlPri: 'Primary',
-    roleStudent: 'Student',
-    roleDoctor: 'Doctor',
-    roleInstructor: 'Instructor',
-    roleTeacher: 'Teacher',
-    btnContinue: 'Confirm & Enter Platform',
-    privacyNote: 'All fields are mandatory. Your details adapt the explanation level and register your access.',
-    errGooglePopup: 'Please sign in using the Google button first to continue.',
-    errEmail: 'Please enter a valid Google email address (e.g. name@gmail.com).',
-    errName: 'Please enter your full name (at least 2 characters).',
-    errFaculty: 'Please enter your faculty, university, or school.',
-    errCountry: 'Please choose your country.',
-    errLevel: 'Please choose your education level.',
-    errRole: 'Please choose your role.',
-    googleReadyMsg: 'Google account verified! Complete your academic fields below and click "Confirm & Enter Platform".',
-    loginSuccessRedirect: 'Signed in successfully! Redirecting to the platform...',
-    clientIdNotice: 'Enter your Google email (Gmail) and mandatory academic fields below, then click "Confirm & Enter Platform".'
-  }
-};
+    let pendingSignupData = null;
 
-function $(id) { return document.getElementById(id); }
+    // تطبيق المظهر المحفوظ (فاتح / داكن) المتوافق مع المنصة
+    function applySavedTheme() {
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || "light";
+      document.documentElement.setAttribute("data-theme", savedTheme);
+      const btn = document.getElementById("themeToggleBtn");
+      if (btn) {
+        btn.textContent = savedTheme === "dark" ? "☀️ الوضع النهاري" : "🌙 الوضع الليلي";
+      }
+    }
 
-function safeGet(k) { try { return localStorage.getItem(k); } catch (_) { return null; } }
-function safeSet(k, v) { try { localStorage.setItem(k, v); } catch (_) {} }
-function safeDel(k) { try { localStorage.removeItem(k); } catch (_) {} }
+    function toggleTheme() {
+      const current = document.documentElement.getAttribute("data-theme") || "light";
+      const next = current === "dark" ? "light" : "dark";
+      localStorage.setItem(STORAGE_KEYS.THEME, next);
+      applySavedTheme();
+    }
 
-function showAlert(type, msg) {
-  const el = $('statusAlert');
-  if (!el) return;
-  el.className = 'status-alert ' + type;
-  const icon = type === 'error' ? 'fa-circle-exclamation' : type === 'success' ? 'fa-circle-check' : 'fa-circle-info';
-  el.innerHTML = `<i class="fa-solid ${icon}" style="margin-top:3px;"></i><span></span>`;
-  el.querySelector('span').textContent = msg;
-}
+    applySavedTheme();
 
-function clearAlert() {
-  const el = $('statusAlert');
-  if (el) { el.className = 'status-alert'; el.innerHTML = ''; }
-}
+    // إذا كان الطالب مسجلاً دخوله بالفعل، حوّله مباشرة إلى المنصة
+    (function checkExistingSession() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH_USER) || "null");
+        if (saved && saved.loggedIn && !saved.guest && saved.email) {
+          window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGIN);
+        }
+      } catch (e) {}
+    })();
 
-function parseGoogleJwt(token) {
-  try {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const jsonPayload = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
-        .join('')
-    );
-    return JSON.parse(jsonPayload);
-  } catch (e) {
-    return null;
-  }
-}
+    function showAlert(msg, type = "error") {
+      const box = document.getElementById("alertBox");
+      box.className = "mb-5 p-3.5 rounded-l-xl text-xs font-bold leading-relaxed border-y border-l";
+      if (type === "success") {
+        box.style.borderRight = "4px solid #1A7398";
+        box.style.backgroundColor = "var(--med-primary-soft)";
+        box.style.borderColor = "var(--med-border)";
+        box.style.borderRightColor = "#1A7398";
+        box.style.color = "var(--med-navy)";
+      } else {
+        box.style.borderRight = "4px solid #C06A23";
+        box.style.backgroundColor = "var(--med-amber-bg)";
+        box.style.borderColor = "var(--med-border)";
+        box.style.borderRightColor = "#C06A23";
+        box.style.color = "var(--med-navy)";
+      }
+      box.textContent = msg;
+    }
 
-function isRealClientId() {
-  return AUTH_CONFIG.GOOGLE_CLIENT_ID &&
-    !AUTH_CONFIG.GOOGLE_CLIENT_ID.startsWith('YOUR_GOOGLE_CLIENT_ID') &&
-    AUTH_CONFIG.GOOGLE_CLIENT_ID.endsWith('.apps.googleusercontent.com');
-}
+    function hideAlert() {
+      document.getElementById("alertBox").className = "hidden";
+    }
 
-function initGoogleIdentity() {
-  if (!window.google || !google.accounts || !google.accounts.id || !isRealClientId()) return;
-  try {
-    google.accounts.id.initialize({
-      client_id: AUTH_CONFIG.GOOGLE_CLIENT_ID,
-      callback: handleGoogleCredentialResponse,
-      auto_select: false,
-      cancel_on_tap_outside: false
+    function switchTab(tab) {
+      hideAlert();
+      document.getElementById("authTabs").classList.remove("hidden");
+      document.getElementById("otpForm").classList.add("hidden");
+
+      const loginBtn = document.getElementById("tabLoginBtn");
+      const signupBtn = document.getElementById("tabSignupBtn");
+      const loginForm = document.getElementById("loginForm");
+      const signupForm = document.getElementById("signupForm");
+
+      if (tab === "login") {
+        loginBtn.classList.add("active");
+        signupBtn.classList.remove("active");
+        loginForm.classList.remove("hidden");
+        signupForm.classList.add("hidden");
+      } else {
+        signupBtn.classList.add("active");
+        loginBtn.classList.remove("active");
+        signupForm.classList.remove("hidden");
+        loginForm.classList.add("hidden");
+      }
+    }
+
+    function backToSignup() {
+      hideAlert();
+      document.getElementById("otpForm").classList.add("hidden");
+      document.getElementById("authTabs").classList.remove("hidden");
+      document.getElementById("signupForm").classList.remove("hidden");
+    }
+
+    async function callCloudApi(payload) {
+      try {
+        const res = await fetch(AUTH_CONFIG.CLOUD_WEBHOOK_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(payload)
+        });
+        return await res.json();
+      } catch (postErr) {
+        const qs = new URLSearchParams(payload).toString();
+        const res = await fetch(AUTH_CONFIG.CLOUD_WEBHOOK_URL + "?" + qs);
+        return await res.json();
+      }
+    }
+
+    function completeSessionAndRedirect(user) {
+      const nowIso = new Date().toISOString();
+      const profileData = {
+        name: user.name || "",
+        email: (user.email || "").toLowerCase(),
+        faculty: user.faculty || "",
+        country: user.country || "",
+        level: user.level || "university",
+        role: user.role || "student",
+        savedAt: nowIso
+      };
+
+      const authData = {
+        ...profileData,
+        guest: false,
+        loggedIn: true,
+        authProvider: "email_otp",
+        loginAt: nowIso
+      };
+
+      localStorage.setItem(STORAGE_KEYS.PROFILE, JSON.stringify(profileData));
+      localStorage.setItem(STORAGE_KEYS.AUTH_USER, JSON.stringify(authData));
+
+      try {
+        const list = JSON.parse(localStorage.getItem(STORAGE_KEYS.USERS_LIST) || "[]");
+        const filtered = list.filter((u) => (u.email || "").toLowerCase() !== profileData.email);
+        filtered.push(authData);
+        localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(filtered));
+      } catch (e) {}
+
+      window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGIN);
+    }
+
+    // 1) إرسال كود التفعيل عند إنشاء حساب جديد
+    document.getElementById("signupForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideAlert();
+
+      const btn = document.getElementById("signupSubmitBtn");
+      const originalText = btn.innerHTML;
+
+      pendingSignupData = {
+        action: "send_otp",
+        name: document.getElementById("signupName").value.trim(),
+        country: document.getElementById("signupCountry").value.trim(),
+        email: document.getElementById("signupEmail").value.trim().toLowerCase(),
+        password: document.getElementById("signupPassword").value,
+        faculty: document.getElementById("signupFaculty").value.trim(),
+        level: document.getElementById("signupLevel").value,
+        role: document.getElementById("signupRole").value
+      };
+
+      btn.disabled = true;
+      btn.innerHTML = "<span>جاري إرسال كود التفعيل إلى بريدك...</span>";
+
+      try {
+        const result = await callCloudApi(pendingSignupData);
+        if (result && result.status === "success") {
+          document.getElementById("authTabs").classList.add("hidden");
+          document.getElementById("signupForm").classList.add("hidden");
+          document.getElementById("otpForm").classList.remove("hidden");
+          document.getElementById("otpTargetEmail").textContent = pendingSignupData.email;
+          showAlert("تم إرسال كود التفعيل (6 أرقام) إلى بريدك الإلكتروني بنجاح. تفقد البريد الوارد أو الرسائل غير المرغوب فيها (Spam).", "success");
+        } else {
+          showAlert((result && result.message) || "تعذر إرسال كود التفعيل، تحقق من صحة البريد الإلكتروني.");
+        }
+      } catch (err) {
+        showAlert("حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     });
-    const target = $('g_id_onload_btn');
-    if (target) {
-      google.accounts.id.renderButton(target, {
-        theme: document.documentElement.getAttribute('data-theme') === 'dark' ? 'filled_black' : 'outline',
-        size: 'large',
-        shape: 'pill',
-        width: 340,
-        text: 'signin_with',
-        locale: currentLang
-      });
-      $('customGoogleBtn').style.display = 'none';
-      $('login_email').readOnly = true;
+
+    async function resendOtpCode() {
+      if (!pendingSignupData) return;
+      const btn = document.getElementById("resendOtpBtn");
+      btn.textContent = "جاري إعادة الإرسال...";
+      try {
+        const res = await callCloudApi(pendingSignupData);
+        if (res && res.status === "success") {
+          showAlert("تمت إعادة إرسال كود تفعيل جديد إلى بريدك الإلكتروني.", "success");
+        } else {
+          showAlert((res && res.message) || "تعذر إعادة الإرسال حالياً.");
+        }
+      } catch (e) {
+        showAlert("تعذر الاتصال بالخادم.");
+      } finally {
+        btn.textContent = "إعادة إرسال الكود مرة أخرى";
+      }
     }
-  } catch (e) {
-    console.warn('[MEDNERD Auth] تعذر تهيئة Google GSI:', e);
-  }
-}
 
-function handleGoogleCredentialResponse(response) {
-  const payload = parseGoogleJwt(response && response.credential);
-  if (!payload || !payload.email) {
-    showAlert('error', 'تعذر قراءة بيانات حساب Google. حاول مرة أخرى.');
-    return;
-  }
-  googleUserPayload = {
-    sub: payload.sub || '',
-    name: payload.name || '',
-    givenName: payload.given_name || '',
-    email: payload.email || '',
-    picture: payload.picture || '',
-    emailVerified: !!payload.email_verified,
-    provider: 'google',
-    loginAt: new Date().toISOString()
-  };
+    // 2) التحقق من الكود وتفعيل الحساب
+    document.getElementById("otpForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideAlert();
 
-  renderLinkedUserCard(googleUserPayload);
-  if ($('login_name') && !$('login_name').value.trim()) {
-    $('login_name').value = googleUserPayload.name;
-  }
-  if ($('login_email')) {
-    $('login_email').value = googleUserPayload.email;
-    $('login_email').readOnly = true;
-  }
-  showAlert('success', I18N[currentLang].googleReadyMsg);
-}
+      if (!pendingSignupData) return;
+      const otpCode = document.getElementById("otpCodeInput").value.trim();
+      const btn = document.getElementById("verifyOtpBtn");
+      const originalText = btn.innerHTML;
 
-function renderLinkedUserCard(user) {
-  const card = $('userCard');
-  if (!card || !user) return;
-  const wrap = $('userAvatarWrap');
-  wrap.innerHTML = '';
-  if (user.picture) {
-    const img = document.createElement('img');
-    img.className = 'user-avatar';
-    img.src = user.picture;
-    img.alt = user.name || 'User';
-    img.referrerPolicy = 'no-referrer';
-    wrap.appendChild(img);
-  } else {
-    const div = document.createElement('div');
-    div.className = 'user-avatar';
-    div.textContent = (user.name || 'M').trim().charAt(0).toUpperCase();
-    wrap.appendChild(div);
-  }
-  $('userNameText').textContent = user.name || '';
-  $('userEmailText').textContent = user.email || '';
-  card.style.display = 'flex';
-}
+      btn.disabled = true;
+      btn.innerHTML = "جاري التحقق وتفعيل الحساب...";
 
-function handleCustomGoogleClick() {
-  if (window.google && google.accounts && google.accounts.id && isRealClientId()) {
-    google.accounts.id.prompt();
-    return;
-  }
-  showAlert('info', I18N[currentLang].clientIdNotice);
-  $('login_email').focus();
-}
+      try {
+        const result = await callCloudApi({
+          action: "verify_otp",
+          email: pendingSignupData.email,
+          otp: otpCode
+        });
 
-function signOutGoogle() {
-  if (window.google && google.accounts && google.accounts.id) {
-    try { google.accounts.id.disableAutoSelect(); } catch (_) {}
-  }
-  googleUserPayload = null;
-  safeDel(AUTH_CONFIG.AUTH_STORAGE_KEY);
-  $('userCard').style.display = 'none';
-  if ($('login_email')) {
-    $('login_email').value = '';
-    $('login_email').readOnly = isRealClientId();
-  }
-  clearAlert();
-}
+        if (result && result.status === "success") {
+          showAlert("تم تفعيل حسابك بنجاح! جاري تحويلك إلى منصة MEDNERD...", "success");
+          setTimeout(() => {
+            completeSessionAndRedirect(result.user || pendingSignupData);
+          }, 500);
+        } else {
+          showAlert((result && result.message) || "كود التفعيل غير صحيح! تأكد من الأرقام الستة.");
+        }
+      } catch (err) {
+        showAlert("حدث خطأ في الاتصال أثناء التحقق من الكود.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
 
-function isValidEmail(email) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email);
-}
+    // 3) تسجيل الدخول لحساب موجود مسبقاً
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      hideAlert();
 
-async function recordUserForAdmin(userData) {
-  try {
-    const raw = safeGet(AUTH_CONFIG.LOCAL_USERS_LIST_KEY) || '[]';
-    let list = JSON.parse(raw);
-    if (!Array.isArray(list)) list = [];
-    const idx = list.findIndex(u => u.email === userData.email);
-    if (idx >= 0) {
-      list[idx] = { ...list[idx], ...userData };
-    } else {
-      list.push(userData);
-    }
-    safeSet(AUTH_CONFIG.LOCAL_USERS_LIST_KEY, JSON.stringify(list));
-  } catch (e) {
-    console.warn('تعذر حفظ السجل المحلي:', e);
-  }
+      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
+      const password = document.getElementById("loginPassword").value;
+      const btn = document.getElementById("loginSubmitBtn");
+      const originalText = btn.innerHTML;
 
-  if (AUTH_CONFIG.CLOUD_WEBHOOK_URL) {
-    try {
-      await fetch(AUTH_CONFIG.CLOUD_WEBHOOK_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(userData)
-      });
-    } catch (_) {}
-  }
-}
+      btn.disabled = true;
+      btn.innerHTML = "<span>جاري التحقق من الحساب...</span>";
 
-async function submitLoginForm(e) {
-  if (e) e.preventDefault();
-  clearAlert();
-  const t = I18N[currentLang];
+      try {
+        const result = await callCloudApi({
+          action: "login",
+          email: email,
+          password: password
+        });
 
-  if (isRealClientId() && AUTH_CONFIG.REQUIRE_GOOGLE_POPUP && !googleUserPayload) {
-    showAlert('error', t.errGooglePopup);
-    return;
-  }
-
-  const email = ((googleUserPayload && googleUserPayload.email) || $('login_email').value || '').trim();
-  const name = $('login_name').value.trim();
-  const faculty = $('login_faculty').value.trim();
-  const country = $('login_country').value;
-  const level = $('login_level').value;
-  const role = $('login_role').value;
-
-  if (!isValidEmail(email)) { showAlert('error', t.errEmail); $('login_email').focus(); return; }
-  if (name.length < 2) { showAlert('error', t.errName); $('login_name').focus(); return; }
-  if (faculty.length < 2) { showAlert('error', t.errFaculty); $('login_faculty').focus(); return; }
-  if (!country) { showAlert('error', t.errCountry); $('login_country').focus(); return; }
-  if (!level) { showAlert('error', t.errLevel); $('login_level').focus(); return; }
-  if (!role) { showAlert('error', t.errRole); $('login_role').focus(); return; }
-
-  const btn = $('submitLoginBtn');
-  if (btn) btn.disabled = true;
-
-  const profileData = {
-    name,
-    email,
-    faculty,
-    country,
-    level,
-    role,
-    picture: (googleUserPayload && googleUserPayload.picture) || '',
-    provider: 'google',
-    savedAt: new Date().toISOString()
-  };
-
-  safeSet(AUTH_CONFIG.PROFILE_STORAGE_KEY, JSON.stringify(profileData));
-  safeSet(AUTH_CONFIG.AUTH_STORAGE_KEY, JSON.stringify({
-    ...(googleUserPayload || {}),
-    name,
-    email,
-    faculty,
-    country,
-    level,
-    role,
-    guest: false,
-    loggedIn: true,
-    loginAt: new Date().toISOString()
-  }));
-
-  showAlert('success', t.loginSuccessRedirect);
-  await recordUserForAdmin(profileData);
-
-  try { sessionStorage.setItem('mednerd_intro', '1'); } catch (_) {}
-  window.location.replace(AUTH_CONFIG.REDIRECT_URL);
-}
-
-function applyLang(lang) {
-  currentLang = lang === 'en' ? 'en' : 'ar';
-  const h = document.documentElement;
-  h.lang = currentLang;
-  h.dir = currentLang === 'en' ? 'ltr' : 'rtl';
-  safeSet('mednerd_lang', currentLang);
-  const lb = $('langBtn');
-  if (lb) {
-    lb.textContent = currentLang === 'en' ? 'AR' : 'EN';
-    lb.title = currentLang === 'en' ? 'العربية' : 'English';
-  }
-  const dict = I18N[currentLang];
-  document.querySelectorAll('[data-i18n]').forEach(el => {
-    const key = el.getAttribute('data-i18n');
-    if (dict[key]) el.textContent = dict[key];
-  });
-  $('login_name').placeholder = currentLang === 'en' ? 'e.g. Dr. Ahmad Al Shhada' : 'مثال: د. أحمد الشحادة';
-  $('login_faculty').placeholder = currentLang === 'en' ? 'e.g. Faculty of Medicine' : 'مثال: كلية الطب البشري';
-}
-
-function toggleLang() {
-  applyLang(currentLang === 'ar' ? 'en' : 'ar');
-}
-
-function applyTheme(theme) {
-  document.documentElement.setAttribute('data-theme', theme);
-  const icon = $('themeIcon');
-  if (icon) icon.className = theme === 'dark' ? 'fa-solid fa-sun' : 'fa-solid fa-moon';
-}
-
-function toggleTheme() {
-  const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  applyTheme(next);
-  safeSet('mednerd_theme', next);
-}
-
-window.addEventListener('DOMContentLoaded', () => {
-  applyLang(safeGet('mednerd_lang') === 'en' ? 'en' : 'ar');
-  applyTheme(safeGet('mednerd_theme') || 'light');
-
-  try {
-    const savedProfile = JSON.parse(safeGet(AUTH_CONFIG.PROFILE_STORAGE_KEY) || 'null');
-    const savedAuth = JSON.parse(safeGet(AUTH_CONFIG.AUTH_STORAGE_KEY) || 'null');
-    if (savedProfile) {
-      if (savedProfile.email) $('login_email').value = savedProfile.email;
-      if (savedProfile.name) $('login_name').value = savedProfile.name;
-      if (savedProfile.faculty) $('login_faculty').value = savedProfile.faculty;
-      if (savedProfile.country) $('login_country').value = savedProfile.country;
-      if (savedProfile.level) $('login_level').value = savedProfile.level;
-      if (savedProfile.role) $('login_role').value = savedProfile.role;
-    }
-    if (savedAuth && savedAuth.loggedIn && !savedAuth.guest && savedAuth.email) {
-      googleUserPayload = savedAuth;
-      renderLinkedUserCard(savedAuth);
-    }
-  } catch (_) {}
-
-  window.addEventListener('load', initGoogleIdentity);
-});
-</script>
+        if (result && result.status === "success" && result.user) {
+          showAlert("تم تسجيل الدخول بنجاح! جاري فتح المنصة...", "success");
+          setTimeout(() => {
+            completeSessionAndRedirect(result.user);
+          }, 400);
+        } else {
+          showAlert((result && result.message) || "بيانات الدخول غير صحيحة.");
+        }
+      } catch (err) {
+        showAlert("تعذر الاتصال بالخادم، حاول مرة أخرى.");
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    });
+  </script>
 </body>
 </html>
