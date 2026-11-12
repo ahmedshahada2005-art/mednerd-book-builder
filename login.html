@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MEDNERD AI | بوابة الدخول الأكاديمية</title>
+  <title>MEDNERD AI | تسجيل الدخول</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
@@ -68,20 +68,14 @@
       box-shadow: 0 0 0 3px rgba(26, 115, 152, 0.16);
     }
 
-    .med-tab-bar {
-      background-color: var(--med-box);
-      border: 1px solid var(--med-border);
-    }
-
-    .med-tab-btn {
-      color: var(--med-muted);
-      transition: all 0.2s ease;
-    }
-
-    .med-tab-btn.active {
-      background-color: #1A7398;
-      color: #FFFFFF;
-      box-shadow: 0 6px 16px -3px rgba(26, 115, 152, 0.4);
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    select:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 1000px var(--med-box) inset !important;
+      -webkit-text-fill-color: var(--med-navy) !important;
+      caret-color: var(--med-navy) !important;
+      transition: background-color 5000s ease-in-out 0s;
     }
 
     .med-btn-primary {
@@ -119,28 +113,24 @@
       </div>
     </div>
 
-    <div class="flex items-center gap-2">
-      <button
-        type="button"
-        onclick="toggleTheme()"
-        id="themeToggleBtn"
-        class="px-3 py-1.5 rounded-lg text-xs font-extrabold border border-[#E2E8F0] bg-white/80 text-[#0F172A] hover:border-[#1A7398] transition"
-        title="تبديل المظهر"
-      >
-        🌙 الوضع الليلي
-      </button>
-    </div>
+    <button
+      type="button"
+      onclick="toggleTheme()"
+      id="themeToggleBtn"
+      class="px-3 py-1.5 rounded-lg text-xs font-extrabold border border-[#E2E8F0] bg-white/80 text-[#0F172A] hover:border-[#1A7398] transition"
+    >
+      🌙 الوضع الليلي
+    </button>
   </header>
 
   <!-- البطاقة المركزية -->
   <main class="w-full max-w-lg mx-auto my-auto py-5">
     <div class="med-card rounded-2xl p-6 md:p-7">
 
-      <!-- ترويسة البطاقة -->
       <div class="mb-5 pb-3 border-b border-[var(--med-border)] flex items-center justify-between">
         <div>
           <h1 class="text-lg md:text-xl font-black" style="color: var(--med-navy);">
-            بوابة الوصول الأكاديمي المعتمدة
+            تسجيل الدخول إلى المنصة
           </h1>
           <p class="text-xs font-semibold mt-0.5" style="color: var(--med-muted);">
             منظومة MEDNERD المتكاملة (32 أداة طبية وتعليمية ذكية)
@@ -151,90 +141,16 @@
         </span>
       </div>
 
-      <!-- تبويبات: تسجيل الدخول / إنشاء حساب جديد -->
-      <div id="authTabs" class="med-tab-bar grid grid-cols-2 gap-1.5 p-1.5 rounded-xl mb-5">
-        <button
-          type="button"
-          id="tabLoginBtn"
-          onclick="switchTab('login')"
-          class="med-tab-btn active py-2.5 px-4 rounded-lg text-xs md:text-sm font-extrabold"
-        >
-          تسجيل الدخول
-        </button>
-        <button
-          type="button"
-          id="tabSignupBtn"
-          onclick="switchTab('signup')"
-          class="med-tab-btn py-2.5 px-4 rounded-lg text-xs md:text-sm font-extrabold"
-        >
-          إنشاء حساب جديد
-        </button>
-      </div>
-
-      <!-- صندوق التنبيهات والرسائل (بهوية Clinical Note عند التنبيه) -->
       <div id="alertBox" class="hidden mb-5 p-3.5 rounded-xl text-xs font-bold leading-relaxed"></div>
 
-      <!-- ================================================= -->
-      <!-- 1) نموذج تسجيل الدخول (لحساب مسجل مسبقاً)          -->
-      <!-- ================================================= -->
+      <!-- نموذج تسجيل الدخول المباشر -->
       <form id="loginForm" class="space-y-4">
-        <div>
-          <label class="block text-xs font-extrabold mb-1.5" style="color: var(--med-navy);">
-            البريد الإلكتروني الأكاديمي أو الشخصي (Gmail)
-          </label>
-          <input
-            type="email"
-            id="loginEmail"
-            required
-            placeholder="doctor.name@gmail.com"
-            dir="ltr"
-            class="med-input w-full rounded-xl px-4 py-3 text-sm font-semibold placeholder-slate-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-extrabold mb-1.5" style="color: var(--med-navy);">
-            كلمة المرور
-          </label>
-          <input
-            type="password"
-            id="loginPassword"
-            required
-            placeholder="••••••••"
-            dir="ltr"
-            class="med-input w-full rounded-xl px-4 py-3 text-sm font-semibold placeholder-slate-400"
-          />
-        </div>
-
-        <button
-          type="submit"
-          id="loginSubmitBtn"
-          class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2"
-        >
-          <span>دخول إلى منصة MEDNERD</span>
-          <span>←</span>
-        </button>
-
-        <div class="clinical-pearl p-3 rounded-l-xl text-[12px] leading-relaxed mt-3">
-          <span class="font-black text-[#C06A23] block text-xs mb-0.5">ملاحظة أكاديمية (Academic Access Note):</span>
-          <span style="color: var(--med-slate);">
-            إذا كنت تستخدم المنصة لأول مرة، انتقل إلى تبويب
-            <button type="button" onclick="switchTab('signup')" class="text-[#1A7398] font-black underline">إنشاء حساب جديد</button>
-            ليصلك كود التفعيل الفوري على بريدك الإلكتروني.
-          </span>
-        </div>
-      </form>
-
-      <!-- ================================================= -->
-      <!-- 2) نموذج إنشاء حساب جديد (يرسل كود تفعيل للإيميل) -->
-      <!-- ================================================= -->
-      <form id="signupForm" class="space-y-3.5 hidden">
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div>
-            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الاسم الثلاثي الكامل *</label>
+            <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الاسم الكامل *</label>
             <input
               type="text"
-              id="signupName"
+              id="userName"
               required
               placeholder="د. أحمد محمد..."
               class="med-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold placeholder-slate-400"
@@ -245,7 +161,7 @@
             <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">البلد / المدينة *</label>
             <input
               type="text"
-              id="signupCountry"
+              id="userCountry"
               required
               placeholder="سوريا، مصر، السعودية..."
               class="med-input w-full rounded-xl px-3.5 py-2.5 text-sm font-semibold placeholder-slate-400"
@@ -254,27 +170,12 @@
         </div>
 
         <div>
-          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">
-            البريد الإلكتروني (سيتم إرسال كود التفعيل من 6 أرقام إليه) *
-          </label>
+          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">البريد الإلكتروني (Gmail) *</label>
           <input
             type="email"
-            id="signupEmail"
+            id="userEmail"
             required
             placeholder="yourname@gmail.com"
-            dir="ltr"
-            class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
-          />
-        </div>
-
-        <div>
-          <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">تعيين كلمة مرور للحساب *</label>
-          <input
-            type="password"
-            id="signupPassword"
-            required
-            minlength="4"
-            placeholder="أدخل كلمة مرور يسهل عليك تذكرها..."
             dir="ltr"
             class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
           />
@@ -284,9 +185,9 @@
           <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الكلية / التخصص أو المؤسسة التعليمية *</label>
           <input
             type="text"
-            id="signupFaculty"
+            id="userFaculty"
             required
-            placeholder="كلية الطب البشري / طب الأسنان / الصيدلة..."
+            placeholder="كلية الطب البشري / الصيدلة / طب الأسنان..."
             class="med-input w-full rounded-xl px-4 py-2.5 text-sm font-semibold placeholder-slate-400"
           />
         </div>
@@ -295,7 +196,7 @@
           <div>
             <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">المرحلة الدراسية *</label>
             <select
-              id="signupLevel"
+              id="userLevel"
               class="med-input w-full rounded-xl px-3.5 py-2.5 text-xs font-extrabold"
             >
               <option value="university">جامعي / دراسات عليا (University)</option>
@@ -308,7 +209,7 @@
           <div>
             <label class="block text-xs font-extrabold mb-1" style="color: var(--med-navy);">الصفة الأكاديمية *</label>
             <select
-              id="signupRole"
+              id="userRole"
               class="med-input w-full rounded-xl px-3.5 py-2.5 text-xs font-extrabold"
             >
               <option value="student">طالب (Student)</option>
@@ -321,73 +222,24 @@
 
         <button
           type="submit"
-          id="signupSubmitBtn"
+          id="submitBtn"
           class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm flex items-center justify-center gap-2 mt-2"
         >
-          <span>إرسال كود التفعيل إلى البريد الإلكتروني</span>
+          <span>دخول إلى منصة MEDNERD</span>
           <span>←</span>
         </button>
-      </form>
 
-      <!-- ================================================= -->
-      <!-- 3) شاشة إدخال كود التفعيل (OTP من 6 أرقام)       -->
-      <!-- ================================================= -->
-      <form id="otpForm" class="space-y-4 hidden">
-        <div class="p-4 rounded-xl border-2 border-dashed border-[#1A7398] bg-[var(--med-box)] text-center">
-          <span class="text-xs font-black text-[#1A7398] tracking-wider uppercase block mb-1">
-            EMAIL VERIFICATION CODE (OTP)
+        <div class="clinical-pearl p-3 rounded-l-xl text-[12px] leading-relaxed mt-3">
+          <span class="font-black text-[#C06A23] block text-xs mb-0.5">ملاحظة (Academic Access):</span>
+          <span style="color: var(--med-slate);">
+            الدخول إجباري لحفظ ملفك الأكاديمي وتخصيص مستوى الشرح في الأدوات الـ 32 حسب مرحلتك وتخصصك.
           </span>
-          <h2 class="text-base font-black" style="color: var(--med-navy);">أدخل كود التفعيل المرسل لبريدك</h2>
-          <p class="text-xs mt-1" style="color: var(--med-muted);">
-            تم إرسال كود مكوّن من 6 أرقام إلى البريد:
-            <span id="otpTargetEmail" class="text-[#1A7398] font-black block mt-1" dir="ltr"></span>
-          </p>
-        </div>
-
-        <div>
-          <input
-            type="text"
-            id="otpCodeInput"
-            maxlength="6"
-            required
-            placeholder="000000"
-            dir="ltr"
-            class="med-input w-full rounded-xl px-4 py-3.5 text-center text-2xl font-black tracking-[0.5em]"
-          />
-        </div>
-
-        <button
-          type="submit"
-          id="verifyOtpBtn"
-          class="med-btn-primary w-full py-3.5 rounded-xl font-black text-sm"
-        >
-          تأكيد الكود وتفعيل الحساب الأكاديمي
-        </button>
-
-        <div class="flex items-center justify-between text-xs pt-1 font-bold">
-          <button
-            type="button"
-            onclick="resendOtpCode()"
-            id="resendOtpBtn"
-            class="text-[#1A7398] hover:underline"
-          >
-            إعادة إرسال الكود مرة أخرى
-          </button>
-          <button
-            type="button"
-            onclick="backToSignup()"
-            style="color: var(--med-muted);"
-            class="hover:underline"
-          >
-            تعديل البريد الإلكتروني ←
-          </button>
         </div>
       </form>
 
     </div>
   </main>
 
-  <!-- الفوتر المعتمد لهوية MEDNERD -->
   <footer class="w-full max-w-lg mx-auto pt-2 pb-1">
     <div class="border-t border-[var(--med-border)] pt-2 flex justify-between items-center text-[11px] font-bold" style="color: var(--med-muted);">
       <span class="tracking-wider">MEDNERD ACADEMIC SYSTEM</span>
@@ -396,11 +248,7 @@
   </footer>
 
   <script>
-    // =========================================================================
-    // إعدادات الربط مع Google Apps Script (مربوط بالرابط المعتمد الخاص بك)
-    // =========================================================================
     const AUTH_CONFIG = {
-      CLOUD_WEBHOOK_URL: "https://script.google.com/macros/s/AKfycbxff4fkS46SAudNpuLP64pQHKEBfqQF3EH9LprQfUpMe4JXxsk885xVbvDWemvZcUqqog/exec",
       REDIRECT_AFTER_LOGIN: "index.html"
     };
 
@@ -411,9 +259,6 @@
       THEME: "mednerd_theme"
     };
 
-    let pendingSignupData = null;
-
-    // تطبيق المظهر المحفوظ (فاتح / داكن) المتوافق مع المنصة
     function applySavedTheme() {
       const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME) || "light";
       document.documentElement.setAttribute("data-theme", savedTheme);
@@ -432,7 +277,7 @@
 
     applySavedTheme();
 
-    // إذا كان الطالب مسجلاً دخوله بالفعل، حوّله مباشرة إلى المنصة
+    // تحويل تلقائي إذا كان المستخدم مسجلاً بالفعل
     (function checkExistingSession() {
       try {
         const saved = JSON.parse(localStorage.getItem(STORAGE_KEYS.AUTH_USER) || "null");
@@ -442,83 +287,17 @@
       } catch (e) {}
     })();
 
-    function showAlert(msg, type = "error") {
-      const box = document.getElementById("alertBox");
-      box.className = "mb-5 p-3.5 rounded-l-xl text-xs font-bold leading-relaxed border-y border-l";
-      if (type === "success") {
-        box.style.borderRight = "4px solid #1A7398";
-        box.style.backgroundColor = "var(--med-primary-soft)";
-        box.style.borderColor = "var(--med-border)";
-        box.style.borderRightColor = "#1A7398";
-        box.style.color = "var(--med-navy)";
-      } else {
-        box.style.borderRight = "4px solid #C06A23";
-        box.style.backgroundColor = "var(--med-amber-bg)";
-        box.style.borderColor = "var(--med-border)";
-        box.style.borderRightColor = "#C06A23";
-        box.style.color = "var(--med-navy)";
-      }
-      box.textContent = msg;
-    }
+    document.getElementById("loginForm").addEventListener("submit", function (e) {
+      e.preventDefault();
 
-    function hideAlert() {
-      document.getElementById("alertBox").className = "hidden";
-    }
-
-    function switchTab(tab) {
-      hideAlert();
-      document.getElementById("authTabs").classList.remove("hidden");
-      document.getElementById("otpForm").classList.add("hidden");
-
-      const loginBtn = document.getElementById("tabLoginBtn");
-      const signupBtn = document.getElementById("tabSignupBtn");
-      const loginForm = document.getElementById("loginForm");
-      const signupForm = document.getElementById("signupForm");
-
-      if (tab === "login") {
-        loginBtn.classList.add("active");
-        signupBtn.classList.remove("active");
-        loginForm.classList.remove("hidden");
-        signupForm.classList.add("hidden");
-      } else {
-        signupBtn.classList.add("active");
-        loginBtn.classList.remove("active");
-        signupForm.classList.remove("hidden");
-        loginForm.classList.add("hidden");
-      }
-    }
-
-    function backToSignup() {
-      hideAlert();
-      document.getElementById("otpForm").classList.add("hidden");
-      document.getElementById("authTabs").classList.remove("hidden");
-      document.getElementById("signupForm").classList.remove("hidden");
-    }
-
-    async function callCloudApi(payload) {
-      try {
-        const res = await fetch(AUTH_CONFIG.CLOUD_WEBHOOK_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify(payload)
-        });
-        return await res.json();
-      } catch (postErr) {
-        const qs = new URLSearchParams(payload).toString();
-        const res = await fetch(AUTH_CONFIG.CLOUD_WEBHOOK_URL + "?" + qs);
-        return await res.json();
-      }
-    }
-
-    function completeSessionAndRedirect(user) {
       const nowIso = new Date().toISOString();
       const profileData = {
-        name: user.name || "",
-        email: (user.email || "").toLowerCase(),
-        faculty: user.faculty || "",
-        country: user.country || "",
-        level: user.level || "university",
-        role: user.role || "student",
+        name: document.getElementById("userName").value.trim(),
+        country: document.getElementById("userCountry").value.trim(),
+        email: document.getElementById("userEmail").value.trim().toLowerCase(),
+        faculty: document.getElementById("userFaculty").value.trim(),
+        level: document.getElementById("userLevel").value,
+        role: document.getElementById("userRole").value,
         savedAt: nowIso
       };
 
@@ -526,7 +305,7 @@
         ...profileData,
         guest: false,
         loggedIn: true,
-        authProvider: "email_otp",
+        authProvider: "direct",
         loginAt: nowIso
       };
 
@@ -538,140 +317,20 @@
         const filtered = list.filter((u) => (u.email || "").toLowerCase() !== profileData.email);
         filtered.push(authData);
         localStorage.setItem(STORAGE_KEYS.USERS_LIST, JSON.stringify(filtered));
-      } catch (e) {}
+      } catch (err) {}
 
-      window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGIN);
-    }
+      const box = document.getElementById("alertBox");
+      box.className = "mb-5 p-3.5 rounded-l-xl text-xs font-bold leading-relaxed border-y border-l";
+      box.style.borderRight = "4px solid #1A7398";
+      box.style.backgroundColor = "var(--med-primary-soft)";
+      box.style.borderColor = "var(--med-border)";
+      box.style.borderRightColor = "#1A7398";
+      box.style.color = "var(--med-navy)";
+      box.textContent = "تم تسجيل الدخول بنجاح! جاري تحويلك إلى منصة MEDNERD...";
 
-    // 1) إرسال كود التفعيل عند إنشاء حساب جديد
-    document.getElementById("signupForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      hideAlert();
-
-      const btn = document.getElementById("signupSubmitBtn");
-      const originalText = btn.innerHTML;
-
-      pendingSignupData = {
-        action: "send_otp",
-        name: document.getElementById("signupName").value.trim(),
-        country: document.getElementById("signupCountry").value.trim(),
-        email: document.getElementById("signupEmail").value.trim().toLowerCase(),
-        password: document.getElementById("signupPassword").value,
-        faculty: document.getElementById("signupFaculty").value.trim(),
-        level: document.getElementById("signupLevel").value,
-        role: document.getElementById("signupRole").value
-      };
-
-      btn.disabled = true;
-      btn.innerHTML = "<span>جاري إرسال كود التفعيل إلى بريدك...</span>";
-
-      try {
-        const result = await callCloudApi(pendingSignupData);
-        if (result && result.status === "success") {
-          document.getElementById("authTabs").classList.add("hidden");
-          document.getElementById("signupForm").classList.add("hidden");
-          document.getElementById("otpForm").classList.remove("hidden");
-          document.getElementById("otpTargetEmail").textContent = pendingSignupData.email;
-          showAlert("تم إرسال كود التفعيل (6 أرقام) إلى بريدك الإلكتروني بنجاح. تفقد البريد الوارد أو الرسائل غير المرغوب فيها (Spam).", "success");
-        } else {
-          showAlert((result && result.message) || "تعذر إرسال كود التفعيل، تحقق من صحة البريد الإلكتروني.");
-        }
-      } catch (err) {
-        showAlert("حدث خطأ أثناء الاتصال بالخادم. تحقق من اتصالك بالإنترنت وحاول مرة أخرى.");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    });
-
-    async function resendOtpCode() {
-      if (!pendingSignupData) return;
-      const btn = document.getElementById("resendOtpBtn");
-      btn.textContent = "جاري إعادة الإرسال...";
-      try {
-        const res = await callCloudApi(pendingSignupData);
-        if (res && res.status === "success") {
-          showAlert("تمت إعادة إرسال كود تفعيل جديد إلى بريدك الإلكتروني.", "success");
-        } else {
-          showAlert((res && res.message) || "تعذر إعادة الإرسال حالياً.");
-        }
-      } catch (e) {
-        showAlert("تعذر الاتصال بالخادم.");
-      } finally {
-        btn.textContent = "إعادة إرسال الكود مرة أخرى";
-      }
-    }
-
-    // 2) التحقق من الكود وتفعيل الحساب
-    document.getElementById("otpForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      hideAlert();
-
-      if (!pendingSignupData) return;
-      const otpCode = document.getElementById("otpCodeInput").value.trim();
-      const btn = document.getElementById("verifyOtpBtn");
-      const originalText = btn.innerHTML;
-
-      btn.disabled = true;
-      btn.innerHTML = "جاري التحقق وتفعيل الحساب...";
-
-      try {
-        const result = await callCloudApi({
-          action: "verify_otp",
-          email: pendingSignupData.email,
-          otp: otpCode
-        });
-
-        if (result && result.status === "success") {
-          showAlert("تم تفعيل حسابك بنجاح! جاري تحويلك إلى منصة MEDNERD...", "success");
-          setTimeout(() => {
-            completeSessionAndRedirect(result.user || pendingSignupData);
-          }, 500);
-        } else {
-          showAlert((result && result.message) || "كود التفعيل غير صحيح! تأكد من الأرقام الستة.");
-        }
-      } catch (err) {
-        showAlert("حدث خطأ في الاتصال أثناء التحقق من الكود.");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
-    });
-
-    // 3) تسجيل الدخول لحساب موجود مسبقاً
-    document.getElementById("loginForm").addEventListener("submit", async (e) => {
-      e.preventDefault();
-      hideAlert();
-
-      const email = document.getElementById("loginEmail").value.trim().toLowerCase();
-      const password = document.getElementById("loginPassword").value;
-      const btn = document.getElementById("loginSubmitBtn");
-      const originalText = btn.innerHTML;
-
-      btn.disabled = true;
-      btn.innerHTML = "<span>جاري التحقق من الحساب...</span>";
-
-      try {
-        const result = await callCloudApi({
-          action: "login",
-          email: email,
-          password: password
-        });
-
-        if (result && result.status === "success" && result.user) {
-          showAlert("تم تسجيل الدخول بنجاح! جاري فتح المنصة...", "success");
-          setTimeout(() => {
-            completeSessionAndRedirect(result.user);
-          }, 400);
-        } else {
-          showAlert((result && result.message) || "بيانات الدخول غير صحيحة.");
-        }
-      } catch (err) {
-        showAlert("تعذر الاتصال بالخادم، حاول مرة أخرى.");
-      } finally {
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-      }
+      setTimeout(function () {
+        window.location.replace(AUTH_CONFIG.REDIRECT_AFTER_LOGIN);
+      }, 350);
     });
   </script>
 </body>
